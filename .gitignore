@@ -125,3 +125,8 @@ nb-configuration.xml
 /phpunit*.xml
 /.phpunit.*.cache
 
+#-------------------------
+# Node/NPM (TAILWIND CSS, etc.)
+#-------------------------
+node_modules/
+package-lock.json
