@@ -24,7 +24,7 @@ class AuthFilter implements FilterInterface
         
         if (!$auth->check()) {
             // Redirect to login if not authenticated
-            return redirect()->to('/login');
+            return redirect()->to('/');
         }
     }
 
