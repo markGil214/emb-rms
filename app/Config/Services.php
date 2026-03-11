@@ -19,13 +19,19 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
-	// public static function example($getShared = true)
-	// {
-	//     if ($getShared)
-	//     {
-	//         return static::getSharedInstance('example');
-	//     }
-	//
-	//     return new \CodeIgniter\Example();
-	// }
+	/**
+	 * Authentication Service
+	 * Provides user authentication functionality (login, logout, etc.)
+	 * 
+	 * @param bool $getShared
+	 * @return \App\Libraries\Authentication
+	 */
+	public static function authentication($getShared = true)
+	{
+		if ($getShared) {
+			return static::getSharedInstance('authentication');
+		}
+
+		return new \App\Libraries\Authentication();
+	}
 }

@@ -33,6 +33,11 @@ class CreateUsers extends Migration
 				'constraint' => '20',
 				'default' => 'RecordsOfficer',
 			],
+			'remember_token' => [
+				'type' => 'VARCHAR',
+				'constraint' => '255',
+				'null' => true,
+			],
 			'created_at' => [
 				'type' => 'TIMESTAMP',
 				'null' => false,
