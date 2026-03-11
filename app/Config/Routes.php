@@ -39,9 +39,9 @@ $routes->get('/register',           'RegisterController::index',    ['as' => 're
 $routes->post('/register/store',    'RegisterController::store',    ['as' => 'register.store', 'filter' => 'guest']);
 $routes->get('/logout',             'LoginController::logout',     ['as' => 'logout', 'filter' => 'auth']);
 $routes->post('/logout',            'LoginController::logout',     ['as' => 'logout', 'filter' => 'auth']);
-
 // Protected routes - Authenticated users only
 $routes->get('/dashboard',        'DashboardController::index',  ['as' => 'dashboard', 'filter' => 'auth']);
+$routes->get('/shelfmap',         'DashboardController::shelfmap', ['as' => 'shelfmap', 'filter' => 'auth']);
 
 /*
  * --------------------------------------------------------------------
