@@ -3,36 +3,50 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use App\Libraries\Authentication;
 
 class LoginController extends BaseController
 {
-	protected $auth;
-
-	public function __construct()
-	{
-		$this->auth = new Authentication();
-	}
+	/**
+	 * Display login page
+	 */
 	public function index()
 	{
 		return view('login');
 	}
 
-
+	/**
+	 * Authenticate user credentials
+	 * Validates input and attempts login via Authentication service
+	 */
 	public function authenticate()
 	{
 		$username = $this->request->getPost('username');
 		$password = $this->request->getPost('password');
 
-		if(!$username || !$password) {
-			return redirect()->back()->with('error', 'username and password ar required');
+		// Validate input
+		if (!$username || !$password) {
+			return redirect()->back()->with('error', 'Username and password are required');
 		}
 
-		if($this->auth->login($username, $password)) {
+		// Attempt login via Authentication service
+		$auth = service('authentication');
+		if ($auth->login($username, $password)) {
 			return redirect()->to('/dashboard');
-		} else {
-			return redirect()->back()->with('error', 'Invalid username or password');
 		}
 
+		return redirect()->back()->with('error', 'Invalid username or password');
+	}
+
+	/**
+	 * Logout current user
+	 */
+	public function logout()
+	{
+		$auth = service('authentication');
+		if ($auth->logout()) {
+			return redirect()->to('/')->with('success', 'You have been logged out');
+		}
+
+		return redirect()->back()->with('error', 'Logout failed');
 	}
 }

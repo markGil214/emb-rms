@@ -22,18 +22,25 @@ $routes->setDefaultController('Home');
 $routes->setDefaultMethod('index');
 $routes->setTranslateURIDashes(false);
 $routes->set404Override();
-$routes->setAutoRoute(true);
+$routes->setAutoRoute(false);  // DISABLED for security - use explicit routes only
 
 /*
  * --------------------------------------------------------------------
  * Route Definitions
+ * Named routes follow RESTful conventions (resource.action)
+ * Apply filters at route level for security
  * --------------------------------------------------------------------
  */
 
-// We get a performance increase by specifying the default
-// route since we don't have to scan directories.
-$routes->get('/', 'LoginController::index');
-$routes->post('/authenticate', 'LoginController::authenticate');
+// Public routes - Guest only (login/register)
+$routes->get('/',                   'LoginController::index',      ['as' => 'login', 'filter' => 'guest']);
+$routes->post('/authenticate',      'LoginController::authenticate',['as' => 'login.authenticate']);
+$routes->get('/register',           'RegisterController::index',    ['as' => 'register', 'filter' => 'guest']);
+$routes->post('/register/store',    'RegisterController::store',    ['as' => 'register.store', 'filter' => 'guest']);
+$routes->post('/logout',            'LoginController::logout',     ['as' => 'logout', 'filter' => 'auth']);
+
+// Protected routes - Authenticated users only
+// $routes->get('/dashboard',        'DashboardController::index',  ['as' => 'dashboard', 'filter' => 'auth']);
 
 /*
  * --------------------------------------------------------------------
