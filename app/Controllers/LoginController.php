@@ -44,7 +44,7 @@ class LoginController extends BaseController
 	{
 		$auth = service('authentication');
 		if ($auth->logout()) {
-			return redirect()->to('/')->with('success', 'You have been logged out');
+			return redirect()->to('/');
 		}
 
 		return redirect()->back()->with('error', 'Logout failed');

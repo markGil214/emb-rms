@@ -24,8 +24,7 @@ class GuestFilter implements FilterInterface
         
         if ($auth->check()) {
             // Redirect authenticated users away from guest-only routes
-            // In a real app, redirect to dashboard or home
-            return redirect()->back();
+            return redirect()->to('/dashboard');
         }
     }
 
