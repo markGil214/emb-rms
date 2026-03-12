@@ -46,7 +46,7 @@
         <!-- Header Section -->
         <div class="p-8 bg-white border-b border-gray-200">
             <h2 class="text-2xl font-bold text-gray-900 mb-2">Shelf Map & Search</h2>
-            <p class="text-gray-600">Manage and search through document shelves</p>
+            <p class="text-gray-600 mt-10">Manage and search through document shelves</p>
         </div>
 
         <!-- Search Section -->

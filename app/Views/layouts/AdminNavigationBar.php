@@ -21,10 +21,10 @@ class="bg-gray-800 text-white h-screen fixed left-0 top-0 shadow-lg transition-a
 :class="sidebarOpen ? 'w-64' : 'w-16'">
     
     <!-- Header Section -->
-    <div class="p-4 border-b border-gray-200 bg-gray-50 text-black">
+    <div class="p-4 border-b border-gray-200 bg-green-600 text-white">
         <div class="flex items-center justify-between">
             <div x-show="sidebarOpen" x-transition class="flex items-center">
-                <img src="/images/EMB-Logo.png" alt="EMB Records Logo" class="w-8 h-8 mr-3">
+                <img src="/images/EMB-Logo.png" alt="EMB Records Logo" class="w-12 h-12 mr-3">
                 <h2 class="text-xl font-bold">EMBRMS</h2>
             </div>
         </div>
@@ -33,9 +33,9 @@ class="bg-gray-800 text-white h-screen fixed left-0 top-0 shadow-lg transition-a
     <!-- Navigation Menu -->
     <ul class="p-4 space-y-2 h-screen overflow-y-hidden">
         <li>
-            <a href="<?= url_to('dashboard') ?>" 
+            <a href="<?= route_to('dashboard') ?>" 
                class="flex items-center p-3 rounded hover:bg-gray-700 transition-colors group"
-               :class="window.location.pathname === '<?= url_to('dashboard') ?>' ? 'bg-gray-700' : ''">
+               :class="window.location.pathname === '<?= route_to('dashboard') ?>' ? 'bg-gray-700' : ''">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
                 </svg>

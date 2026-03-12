@@ -6,10 +6,10 @@
         sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false',
         hamburgerOpen: true,
         stats: {
-            totalFolders: 25,
-            activeUsers: 856,
-            newToday: 42,
-            pendingReview: 28
+            totalFolders: <?= $stats['totalFolders'] ?? 0 ?>,
+            activeUsers: <?= $stats['totalUsers'] ?? 0 ?>,
+            newToday: <?= $stats['totalRecords'] ?? 0 ?>,
+            pendingReview: <?= $stats['pendingRequests'] ?? 0 ?>
         },
         activities: [
             { id: 1, user: 'John Doe', action: 'created a new record', time: '2 minutes ago', type: 'success' },
@@ -33,7 +33,7 @@
             <!-- Welcome Section -->
             <div class="p-8">
                 <h2 class="text-2xl font-bold text-gray-900 mb-2">Welcome back, <?= auth_user()['username'] ?? 'Admin' ?>!</h2>
-                <p class="text-gray-600">Here's what's happening in your system today.</p>
+                <p class="text-gray-600 mt-10 mb-10">Here's what's happening in your system today.</p>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total Folders -->
         <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200 hover:shadow-lg transition-all duration-300 hover:scale-105">
@@ -42,10 +42,8 @@
                     <p class="text-sm font-medium text-blue-600 mb-1">Total Folders</p>
                     <p class="text-3xl font-bold text-blue-900" x-text="stats.totalFolders"></p>
                     <p class="text-xs text-blue-700 mt-2">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                        +8% from last month
+                        
+                        
                     </p>
                 </div>
                 <div class="p-3 bg-blue-500 rounded-full">
@@ -62,12 +60,7 @@
                 <div>
                     <p class="text-sm font-medium text-green-600 mb-1">Active Users</p>
                     <p class="text-3xl font-bold text-green-900" x-text="stats.activeUsers"></p>
-                    <p class="text-xs text-green-700 mt-2">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                        +8% from last week
-                    </p>
+                    <p class="text-xs text-green-700 mt-2"></p>
                 </div>
                 <div class="p-3 bg-green-500 rounded-full">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,10 +77,8 @@
                     <p class="text-sm font-medium text-yellow-600 mb-1">New Today</p>
                     <p class="text-3xl font-bold text-yellow-900" x-text="stats.newToday"></p>
                     <p class="text-xs text-yellow-700 mt-2">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                        +5% from yesterday
+                        
+                        
                     </p>
                 </div>
                 <div class="p-3 bg-yellow-500 rounded-full">
@@ -105,10 +96,8 @@
                     <p class="text-sm font-medium text-purple-600 mb-1">Pending Review</p>
                     <p class="text-3xl font-bold text-purple-900" x-text="stats.pendingReview"></p>
                     <p class="text-xs text-purple-700 mt-2">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
-                        </svg>
-                        -3% from last week
+                       
+                       
                     </p>
                 </div>
                 <div class="p-3 bg-purple-500 rounded-full">
@@ -121,54 +110,63 @@
     </div>
     
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Recent Activity Feed -->
+        <!-- Recent Users Table -->
         <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="p-6 border-b border-gray-200">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                    <h3 class="text-lg font-semibold text-gray-900">Recent Users</h3>
                     <button @click="refreshStats()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
                         Refresh
                     </button>
                 </div>
             </div>
-            <div class="max-h-96 overflow-y-auto">
-                <template x-for="activity in activities" :key="activity.id">
-                    <div class="p-4 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors">
-                        <div class="flex items-start space-x-3">
-                            <div class="flex-shrink-0">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center"
-                                     :class="{
-                                         'bg-green-100': activity.type === 'success',
-                                         'bg-blue-100': activity.type === 'info',
-                                         'bg-yellow-100': activity.type === 'warning',
-                                         'bg-red-100': activity.type === 'error'
-                                     }">
-                                    <svg class="w-4 h-4"
-                                         :class="{
-                                             'text-green-600': activity.type === 'success',
-                                             'text-blue-600': activity.type === 'info',
-                                             'text-yellow-600': activity.type === 'warning',
-                                             'text-red-600': activity.type === 'error'
-                                         }"
-                                         fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                    </svg>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <?php foreach($recentUsers as $user): ?>
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                                        <span class="text-green-600 font-medium text-sm">
+                                            <?= strtoupper(substr($user['username'], 0, 1)) ?>
+                                        </span>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($user['username']) ?></div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm text-gray-900">
-                                    <span class="font-medium" x-text="activity.user"></span>
-                                    <span x-text="' ' + activity.action"></span>
-                                </p>
-                                <p class="text-xs text-gray-500 mt-1" x-text="activity.time"></p>
-                            </div>
-                        </div>
-                    </div>
-                </template>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900"><?= htmlspecialchars($user['email']) ?></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    <?= $user['role'] === 'SuperAdmin' ? 'bg-purple-100 text-purple-800' : 
+                                       ($user['role'] === 'Admin' ? 'bg-blue-100 text-blue-800' : 
+                                       'bg-green-100 text-green-800') ?>">
+                                    <?= htmlspecialchars($user['role']) ?>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <?= date('M d, Y', strtotime($user['created_at'])) ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
             <div class="p-4 border-t border-gray-200">
                 <button class="w-full text-sm text-blue-600 hover:text-blue-800 font-medium text-center">
-                    View all activity
+                    View all users
                 </button>
             </div>
         </div>
@@ -211,6 +209,8 @@
                     </svg>
                     <span class="font-medium">Settings</span>
                 </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
