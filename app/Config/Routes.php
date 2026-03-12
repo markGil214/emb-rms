@@ -43,6 +43,20 @@ $routes->post('/logout',            'LoginController::logout',     ['as' => 'log
 $routes->get('/dashboard',        'DashboardController::index',  ['as' => 'dashboard', 'filter' => 'auth']);
 $routes->get('/shelfmap',         'DashboardController::shelfmap', ['as' => 'shelfmap', 'filter' => 'auth']);
 
+// Folder routes (authenticated users only)
+$routes->group('', ['filter' => 'auth'], function($routes) {
+    $routes->get('/records',                'FolderController::index',    ['as' => 'records']);
+    $routes->get('/records/create',         'FolderController::create',   ['as' => 'records.create']);
+    $routes->post('/records',               'FolderController::store',    ['as' => 'records.store']);
+    $routes->get('/records/(:num)',         'FolderController::show/$1',  ['as' => 'records.show']);
+    $routes->get('/records/(:num)/edit',    'FolderController::edit/$1',  ['as' => 'records.edit']);
+    $routes->put('/records/(:num)',         'FolderController::update/$1',['as' => 'records.update']);
+    
+    // File upload routes
+    $routes->post('/records/(:num)/upload', 'FileUploadController::upload/$1', ['as' => 'file.upload']);
+    $routes->get('/files/(:num)/download',  'FileUploadController::download/$1', ['as' => 'file.download']);
+    $routes->delete('/files/(:num)',        'FileUploadController::delete/$1', ['as' => 'file.delete']);
+});
 /*
  * --------------------------------------------------------------------
  * Additional Routing
