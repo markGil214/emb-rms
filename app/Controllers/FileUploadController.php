@@ -1,0 +1,166 @@
+<?php
+
+namespace App\Controllers;
+
+use App\Models\FolderModel;
+use App\Models\FolderFileModel;
+use CodeIgniter\Controller;
+
+class FileUploadController extends BaseController
+{
+    protected $folderModel;
+    protected $folderFileModel;
+    protected $uploadPath;
+
+    public function __construct()
+    {
+        $this->folderModel = new FolderModel();
+        $this->folderFileModel = new FolderFileModel();
+        $this->uploadPath = WRITEPATH . 'uploads/folders/';
+        
+        // Create directory if it doesn't exist
+        if (!is_dir($this->uploadPath)) {
+            mkdir($this->uploadPath, 0755, true);
+        }
+    }
+
+    /**
+     * Upload file for a folder
+     */
+    public function upload(int $folderId)
+    {
+        // Verify folder exists
+        $folder = $this->folderModel->find($folderId);
+        if (!$folder) {
+            return redirect()->back()->with('error', 'Folder not found');
+        }
+
+        // Validate file upload
+        if (!$this->validate([
+            'pdf_file' => [
+                'rules' => 'uploaded[pdf_file]|max_size[pdf_file,10240]|mime_in[pdf_file,application/pdf]',
+                'errors' => [
+                    'uploaded'  => 'You must select a file to upload.',
+                    'max_size'  => 'File size must not exceed 10MB.',
+                    'mime_in'   => 'File must be a valid PDF.',
+                ]
+            ]
+        ])) {
+            return redirect()->back()->withInput()->with('error', $this->validator->getError('pdf_file'));
+        }
+
+        $file = $this->request->getFile('pdf_file');
+        
+        // Generate unique filename with folder_id prefix
+        $newName = $folderId . '_' . time() . '_' . $file->getRandomName();
+        
+        log_message('debug', "Uploading file: " . $file->getClientName() . " as " . $newName);
+        
+        // Move file to uploads directory
+        try {
+            $file->move($this->uploadPath, $newName);
+            log_message('debug', "File moved to: " . $this->uploadPath . $newName);
+        } catch (\Exception $e) {
+            log_message('error', "File move failed: " . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'File upload failed: ' . $e->getMessage());
+        }
+
+        // Verify file was actually saved
+        $uploadedPath = $this->uploadPath . $newName;
+        if (!file_exists($uploadedPath)) {
+            log_message('error', "Uploaded file not found at: " . $uploadedPath);
+            return redirect()->back()->withInput()->with('error', 'File upload verification failed');
+        }
+
+        // Save file info to database
+        $filePath = 'uploads/folders/' . $newName;
+        $data = [
+            'folder_id' => $folderId,
+            'file_name' => $file->getClientName(),
+            'file_path' => $filePath,
+            'file_size' => $file->getSize(),
+            'uploaded_by' => auth_user()['user_id'] ?? null,
+        ];
+
+        if ($this->folderFileModel->save($data)) {
+            log_message('debug', "File record saved to database with path: " . $filePath);
+            return redirect()->to("/records/$folderId")->with('success', 'File uploaded successfully');
+        } else {
+            // Delete uploaded file if database save fails
+            unlink($this->uploadPath . $newName);
+            log_message('error', "Database save failed: " . implode(', ', $this->folderFileModel->errors()));
+            return redirect()->back()->withInput()->with('error', 'Failed to save file information: ' . implode(', ', $this->folderFileModel->errors()));
+        }
+    }
+
+    /**
+     * Download file
+     */
+    public function download(int $fileId)
+    {
+        $file = $this->folderFileModel->find($fileId);
+        if (!$file) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        // Construct proper file path - file_path already includes 'uploads/folders/'
+        $fullPath = WRITEPATH . $file['file_path'];
+        
+        log_message('debug', "Attempting to download file ID: " . $fileId);
+        log_message('debug', "Stored path: " . $file['file_path']);
+        log_message('debug', "Full path: " . $fullPath);
+        log_message('debug', "File exists: " . (file_exists($fullPath) ? 'yes' : 'no'));
+        
+        if (!file_exists($fullPath)) {
+            log_message('error', "File not found: " . $fullPath);
+            return redirect()->back()->with('error', 'File not found at: ' . $fullPath);
+        }
+
+        // Check if file is readable
+        if (!is_readable($fullPath)) {
+            log_message('error', "File not readable: " . $fullPath);
+            return redirect()->back()->with('error', 'File is not readable');
+        }
+
+        // Get file info
+        $fileSize = filesize($fullPath);
+        $mimeType = 'application/pdf';
+        
+        log_message('debug', "File size: " . $fileSize . " bytes");
+        log_message('debug', "Download as: " . $file['file_name']);
+
+        // Stream the file for download
+        return $this->response
+            ->setHeader('Content-Type', $mimeType)
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $file['file_name'] . '"')
+            ->setHeader('Content-Length', $fileSize)
+            ->setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->setHeader('Pragma', 'no-cache')
+            ->setHeader('Expires', '0')
+            ->setBody(file_get_contents($fullPath));
+    }
+
+    /**
+     * Delete file
+     */
+    public function delete(int $fileId)
+    {
+        $file = $this->folderFileModel->find($fileId);
+        if (!$file) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        $folderId = $file['folder_id'];
+        $filePath = WRITEPATH . $file['file_path'];
+
+        // Delete physical file
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+
+        // Delete database record
+        $this->folderFileModel->delete($fileId);
+
+        return redirect()->to("/records/$folderId")->with('success', 'File deleted successfully');
+    }
+}
