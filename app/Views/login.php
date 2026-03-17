@@ -12,12 +12,22 @@
     <div class="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-7xl w-full flex min-h-[500px]">
         <!-- Left Side - Branding -->
         <div
-            class="bg-gradient-to-br from-green-600 to-green-400 text-white p-10 flex flex-col justify-center items-center text-center flex-1">
-            <img src="/images/EMB-Logo.png" alt="EMB Records Logo"
-                class="w-40 h-auto max-h-40 object-contain rounded-xl mb-5">
-            <h1 class="text-5xl font-bold mb-5 flex items-center gap-4">
-                EMB Record System
-            </h1>
+            class="relative text-white p-10 flex flex-col justify-center items-center text-center flex-1 overflow-hidden">
+            <!-- Background Image with Dark Overlay -->
+            <div class="absolute inset-0">
+                <img src="/images/baguio.jpg" alt="Background" 
+                     class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+            </div>
+            
+            <!-- Content -->
+            <div class="relative z-10 flex flex-col items-center justify-center">
+                <img src="/images/EMB-Logo.png" alt="EMB Records Logo"
+                    class="w-40 h-auto max-h-40 object-contain rounded-xl mb-5">
+                <h1 class="text-5xl font-bold mb-5 flex items-center gap-4 text-center">
+                    EMB Record System
+                </h1>
+            </div>
         </div>
 
         <!-- Right Side - Login Form -->

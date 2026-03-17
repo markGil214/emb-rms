@@ -4,59 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= isset($title) ? esc($title) . ' - ' : '' ?>EMB Records System</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="<?= base_url('assets/css/tailwind.css') ?>" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="stylesheet" href="assets/css/tailwind.css">
-</head>
-<body class="font-sans bg-gray-50" x-data="{ 
-    notificationsOpen: false,
-    userDropdownOpen: false,
-    notifications: [
-        { id: 1, type: 'success', message: 'New user registered successfully', time: '2 minutes ago', read: false },
-        { id: 2, type: 'warning', message: 'System maintenance scheduled', time: '1 hour ago', read: false },
-        { id: 3, type: 'info', message: 'Database backup completed', time: '2 hours ago', read: true }
-    ],
-    alerts: [],
-    unreadCount() {
-        return this.notifications.filter(n => !n.read).length;
-    },
-    init() {
-        // Auto-dismiss alerts after 5 seconds
-        this.$watch('alerts', () => {
-            setTimeout(() => {
-                if (this.alerts.length > 0) {
-                    this.alerts.shift();
-                }
-            }, 5000);
-        });
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.user-dropdown')) {
-                this.userDropdownOpen = false;
-            }
-        });
-    },
-    addAlert(message, type = 'info') {
-        this.alerts.push({ id: Date.now(), message, type });
-    },
-    markAsRead(notificationId) {
-        const notification = this.notifications.find(n => n.id === notificationId);
-        if (notification) {
-            notification.read = true;
+    <style>
+        /* Custom animations */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
         }
-    },
-    markAllAsRead() {
-        this.notifications.forEach(n => n.read = true);
-    }
-}">
-    
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 min-h-screen">
     <!-- Include Vertical Navigation -->
     <?= view('layouts/AdminNavigationBar') ?>
     
     <!-- Main Content Area -->
-    <main class="transition-all duration-300" x-data="{ sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false' }" x-init="$watch('sidebarOpen', (value) => localStorage.setItem('sidebarOpen', value)); window.addEventListener('storage', (e) => { if (e.key === 'sidebarOpen') this.sidebarOpen = e.newValue !== 'false'; });" :class="sidebarOpen ? 'ml-72' : 'ml-20'">
+    <main class="transition-all duration-300" x-data="{ 
+        sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false',
+        notificationsOpen: false,
+        userDropdownOpen: false,
+        notifications: [
+            { id: 1, message: 'New document added to permits', time: '2 minutes ago', type: 'info' },
+            { id: 2, message: 'System backup completed', time: '1 hour ago', type: 'success' },
+            { id: 3, message: 'Storage capacity warning', time: '3 hours ago', type: 'warning' }
+        ],
+        alerts: [],
+        unreadCount() {
+            return this.notifications.filter(n => !n.read).length;
+        }
+    }" x-init="$watch('sidebarOpen', (value) => localStorage.setItem('sidebarOpen', value)); window.addEventListener('storage', (e) => { if (e.key === 'sidebarOpen') this.sidebarOpen = e.newValue !== 'false'; });" :class="sidebarOpen ? 'ml-72' : 'ml-20'">
         <!-- Top Navigation Bar -->
-        <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20 max-w-100%">
+        <header class="bg-white shadow-sm border-b border-gray-200 fixedtop-0 z-20">
             <div class="px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <h1 class="text-2xl font-bold text-gray-900"><?= isset($title) ? esc($title) : 'Dashboard' ?></h1>

@@ -14,14 +14,17 @@ class FileCodeGenerator
     }
 
     /**
-     * Get next file code for a prefix
-     * Safely extracts numeric sequence from existing file codes
+     * Get next file code based on company name
+     * Creates unique code from company name initials + auto-increment number
      */
-    public static function getNext(string $prefix = 'GEN'): string
+    public static function getNextFromCompany(string $companyName): string
     {
         $db = \Config\Database::connect();
-        $prefix = strtoupper($prefix);
-
+        
+        // Extract first two letters from company name
+        $prefix = self::extractCompanyPrefix($companyName);
+        
+        // Find existing codes with this prefix
         $query = $db->query("
             SELECT MAX(CAST(SUBSTRING_INDEX(file_code, '-', -1) AS UNSIGNED)) AS max_number
             FROM folders
@@ -29,12 +32,25 @@ class FileCodeGenerator
         ", [$prefix . '-%']);
 
         $row = $query->getRow();
-
+        
         $nextNumber = ($row && $row->max_number)
             ? ((int) $row->max_number + 1)
             : 1;
 
         return self::generate($prefix, $nextNumber);
+    }
+    
+    /**
+     * Extract first two letters from company name
+     */
+    private static function extractCompanyPrefix(string $companyName): string
+    {
+        // Clean up and remove spaces/special characters
+        $companyName = strtoupper($companyName);
+        $companyName = preg_replace('/[^A-Z]/', '', $companyName);
+        
+        // Take first two letters
+        return substr($companyName, 0, 2);
     }
 
     /**

@@ -23,9 +23,9 @@ class FolderController extends BaseController
      */
     public function index()
     {
-        $folders = $this->folderModel->findAll();
+        $folders = $this->folderModel->orderBy('file_code', 'ASC')->findAll();
 
-        return view('folders/index', [
+        return view('layouts/superadmin/document-records/permits', [
             'title' => 'Folders',
             'folders' => $folders
         ]);
@@ -36,7 +36,7 @@ class FolderController extends BaseController
      */
     public function create()
     {
-        return view('folders/create', [
+        return view('layouts/superadmin/document-records/create', [
             'title' => 'Create New Folder'
         ]);
     }
@@ -52,6 +52,7 @@ class FolderController extends BaseController
             'expiry_date' => 'required|valid_date',
             'cabinet' => 'required',
             'rack' => 'required',
+            'status' => 'required|in_list[Available,Borrowed,Archived,Disposed]',
         ])) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
@@ -59,10 +60,9 @@ class FolderController extends BaseController
         $db = \Config\Database::connect();
         $db->transStart();
 
-        $prefix = $this->request->getPost('prefix') ?? 'GEN';
-
-        // Generate file code safely
-        $nextCode = FileCodeGenerator::getNext($prefix);
+        // Generate file code based on company name
+        $companyName = $this->request->getPost('company_name');
+        $nextCode = FileCodeGenerator::getNextFromCompany($companyName);
 
         // Generate location code
         $locationCode = FileCodeGenerator::generateLocationCode(
@@ -76,6 +76,7 @@ class FolderController extends BaseController
             'company_name' => $this->request->getPost('company_name'),
             'issuance_date' => $this->request->getPost('issuance_date'),
             'expiry_date' => $this->request->getPost('expiry_date'),
+            'status' => $this->request->getPost('status'),
             'location_id' => $this->request->getPost('location_id'),
             'created_by' => auth_user()['user_id'] ?? null,
         ];
@@ -87,7 +88,7 @@ class FolderController extends BaseController
 
         $db->transComplete();
 
-        return redirect()->to('/records')->with('success', 'Folder created successfully');
+        return redirect()->to('/permits')->with('success', 'Folder created successfully');
     }
 
     /**
@@ -98,7 +99,7 @@ class FolderController extends BaseController
         $folder = $this->findFolderOrFail($folderId);
         $files = $this->folderFileModel->getByFolder($folderId);
 
-        return view('folders/show', [
+        return view('layouts/superadmin/document-records/show', [
             'title' => 'Folder: ' . $folder['file_code'],
             'folder' => $folder,
             'files' => $files
@@ -112,7 +113,7 @@ class FolderController extends BaseController
     {
         $folder = $this->findFolderOrFail($folderId);
 
-        return view('folders/edit', [
+        return view('layouts/superadmin/document-records/edit', [
             'title' => 'Edit Folder',
             'folder' => $folder
         ]);
@@ -150,7 +151,7 @@ class FolderController extends BaseController
 
         $this->folderModel->update($folderId, $data);
 
-        return redirect()->to("/records/$folderId")->with('success', 'Folder updated successfully');
+        return redirect()->to('/permits')->with('success', 'Folder updated successfully');
     }
 
     /**
