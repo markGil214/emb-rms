@@ -1,0 +1,326 @@
+<?php
+
+namespace App\Controllers\Admin;
+
+use App\Controllers\BaseController;
+use App\Config\Permissions;
+
+class PermissionController extends BaseController
+{
+	/**
+	 * Display permission management interface
+	 * Super Admin only
+	 */
+	public function index()
+	{
+		// Check permission
+		if (!can('manage_users')) {
+			throw new \CodeIgniter\Exceptions\HttpException(403, 'Forbidden');
+		}
+
+		$db = \Config\Database::connect();
+		$permissionService = service('permissionService');
+
+		// Get all users
+		$users = $db->table('users')
+			->orderBy('username', 'ASC')
+			->get()
+			->getResultArray();
+
+		// Get all roles
+		$roles = $db->table('roles')
+			->orderBy('role_id', 'ASC')
+			->get()
+			->getResultArray();
+
+		// Get all permissions (grouped)
+		$allPermissions = Permissions::grouped();
+
+		$data = [
+			'title' => 'User Permissions',
+			'users' => $users,
+			'roles' => $roles,
+			'permissions' => $allPermissions,
+		];
+
+		return view('admin/permissions/manage', $data);
+	}
+
+	/**
+	 * Load user's current permissions via AJAX
+	 */
+	public function loadUser($userId)
+	{
+		if (!can('manage_users')) {
+			return $this->response->setJSON(['error' => 'Forbidden'], 403);
+		}
+
+		$db = \Config\Database::connect();
+		$permissionService = service('permissionService');
+
+		// Get user
+		$user = $db->table('users')->where('user_id', $userId)->first();
+		if (!$user) {
+			return $this->response->setJSON(['error' => 'User not found'], 404);
+		}
+
+		// Get user's role
+		$userRole = $permissionService->getUserRole($userId);
+		$roleId = null;
+		if ($userRole) {
+			$role = $db->table('roles')
+				->where('role_name', $userRole)
+				->first();
+			$roleId = $role['role_id'] ?? null;
+		}
+
+		// Get user's permissions
+		$userPermissions = $permissionService->userPermissions($userId);
+		$rolePermissions = $permissionService->getRolePermissions($userId);
+		$customPermissions = $permissionService->getCustomPermissions($userId);
+
+		return $this->response->setJSON([
+			'user' => $user,
+			'roleId' => $roleId,
+			'rolePermissions' => $rolePermissions,
+			'customPermissions' => array_column($customPermissions, 'permission_key'),
+			'allPermissions' => $userPermissions,
+		]);
+	}
+
+	/**
+	 * Save user permissions via AJAX
+	 */
+	public function savePermissions($userId)
+	{
+		if (!can('manage_users')) {
+			return $this->response->setJSON(['error' => 'Forbidden'], 403);
+		}
+
+		$db = \Config\Database::connect();
+		$permissionService = service('permissionService');
+
+		$roleId = $this->request->getPost('role_id');
+		$selectedPermissions = $this->request->getPost('permissions') ?? [];
+
+		// Assign new role
+		if ($roleId) {
+			$currentSession = session();
+			$adminId = $currentSession->get('user_id');
+			$permissionService->assignRole($userId, $roleId, $adminId);
+		}
+
+		// Get current user's role permissions
+		$rolePermissions = [];
+		if ($roleId) {
+			$rolePerms = $db->table('role_permissions')
+				->where('role_id', $roleId)
+				->get()
+				->getResultArray();
+			$rolePermissions = array_column($rolePerms, 'permission_key');
+		}
+
+		// Remove all custom permissions first
+		$permissionService->revokeAllCustomPermissions($userId);
+
+		// Add back custom permissions (those not from role)
+		foreach ($selectedPermissions as $perm) {
+			if (!in_array($perm, $rolePermissions)) {
+				$adminId = session()->get('user_id');
+				$permissionService->assignPermission($userId, $perm, $adminId);
+			}
+		}
+
+		// Log the change
+		$auditLog = model('AuditLogModel');
+		$auditLog->log(
+			'permissions_updated',
+			'user',
+			$userId,
+			null,
+			[
+				'role_id' => $roleId,
+				'permissions' => $selectedPermissions,
+			]
+		);
+
+		return $this->response->setJSON(['success' => true, 'message' => 'Permissions updated']);
+	}
+
+	/**
+	 * Search users via AJAX
+	 */
+	public function searchUsers()
+	{
+		if (!can('manage_users')) {
+			return $this->response->setJSON(['error' => 'Forbidden'], 403);
+		}
+
+		$query = $this->request->getGet('q', FILTER_SANITIZE_STRING);
+		$db = \Config\Database::connect();
+
+		$users = $db->table('users')
+			->where("username LIKE '%{$query}%' OR email LIKE '%{$query}%'")
+			->limit(10)
+			->get()
+			->getResultArray();
+
+		return $this->response->setJSON($users);
+	}
+
+	/**
+	 * Get permission change history for a user
+	 */
+	public function getHistory($userId)
+	{
+		if (!can('manage_users')) {
+			return $this->response->setJSON(['error' => 'Forbidden'], 403);
+		}
+
+		$db = \Config\Database::connect();
+
+		$history = $db->table('audit_logs')
+			->select('audit_logs.*, users.username as admin_name')
+			->join('users', 'users.user_id = audit_logs.user_id', 'left')
+			->where('audit_logs.target_user_id', $userId)
+			->where('audit_logs.action_type IN ("permission_changed", "role_assigned")')
+			->orderBy('audit_logs.created_at', 'DESC')
+			->limit(20)
+			->get()
+			->getResultArray();
+
+		return $this->response->setJSON($history);
+	}
+
+	/**
+	 * Load permissions for a specific role (for role-based matrix view)
+	 */
+	public function loadRole($roleId)
+	{
+		try {
+			if (!can('manage_users')) {
+				return $this->response->setJSON(['error' => 'Forbidden'], 403);
+			}
+
+			$roleId = (int) $roleId;
+			if ($roleId <= 0) {
+				return $this->response->setJSON(['error' => 'Invalid role ID'], 400);
+			}
+
+			$db = \Config\Database::connect();
+
+			// Get all permissions for this role
+			$rolePerms = $db->table('role_permissions')
+				->where('role_id', $roleId)
+				->get()
+				->getResultArray();
+
+			if (empty($rolePerms)) {
+				log_message('info', "No permissions found for role $roleId");
+				return $this->response->setJSON([]);
+			}
+
+			$permissions = [];
+			foreach ($rolePerms as $perm) {
+				if (isset($perm['permission_key'])) {
+					$permissions[$perm['permission_key']] = true;
+				}
+			}
+
+			log_message('info', "Loaded " . count($permissions) . " permissions for role $roleId");
+			return $this->response->setJSON($permissions);
+		} catch (\Exception $e) {
+			log_message('error', 'loadRole error: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
+			return $this->response->setJSON(['error' => $e->getMessage()], 500);
+		}
+	}
+
+	/**
+	 * Save permissions for roles (role matrix bulk update)
+	 */
+	public function saveRolePerms()
+	{
+		if (!can('manage_users')) {
+			return $this->response->setJSON(['error' => 'Forbidden'], 403);
+		}
+
+		try {
+			$db = \Config\Database::connect();
+			
+			// Try multiple ways to get JSON input
+			$input = null;
+			
+			// Method 1: Parse raw body directly (most reliable)
+			$rawBody = file_get_contents('php://input');
+			if ($rawBody) {
+				$input = json_decode($rawBody, true);
+				log_message('info', 'Parsed JSON from php://input');
+			}
+			
+			// Method 2: getJSON() as fallback
+			if (!$input) {
+				$jsonObj = $this->request->getJSON();
+				if ($jsonObj) {
+					$input = json_decode(json_encode($jsonObj), true);
+					log_message('info', 'Parsed JSON from getJSON()');
+				}
+			}
+
+			// Debug logging
+			log_message('info', 'saveRolePerms called');
+			log_message('info', 'Content-Type: ' . $this->request->getHeaderLine('Content-Type'));
+			log_message('info', 'Raw body length: ' . strlen($rawBody ?? ''));
+			log_message('info', 'Input after parsing: ' . json_encode($input));
+			log_message('info', 'Input type: ' . gettype($input));
+
+			if (empty($input) || !is_array($input)) {
+				log_message('error', 'Invalid input - empty or not array. input: ' . json_encode($input) . ', is_array: ' . var_export(is_array($input), true));
+				return $this->response->setJSON(['success' => false, 'error' => 'No valid data received'], 400);
+			}
+
+			$adminId = session()->get('user_id');
+
+			// Process each role
+			foreach ($input as $roleId => $permissions) {
+				$roleId = (int) $roleId;
+
+				if ($roleId <= 0) {
+					continue;
+				}
+
+				// Ensure permissions is array
+				if (!is_array($permissions)) {
+					$permissions = [];
+				}
+
+				// Remove all existing permissions for this role
+				$db->table('role_permissions')->where('role_id', $roleId)->delete();
+
+				// Add new permissions
+				foreach ($permissions as $permKey) {
+					$db->table('role_permissions')->insert([
+						'role_id' => $roleId,
+						'permission_key' => $permKey,
+						'created_at' => date('Y-m-d H:i:s'),
+					]);
+				}
+
+				// Log the change
+				$auditLog = model('AuditLogModel');
+				$auditLog->log(
+					'permissions_updated',
+					'role',
+					$roleId,
+					null,
+					['permissions' => $permissions],
+					$adminId
+				);
+			}
+
+			return $this->response->setJSON(['success' => true, 'message' => 'Role permissions updated'], 200);
+		} catch (\Exception $e) {
+			log_message('error', 'saveRolePerms error: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
+			return $this->response->setJSON(['success' => false, 'error' => 'Error: ' . $e->getMessage()], 500);
+		}
+	}
+}

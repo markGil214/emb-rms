@@ -49,6 +49,7 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
             </a>
         </li>
         <li>
+            <?php if (can('view_shelf_map')): ?>
             <a href="<?= route_to('shelfmap') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
                :class="window.location.pathname === '<?= route_to('shelfmap') ?>' ? 'bg-green-900' : ''">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,9 +57,11 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
                 </svg>
                 <span x-show="sidebarOpen" x-transition class="ml-3">Shelf Map And Search</span>
             </a>
+            <?php endif; ?>
         </li>
         
         <li class="document-dropdown">
+            <?php if (can('view_documents') || can('create_document_record') || can('edit_document_metadata') || can('search_documents')): ?>
             <button @click="documentDropdownOpen = !documentDropdownOpen" 
                     class="w-full flex items-center p-3 rounded hover:bg-green-900 transition-colors group text-left">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,27 +96,33 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
                     <span x-show="sidebarOpen" x-transition>CNC</span>
                 </a>
             </div>
+            <?php endif; ?>
         </li>
         
         <li>
+            <?php if (can('request_borrow') || can('approve_borrow_requests') || can('process_borrow_release') || can('process_return')): ?>
             <a href="#" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                 </svg>
                 <span x-show="sidebarOpen" x-transition class="ml-3">Borrow Queue</span>
             </a>
+            <?php endif; ?>
         </li>
 
         <li>
+            <?php if (can('request_relocation') || can('approve_relocations')): ?>
             <a href="#" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
                 </svg>
                 <span x-show="sidebarOpen" x-transition class="ml-3">Relocation</span>
             </a>
+            <?php endif; ?>
         </li>
 
          <li class="archive-dropdown">
+            <?php if (can('archive_document') || can('view_archive_module') || can('manage_archive_policies') || can('view_disposal_workflow') || can('approve_disposal')): ?>
             <button @click="archiveDropdownOpen = !archiveDropdownOpen" 
                     class="w-full flex items-center p-3 rounded hover:bg-green-900 transition-colors group text-left">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,24 +157,29 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
                     <span x-show="sidebarOpen" x-transition>CNC Archive</span>
                 </a>
             </div>
+            <?php endif; ?>
         </li>
 
               <li>
+            <?php if (can('view_disposal_workflow') || can('approve_disposal')): ?>
             <a href="#" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6a4 4 0 004 4h4a4 4 0 004-4v-6"></path>
                 </svg>
                 <span x-show="sidebarOpen" x-transition class="ml-3">Disposal Workflow</span>
             </a>
+            <?php endif; ?>
         </li>
 
             <li>
+            <?php if (can('view_alerts_module')): ?>
             <a href="#" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                 </svg>
                 <span x-show="sidebarOpen" x-transition class="ml-3">Alert Module</span>
             </a>
+            <?php endif; ?>
         </li>
     </ul>
 </div>

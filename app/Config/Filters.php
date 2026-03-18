@@ -17,11 +17,12 @@ class Filters extends BaseConfig
 	 * @var array
 	 */
 	public $aliases = [
-		'csrf'       => CSRF::class,
-		'toolbar'    => DebugToolbar::class,
-		'honeypot'   => Honeypot::class,
-		'auth'       => AuthFilter::class,      // Authentication middleware
-		'guest'      => \App\Filters\GuestFilter::class,   // Guest-only middleware
+    'csrf'       => CSRF::class,
+    'toolbar'    => DebugToolbar::class,
+    'honeypot'   => Honeypot::class,
+    'auth'       => AuthFilter::class,      // Authentication middleware
+    'guest'      => \App\Filters\GuestFilter::class,   // Guest-only middleware
+    'permission' => \App\Filters\PermissionFilter::class,  // Permission-based protection
 	];
 
 	/**
