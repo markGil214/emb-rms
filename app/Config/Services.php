@@ -3,6 +3,7 @@
 namespace Config;
 
 use CodeIgniter\Config\BaseService;
+use App\Libraries\PermissionService;
 
 /**
  * Services Configuration file.
@@ -34,4 +35,13 @@ class Services extends BaseService
 
 		return new \App\Libraries\Authentication();
 	}
+
+	  public static function permissionService($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('permissionService');
+        }
+
+        return new PermissionService();
+    }
 }
