@@ -107,11 +107,16 @@
 		let currentTab = 'document';
 		let matrixData = {};
 
+		// Track checked permissions across all tabs (not just current tab)
+		let allCheckedPermissions = {};
+
 		// Initialize matrix data structure
 		function initializeMatrixData() {
 			<?php foreach ($roles as $role): ?>
 			matrixData[<?= $role['role_id'] ?>] = {};
 			<?php endforeach; ?>
+			// Reset all checked permissions when re-initializing
+			allCheckedPermissions = {};
 		}
 
 		// Load role permissions from server
@@ -137,9 +142,10 @@
 				});
 			});
 
-			// Wait for all AJAX calls to complete, then render
+			// Wait for all AJAX calls to complete, then initialize and render
 			$.when(...promises).done(function() {
-				console.log('All permissions loaded, rendering matrix:', matrixData);
+				console.log('All permissions loaded, initializing tracker:', matrixData);
+				initializeAllCheckedPermissions(); // Initialize allCheckedPermissions from server data
 				renderMatrix(currentTab);
 			});
 		}
@@ -167,8 +173,11 @@
 					</td>`;
 				
 				perms.forEach(([key, label]) => {
-					// Super admin always has all permissions
-					const isChecked = isSuperAdmin || (matrixData[role.role_id] && matrixData[role.role_id][key]);
+					// Check both allCheckedPermissions (user changes) AND matrixData (server state)
+					// Use allCheckedPermissions if it exists, otherwise fall back to matrixData
+					const userChecked = allCheckedPermissions[role.role_id] && allCheckedPermissions[role.role_id][key];
+					const serverChecked = matrixData[role.role_id] && matrixData[role.role_id][key];
+					const isChecked = isSuperAdmin || userChecked || serverChecked;
 					const disabledAttr = isSuperAdmin ? 'disabled' : '';
 					const cursorClass = isSuperAdmin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer';
 					
@@ -186,6 +195,46 @@
 			$('#matrixBody').html(bodyHtml);
 		}
 
+		// Initialize allCheckedPermissions from loaded matrixData (only once after loading)
+		function initializeAllCheckedPermissions() {
+			allCheckedPermissions = {};
+			roles.forEach(role => {
+				if (!allCheckedPermissions[role.role_id]) {
+					allCheckedPermissions[role.role_id] = {};
+				}
+				// Get all permissions for all groups
+				Object.keys(permissionGroups).forEach(groupKey => {
+					const groupPerms = Object.keys(permissionGroups[groupKey].permissions);
+					groupPerms.forEach(perm => {
+						const isChecked = matrixData[role.role_id] && matrixData[role.role_id][perm];
+						if (isChecked) {
+							allCheckedPermissions[role.role_id][perm] = true;
+						}
+					});
+				});
+			});
+			console.log('Initialized allCheckedPermissions from server data:', allCheckedPermissions);
+		}
+
+		// Handle checkbox changes
+		$(document).on('change', '.perm-checkbox', function() {
+			const roleId = $(this).data('role');
+			const perm = $(this).data('perm');
+			
+			if (!allCheckedPermissions[roleId]) {
+				allCheckedPermissions[roleId] = {};
+			}
+			
+			if ($(this).is(':checked')) {
+				allCheckedPermissions[roleId][perm] = true;
+			} else {
+				delete allCheckedPermissions[roleId][perm];
+			}
+			
+			// Also sync back to matrixData
+			matrixData[roleId][perm] = $(this).is(':checked');
+		});
+
 		// Handle tab switching
 		$(document).on('click', '.tab-button', function() {
 			$('.tab-button').removeClass('border-blue-600 text-blue-600').addClass('border-transparent text-gray-600');
@@ -196,32 +245,22 @@
 
 		// Save changes
 		$('#saveBtn').click(function() {
+			// Build changes from allCheckedPermissions (not just current DOM)
 			const changes = {};
 			
-			// Get all roles from table
-			const roles = <?= json_encode(array_column($roles, 'role_id')) ?>;
-			const superAdminCheck = <?= json_encode(array_column($roles, 'role_id', 'role_name')) ?>;
-			
-			// Collect checked permissions for each role (skip super_admin)
-			roles.forEach(roleId => {
+			// Process each role
+			roles.forEach(role => {
+				const roleId = role.role_id;
 				// Skip super_admin role
-				const isSuperAdmin = Object.keys(superAdminCheck).some(name => name === 'super_admin' && superAdminCheck[name] === roleId);
-				if (!isSuperAdmin) {
-					changes[roleId] = [];
+				if (role.role_name !== 'super_admin') {
+					// Convert object keys to array and send all permissions for this role
+					if (allCheckedPermissions[roleId]) {
+						changes[roleId] = Object.keys(allCheckedPermissions[roleId]);
+					} else {
+						changes[roleId] = [];
+					}
 				}
 			});
-			
-			// Get all checked permissions (exclude super_admin)
-			$('.perm-checkbox:checked').each(function() {
-				const roleId = $(this).data('role');
-				const perm = $(this).data('perm');
-				// Only collect from non-super_admin roles
-				if (changes.hasOwnProperty(roleId)) {
-					changes[roleId].push(perm);
-				}
-			});
-
-			console.log('Sending save request with data:', changes);
 
 			if (confirm('Save permission changes?')) {
 				$.ajax({
@@ -276,6 +315,7 @@
 		// Reset
 		$('#resetBtn').click(function() {
 			matrixData = {}; // Clear cache
+			allCheckedPermissions = {}; // Clear user changes
 			initializeMatrixData();
 			loadRolePermissions(); // This now waits for all data before rendering
 		});
