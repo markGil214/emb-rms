@@ -5,10 +5,170 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= isset($title) ? esc($title) . ' - ' : '' ?>EMB Records System</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="stylesheet" href="assets/css/tailwind.css">
+    <link rel="stylesheet" href="<?= base_url('assets/css/tailwind.css') ?>">
+    <style>
+        /* Dark mode styles */
+        .dark {
+            color-scheme: dark;
+        }
+        
+        .dark body {
+            background-color: rgb(17 24 39);
+            color: rgb(243 244 246);
+        }
+        
+        .dark .bg-white {
+            background-color: rgb(31 41 55) !important;
+        }
+        
+        .dark .bg-gray-50 {
+            background-color: rgb(17 24 39) !important;
+        }
+        
+        .dark .bg-gray-100 {
+            background-color: rgb(31 41 55) !important;
+        }
+        
+        .dark .bg-gray-200 {
+            background-color: rgb(55 65 81) !important;
+        }
+        
+        .dark .bg-gray-300 {
+            background-color: rgb(75 85 99) !important;
+        }
+        
+        .dark .bg-gray-700 {
+            background-color: rgb(55 65 81) !important;
+        }
+        
+        .dark .bg-gray-900 {
+            background-color: rgb(31 41 55) !important;
+        }
+        
+        .dark .text-gray-900 {
+            color: rgb(243 244 246) !important;
+        }
+        
+        .dark .text-gray-800 {
+            color: rgb(229 231 235) !important;
+        }
+        
+        .dark .text-gray-700 {
+            color: rgb(209 213 219) !important;
+        }
+        
+        .dark .text-gray-600 {
+            color: rgb(156 163 175) !important;
+        }
+        
+        .dark .text-gray-500 {
+            color: rgb(156 163 175) !important;
+        }
+        
+        .dark .border-gray-200 {
+            border-color: rgb(55 65 81) !important;
+        }
+        
+        .dark .border-gray-100 {
+            border-color: rgb(55 65 81) !important;
+        }
+        
+        .dark .border-gray-300 {
+            border-color: rgb(75 85 99) !important;
+        }
+        
+        .dark .hover\:bg-gray-50:hover {
+            background-color: rgb(31 41 55) !important;
+        }
+        
+        .dark .hover\:bg-gray-100:hover {
+            background-color: rgb(55 65 81) !important;
+        }
+        
+        .dark .hover\:bg-gray-200:hover {
+            background-color: rgb(75 85 99) !important;
+        }
+        
+        .dark .hover\:bg-gray-900:hover {
+            background-color: rgb(17 24 39) !important;
+        }
+        
+        .dark .hover\:bg-green-900:hover {
+            background-color: rgb(20 83 45) !important;
+        }
+        
+        .dark .hover\:bg-green-600:hover {
+            background-color: rgb(22 101 52) !important;
+        }
+        
+        .dark .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -2px rgb(0 0 0 / 0.3) !important;
+        }
+        
+        .dark .shadow {
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px 0 rgb(0 0 0 / 0.3) !important;
+        }
+        
+        .dark .shadow-sm {
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3) !important;
+        }
+        
+        /* Smooth transitions */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        /* Dark mode for navigation bar */
+        .dark .bg-green-700 {
+            background-color: rgb(20 83 45) !important;
+        }
+        
+        .dark .bg-green-600 {
+            background-color: rgb(22 101 52) !important;
+        }
+        
+        /* Dark mode for buttons */
+        .dark .bg-blue-600 {
+            background-color: rgb(37 99 235) !important;
+        }
+        
+        .dark .bg-blue-700 {
+            background-color: rgb(29 78 216) !important;
+        }
+        
+        .dark .hover\:bg-blue-700:hover {
+            background-color: rgb(29 78 216) !important;
+        }
+        
+        .dark .bg-red-50 {
+            background-color: rgb(127 29 29) !important;
+        }
+        
+        .dark .bg-green-50 {
+            background-color: rgb(20 83 45) !important;
+        }
+        
+        .dark .text-red-700 {
+            color: rgb(248 113 113) !important;
+        }
+        
+        .dark .text-green-700 {
+            color: rgb(134 239 172) !important;
+        }
+        
+        .dark .border-red-200 {
+            border-color: rgb(127 29 29) !important;
+        }
+        
+        .dark .border-green-200 {
+            border-color: rgb(20 83 45) !important;
+        }
+    </style>
 </head>
 <body class="font-sans bg-gray-50" x-data="{ 
+    darkMode: localStorage.getItem('darkMode') === 'true',
     notificationsOpen: false,
     userDropdownOpen: false,
     notifications: [
@@ -21,6 +181,11 @@
         return this.notifications.filter(n => !n.read).length;
     },
     init() {
+        // Apply dark mode on load
+        if (this.darkMode) {
+            document.documentElement.classList.add('dark');
+        }
+        
         // Auto-dismiss alerts after 5 seconds
         this.$watch('alerts', () => {
             setTimeout(() => {
@@ -47,6 +212,15 @@
     },
     markAllAsRead() {
         this.notifications.forEach(n => n.read = true);
+    },
+    toggleDarkMode() {
+        this.darkMode = !this.darkMode;
+        localStorage.setItem('darkMode', this.darkMode);
+        if (this.darkMode) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
     }
 }">
     
@@ -114,6 +288,19 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Dark Mode Toggle -->
+                    <button @click="toggleDarkMode()" 
+                            class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                            :class="darkMode ? 'text-yellow-500' : 'text-gray-600'"
+                            :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+                        <svg x-show="!darkMode" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                        <svg x-show="darkMode" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </button>
                     
                     <!-- User Info Dropdown -->
                     <div class="relative user-dropdown">
