@@ -9,6 +9,13 @@ class FolderSeeder extends Seeder
 {
     public function run()
     {
+        // Check if folders already exist
+        $existingFolders = $this->db->table('folders')->get()->getNumRows();
+        if ($existingFolders > 0) {
+            echo "ℹ️  Folders already seeded. Skipping FolderSeeder.\n";
+            return;
+        }
+
         // 1️⃣ Seed locations dynamically
         $locations = [
             ['cabinet' => 1, 'rack' => 'A'],

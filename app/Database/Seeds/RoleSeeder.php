@@ -9,6 +9,13 @@ class RoleSeeder extends Seeder
 {
     public function run()
     {
+        // Check if roles already exist
+        $existingRoles = $this->db->table('roles')->get()->getNumRows();
+        if ($existingRoles > 0) {
+            echo "ℹ️  Roles already seeded. Skipping RoleSeeder.\n";
+            return;
+        }
+
         $roles = [
             [
                 'role_name' => 'records_officer',

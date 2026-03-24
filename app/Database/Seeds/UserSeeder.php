@@ -8,6 +8,13 @@ class UserSeeder extends Seeder
 {
 	public function run()
 	{
+		// Check if users already exist
+		$existingUsers = $this->db->table('users')->get()->getNumRows();
+		if ($existingUsers > 0) {
+			echo "ℹ️  Users already seeded. Skipping UserSeeder.\n";
+			return;
+		}
+
 		$datas = [
 			[
 				'username' => 'superadmin',
