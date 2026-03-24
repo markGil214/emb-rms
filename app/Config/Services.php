@@ -44,4 +44,20 @@ class Services extends BaseService
 
         return new PermissionService();
     }
+
+	/**
+	 * Audit Log Service
+	 * Provides audit logging functionality
+	 * 
+	 * @param bool $getShared
+	 * @return \App\Models\AuditlogModel
+	 */
+	public static function auditLog($getShared = true)
+	{
+		if ($getShared) {
+			return static::getSharedInstance('auditLog');
+		}
+
+		return new \App\Models\AuditlogModel();
+	}
 }
