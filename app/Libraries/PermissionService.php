@@ -306,4 +306,63 @@ class PermissionService
         $role = $this->getUserRole($userId);
         return in_array($role, ['admin', 'super_admin']);
     }
+
+    /**
+     * Sync all permissions from Permissions config to super_admin role
+     * Ensures super_admin always has all permissions, including new ones
+     * 
+     * @param int|null $assignedById User ID performing the sync (for audit)
+     * @return int Count of newly synced permissions
+     */
+    public function syncSuperAdminPermissions($assignedById = null)
+    {
+        $superAdminId = $this->getRoleId('super_admin');
+        if (!$superAdminId) {
+            return 0;
+        }
+
+        // Get all permissions from config
+        $allPermissions = Permissions::flat();
+        
+        // Get currently assigned permissions to super_admin
+        $currentPerms = $this->db->table('role_permissions')
+            ->where('role_id', $superAdminId)
+            ->get()
+            ->getResultArray();
+        
+        $currentPermKeys = array_column($currentPerms, 'permission_key');
+        
+        // Find missing permissions
+        $missingPerms = array_diff($allPermissions, $currentPermKeys);
+        
+        // Insert missing permissions
+        $synced = 0;
+        foreach ($missingPerms as $permKey) {
+            $this->db->table('role_permissions')->insert([
+                'role_id' => $superAdminId,
+                'permission_key' => $permKey,
+                'created_at' => date('Y-m-d H:i:s'),
+            ]);
+            $synced++;
+        }
+
+        if ($synced > 0) {
+            log_message('info', "Synced $synced new permissions to super_admin role");
+            
+            // Log if audit log available
+            if ($assignedById) {
+                $auditLog = model('AuditlogModel');
+                $auditLog->log(
+                    'permissions_synced',
+                    'role',
+                    $superAdminId,
+                    null,
+                    ['synced_count' => $synced, 'permissions' => $missingPerms],
+                    $assignedById
+                );
+            }
+        }
+
+        return $synced;
+    }
 }

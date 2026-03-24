@@ -69,6 +69,8 @@
 				name: 'Borrow Management',
 				permissions: {
 					'request_borrow': 'Request to Borrow',
+					'view_own_borrow': 'View Own Borrow Requests',
+					'view_all_borrow': 'View All Borrow Requests',
 					'process_borrow_release': 'Process Borrow Release',
 					'process_return': 'Process Return',
 					'approve_borrow_requests': 'Approve Requests',
@@ -107,16 +109,11 @@
 		let currentTab = 'document';
 		let matrixData = {};
 
-		// Track checked permissions across all tabs (not just current tab)
-		let allCheckedPermissions = {};
-
 		// Initialize matrix data structure
 		function initializeMatrixData() {
 			<?php foreach ($roles as $role): ?>
 			matrixData[<?= $role['role_id'] ?>] = {};
 			<?php endforeach; ?>
-			// Reset all checked permissions when re-initializing
-			allCheckedPermissions = {};
 		}
 
 		// Load role permissions from server
@@ -142,98 +139,64 @@
 				});
 			});
 
-			// Wait for all AJAX calls to complete, then initialize and render
+			// Wait for all AJAX calls to complete, then render
 			$.when(...promises).done(function() {
-				console.log('All permissions loaded, initializing tracker:', matrixData);
-				initializeAllCheckedPermissions(); // Initialize allCheckedPermissions from server data
+				console.log('All permissions loaded, rendering matrix:', matrixData);
 				renderMatrix(currentTab);
 			});
 		}
 
 		// Render matrix table
 		function renderMatrix(tab) {
-			const group = permissionGroups[tab];
-			const perms = Object.entries(group.permissions);
-			let headerHtml = '<tr class="bg-gray-50 border-b border-gray-200"><th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 w-1/4">Role</th>';
-			let bodyHtml = '';
+			// Check if matrix needs initialization
+			if ($('#matrixBody').find('tr').length === 0) {
+				let headerHtml = '<tr class="bg-gray-50 border-b border-gray-200"><th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 w-1/4">Role</th>';
+				let bodyHtml = '';
 
-			// Generate header columns
-			perms.forEach(([key, label]) => {
-				headerHtml += `<th class="px-6 py-4 text-center text-sm font-semibold text-gray-900">${label}</th>`;
-			});
-			headerHtml += '</tr>';
-
-			// Generate body rows
-			roles.forEach(role => {
-				const isSuperAdmin = role.role_name === 'super_admin';
-				bodyHtml += `<tr class="border-b border-gray-200 hover:bg-gray-50">
-					<td class="px-6 py-4 font-medium text-gray-900">
-						${role.role_name}
-						${isSuperAdmin ? '<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded ml-2">All Access</span>' : ''}
-					</td>`;
-				
-				perms.forEach(([key, label]) => {
-					// Check both allCheckedPermissions (user changes) AND matrixData (server state)
-					// Use allCheckedPermissions if it exists, otherwise fall back to matrixData
-					const userChecked = allCheckedPermissions[role.role_id] && allCheckedPermissions[role.role_id][key];
-					const serverChecked = matrixData[role.role_id] && matrixData[role.role_id][key];
-					const isChecked = isSuperAdmin || userChecked || serverChecked;
-					const disabledAttr = isSuperAdmin ? 'disabled' : '';
-					const cursorClass = isSuperAdmin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer';
-					
-					bodyHtml += `<td class="px-6 py-4 text-center">
-						<input type="checkbox" class="perm-checkbox w-5 h-5 text-blue-600 rounded ${cursorClass}" 
-							data-role="${role.role_id}" data-perm="${key}" ${isChecked ? 'checked' : ''} ${disabledAttr} 
-							title="${isSuperAdmin ? 'Super admin has all permissions' : ''}">
-					</td>`;
-				});
-				
-				bodyHtml += '</tr>';
-			});
-
-			$('#matrixHead').html(headerHtml);
-			$('#matrixBody').html(bodyHtml);
-		}
-
-		// Initialize allCheckedPermissions from loaded matrixData (only once after loading)
-		function initializeAllCheckedPermissions() {
-			allCheckedPermissions = {};
-			roles.forEach(role => {
-				if (!allCheckedPermissions[role.role_id]) {
-					allCheckedPermissions[role.role_id] = {};
-				}
-				// Get all permissions for all groups
-				Object.keys(permissionGroups).forEach(groupKey => {
-					const groupPerms = Object.keys(permissionGroups[groupKey].permissions);
-					groupPerms.forEach(perm => {
-						const isChecked = matrixData[role.role_id] && matrixData[role.role_id][perm];
-						if (isChecked) {
-							allCheckedPermissions[role.role_id][perm] = true;
-						}
+				// Generate header columns for ALL tabs at once
+				Object.entries(permissionGroups).forEach(([tabKey, tabGroup]) => {
+					Object.entries(tabGroup.permissions).forEach(([key, label]) => {
+						headerHtml += `<th class="px-6 py-4 text-center text-sm font-semibold text-gray-900" data-tab-group="${tabKey}" data-perm="${key}" style="display: ${tabKey === 'document' ? 'table-cell' : 'none'};">${label}</th>`;
 					});
 				});
-			});
-			console.log('Initialized allCheckedPermissions from server data:', allCheckedPermissions);
-		}
+				headerHtml += '</tr>';
 
-		// Handle checkbox changes
-		$(document).on('change', '.perm-checkbox', function() {
-			const roleId = $(this).data('role');
-			const perm = $(this).data('perm');
-			
-			if (!allCheckedPermissions[roleId]) {
-				allCheckedPermissions[roleId] = {};
+				// Generate body rows for ALL permissions at once
+				roles.forEach(role => {
+					const isSuperAdmin = role.role_name === 'super_admin';
+					bodyHtml += `<tr class="border-b border-gray-200 hover:bg-gray-50">
+						<td class="px-6 py-4 font-medium text-gray-900">
+							${role.role_name}
+							${isSuperAdmin ? '<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded ml-2">All Access</span>' : ''}
+						</td>`;
+					
+					Object.entries(permissionGroups).forEach(([tabKey, tabGroup]) => {
+						Object.entries(tabGroup.permissions).forEach(([key, label]) => {
+							const isChecked = isSuperAdmin || (matrixData[role.role_id] && matrixData[role.role_id][key]);
+							const disabledAttr = isSuperAdmin ? 'disabled' : '';
+							const cursorClass = isSuperAdmin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer';
+							
+							bodyHtml += `<td class="px-6 py-4 text-center tab-cell" data-tab-group="${tabKey}" style="display: ${tabKey === 'document' ? 'table-cell' : 'none'};">
+								<input type="checkbox" class="perm-checkbox w-5 h-5 text-blue-600 rounded ${cursorClass}" 
+									data-role="${role.role_id}" data-perm="${key}" ${isChecked ? 'checked' : ''} ${disabledAttr} 
+									title="${isSuperAdmin ? 'Super admin has all permissions' : ''}">
+							</td>`;
+						});
+					});
+					
+					bodyHtml += '</tr>';
+				});
+
+				$('#matrixHead').html(headerHtml);
+				$('#matrixBody').html(bodyHtml);
 			}
-			
-			if ($(this).is(':checked')) {
-				allCheckedPermissions[roleId][perm] = true;
-			} else {
-				delete allCheckedPermissions[roleId][perm];
-			}
-			
-			// Also sync back to matrixData
-			matrixData[roleId][perm] = $(this).is(':checked');
-		});
+
+			// Show/hide columns based on selected tab
+			$('#matrixHead th[data-tab-group], #matrixBody .tab-cell').hide();
+			$('#matrixHead th:first-child').show(); // Always show role column
+			$('#matrixHead th[data-tab-group="' + tab + '"]').show(); // Show only current tab headers
+			$('#matrixBody .tab-cell[data-tab-group="' + tab + '"]').show(); // Show only current tab cells
+		}
 
 		// Handle tab switching
 		$(document).on('click', '.tab-button', function() {
@@ -245,22 +208,32 @@
 
 		// Save changes
 		$('#saveBtn').click(function() {
-			// Build changes from allCheckedPermissions (not just current DOM)
 			const changes = {};
 			
-			// Process each role
-			roles.forEach(role => {
-				const roleId = role.role_id;
+			// Get all roles from table
+			const roles = <?= json_encode(array_column($roles, 'role_id')) ?>;
+			const superAdminCheck = <?= json_encode(array_column($roles, 'role_id', 'role_name')) ?>;
+			
+			// Collect checked permissions for each role (skip super_admin)
+			roles.forEach(roleId => {
 				// Skip super_admin role
-				if (role.role_name !== 'super_admin') {
-					// Convert object keys to array and send all permissions for this role
-					if (allCheckedPermissions[roleId]) {
-						changes[roleId] = Object.keys(allCheckedPermissions[roleId]);
-					} else {
-						changes[roleId] = [];
-					}
+				const isSuperAdmin = Object.keys(superAdminCheck).some(name => name === 'super_admin' && superAdminCheck[name] === roleId);
+				if (!isSuperAdmin) {
+					changes[roleId] = [];
 				}
 			});
+			
+			// Get all checked permissions (exclude super_admin)
+			$('.perm-checkbox:checked').each(function() {
+				const roleId = $(this).data('role');
+				const perm = $(this).data('perm');
+				// Only collect from non-super_admin roles
+				if (changes.hasOwnProperty(roleId)) {
+					changes[roleId].push(perm);
+				}
+			});
+
+			console.log('Sending save request with data:', changes);
 
 			if (confirm('Save permission changes?')) {
 				$.ajax({
@@ -315,7 +288,6 @@
 		// Reset
 		$('#resetBtn').click(function() {
 			matrixData = {}; // Clear cache
-			allCheckedPermissions = {}; // Clear user changes
 			initializeMatrixData();
 			loadRolePermissions(); // This now waits for all data before rendering
 		});

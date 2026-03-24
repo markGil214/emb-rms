@@ -103,14 +103,24 @@ class PermissionController extends BaseController
 		$roleId = $this->request->getPost('role_id');
 		$selectedPermissions = $this->request->getPost('permissions') ?? [];
 
-		// Assign new role
-		if ($roleId) {
+		// ✅ Get current role before making changes
+		$currentUserRole = $permissionService->getUserRole($userId);
+		$currentRoleId = null;
+		if ($currentUserRole) {
+			$role = $db->table('roles')
+				->where('role_name', $currentUserRole)
+				->first();
+			$currentRoleId = $role['role_id'] ?? null;
+		}
+
+		// ✅ Only assign new role if it actually changed
+		if ($roleId && $roleId !== $currentRoleId) {
 			$currentSession = session();
 			$adminId = $currentSession->get('user_id');
 			$permissionService->assignRole($userId, $roleId, $adminId);
 		}
 
-		// Get current user's role permissions
+		// Get current user's role permissions (after potential role change)
 		$rolePermissions = [];
 		if ($roleId) {
 			$rolePerms = $db->table('role_permissions')
@@ -120,15 +130,28 @@ class PermissionController extends BaseController
 			$rolePermissions = array_column($rolePerms, 'permission_key');
 		}
 
-		// Remove all custom permissions first
-		$permissionService->revokeAllCustomPermissions($userId);
-
-		// Add back custom permissions (those not from role)
-		foreach ($selectedPermissions as $perm) {
-			if (!in_array($perm, $rolePermissions)) {
-				$adminId = session()->get('user_id');
-				$permissionService->assignPermission($userId, $perm, $adminId);
-			}
+		// ✅ Get current custom permissions before making changes
+		$currentCustomPerms = $permissionService->getCustomPermissions($userId);
+		$currentPermsArray = array_column($currentCustomPerms, 'permission_key');
+		
+		// ✅ Only manage custom permissions (not from role)
+		$customSelectedPerms = array_diff($selectedPermissions, $rolePermissions);
+		
+		// ✅ Find permissions to add
+		$permsToAdd = array_diff($customSelectedPerms, $currentPermsArray);
+		
+		// ✅ Find permissions to remove (no longer selected and not from role)
+		$permsToRemove = array_diff($currentPermsArray, $customSelectedPerms);
+		
+		// Add new permissions
+		foreach ($permsToAdd as $perm) {
+			$adminId = session()->get('user_id');
+			$permissionService->assignPermission($userId, $perm, $adminId);
+		}
+		
+		// Remove unchecked permissions
+		foreach ($permsToRemove as $perm) {
+			$permissionService->revokePermission($userId, $perm);
 		}
 
 		// Log the change
@@ -208,8 +231,30 @@ class PermissionController extends BaseController
 			}
 
 			$db = \Config\Database::connect();
+			
+			// Get role to check if super_admin
+			$role = $db->table('roles')->where('role_id', $roleId)->get()->getRowArray();
+			if (!$role) {
+				return $this->response->setJSON(['error' => 'Role not found'], 404);
+			}
 
-			// Get all permissions for this role
+			// If super_admin, return all permissions from config
+			if ($role['role_name'] === 'super_admin') {
+				$allPermissions = Permissions::grouped();
+				$permissions = [];
+				
+				// Flatten all permissions
+				foreach ($allPermissions as $group) {
+					foreach ($group as $key => $label) {
+						$permissions[$key] = true;
+					}
+				}
+				
+				log_message('info', "Loaded " . count($permissions) . " ALL permissions for super_admin");
+				return $this->response->setJSON($permissions);
+			}
+
+			// For normal roles, load only assigned permissions
 			$rolePerms = $db->table('role_permissions')
 				->where('role_id', $roleId)
 				->get()
@@ -246,6 +291,14 @@ class PermissionController extends BaseController
 
 		try {
 			$db = \Config\Database::connect();
+			$permissionService = service('permissionService');
+			
+			// Step 1: Sync super_admin with latest permissions before making changes
+			$adminId = session()->get('user_id');
+			$synced = $permissionService->syncSuperAdminPermissions($adminId);
+			if ($synced > 0) {
+				log_message('info', "Auto-synced $synced new permissions to super_admin");
+			}
 			
 			// Try multiple ways to get JSON input
 			$input = null;
@@ -278,13 +331,23 @@ class PermissionController extends BaseController
 				return $this->response->setJSON(['success' => false, 'error' => 'No valid data received'], 400);
 			}
 
-			$adminId = session()->get('user_id');
-
 			// Process each role
 			foreach ($input as $roleId => $permissions) {
 				$roleId = (int) $roleId;
 
 				if ($roleId <= 0) {
+					continue;
+				}
+
+				// Get role to check if super_admin
+				$role = $db->table('roles')->where('role_id', $roleId)->get()->getRowArray();
+				if (!$role) {
+					continue;
+				}
+
+				// SKIP SUPER_ADMIN - it's managed by syncSuperAdminPermissions
+				if ($role['role_name'] === 'super_admin') {
+					log_message('info', 'Skipping super_admin role from edit (managed automatically)');
 					continue;
 				}
 
@@ -317,7 +380,12 @@ class PermissionController extends BaseController
 				);
 			}
 
-			return $this->response->setJSON(['success' => true, 'message' => 'Role permissions updated'], 200);
+			$message = 'Role permissions updated';
+			if ($synced > 0) {
+				$message .= " (synced $synced new permissions to super_admin)";
+			}
+
+			return $this->response->setJSON(['success' => true, 'message' => $message], 200);
 		} catch (\Exception $e) {
 			log_message('error', 'saveRolePerms error: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
 			return $this->response->setJSON(['success' => false, 'error' => 'Error: ' . $e->getMessage()], 500);
