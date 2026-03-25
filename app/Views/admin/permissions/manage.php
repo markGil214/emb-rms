@@ -1,7 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('content') ?>
-<div class="max-w-7xl mx-auto">
+<div class="max-w-8xl mx-auto">
 	<!-- Header -->
 	<div class="mb-8">
 		<h1 class="text-4xl font-bold text-gray-900">Team & Permissions</h1>

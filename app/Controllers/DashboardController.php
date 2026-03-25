@@ -32,6 +32,9 @@ class DashboardController extends BaseController
 
         // Load different stats based on role
         if ($userRole === 'super_admin') {
+            // Get document status counts from database
+            $documentStats = $this->getDocumentStatusCounts($db);
+            
             $data['dashboardTitle'] = 'System Administration Dashboard';
             $data['stats'] = [
                 'totalUsers' => $db->table('users')->countAll(),
@@ -40,8 +43,12 @@ class DashboardController extends BaseController
                 'pendingApprovals' => $this->getPendingApprovalsCount($db, 'all'),
             ];
             $data['recentActivity'] = $this->getSystemActivityFeed($db, 20);
+            $data['documentStats'] = $documentStats;
 
         } elseif ($userRole === 'admin') {
+            // Get document status counts from database
+            $documentStats = $this->getDocumentStatusCounts($db);
+            
             $data['dashboardTitle'] = 'Records Management Dashboard';
             $data['stats'] = [
                 'totalDocuments' => $db->table('folders')->countAll(),
@@ -50,8 +57,12 @@ class DashboardController extends BaseController
                     ->countAllResults(),
             ];
             $data['recentActivity'] = $this->getTeamActivityFeed($db, 20);
+            $data['documentStats'] = $documentStats;
 
         } else { // records_officer
+            // Get document status counts from database
+            $documentStats = $this->getDocumentStatusCounts($db);
+            
             $data['dashboardTitle'] = 'Document Management Dashboard';
             $data['stats'] = [
                 'accessibleDocuments' => $db->table('folders')->countAll(),
@@ -62,9 +73,50 @@ class DashboardController extends BaseController
                     ->countAllResults(),
             ];
             $data['recentActivity'] = $this->getUserActivityFeed($db, $userId, 20);
+            $data['documentStats'] = $documentStats;
         }
 
         return view('layouts/superadmin/dashboard', $data);
+    }
+
+    /**
+     * Get document status counts for dashboard chart
+     */
+    private function getDocumentStatusCounts($db)
+    {
+        // Get counts for each document status
+        $availableCount = $db->table('folders')
+            ->where('status', 'Available')
+            ->countAllResults();
+            
+        $borrowedCount = $db->table('folders')
+            ->where('status', 'Borrowed')
+            ->countAllResults();
+            
+        $archivedCount = $db->table('folders')
+            ->where('status', 'Archived')
+            ->countAllResults();
+            
+        // Get other statuses if they exist
+        $otherStatuses = $db->table('folders')
+            ->whereNotIn('status', ['Available', 'Borrowed', 'Archived'])
+            ->select('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->get()
+            ->getResultArray();
+            
+        $stats = [
+            'availableCount' => $availableCount,
+            'borrowedCount' => $borrowedCount,
+            'archivedCount' => $archivedCount,
+        ];
+        
+        // Add other statuses dynamically
+        foreach ($otherStatuses as $status) {
+            $stats[strtolower($status['status']) . 'Count'] = $status['count'];
+        }
+        
+        return $stats;
     }
 
     /**

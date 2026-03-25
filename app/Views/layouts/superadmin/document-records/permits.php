@@ -208,9 +208,10 @@
 
                     <tbody class="bg-white divide-y divide-gray-200">
 
-                        <template x-for="folder in filteredFolders" :key="folder.folder_id">
+                        <template x-for="(folder, index) in filteredFolders" :key="folder.folder_id">
 
-                            <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <tr class="hover:bg-gray-200 transition-colors duration-150" 
+                                :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-200'">
 
                                 <td class="px-6 py-4 whitespace-nowrap">
 
