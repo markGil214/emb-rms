@@ -58,6 +58,44 @@
 
                 
 
+                <!-- Folder Type -->
+
+                <div>
+
+                    <label for="folder_type" class="block text-sm font-medium text-gray-700 pt-2">
+
+                        Folder Type
+
+                    </label>
+
+                    <select id="folder_type" name="folder_type" 
+
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent">
+
+                        <option value="">-- Select Folder Type --</option>
+
+                        <option value="Commercial sand and gravel" <?= old('folder_type') === 'Commercial sand and gravel' ? 'selected' : '' ?>>Commercial sand and gravel</option>
+
+                        <option value="Telecommunication" <?= old('folder_type') === 'Telecommunication' ? 'selected' : '' ?>>Telecommunication</option>
+
+                        <option value="Local Government Unit" <?= old('folder_type') === 'Local Government Unit' ? 'selected' : '' ?>>Local Government Unit</option>
+
+                        <option value="Mining Company" <?= old('folder_type') === 'Mining Company' ? 'selected' : '' ?>>Mining Company</option>
+
+                        <option value="Hydro Power Plants" <?= old('folder_type') === 'Hydro Power Plants' ? 'selected' : '' ?>>Hydro Power Plants</option>
+
+                    </select>
+
+                    <?php if (isset($errors['folder_type'])): ?>
+
+                        <p class="mt-1 text-sm text-red-600"><?= $errors['folder_type'] ?></p>
+
+                    <?php endif; ?>
+
+                </div>
+
+                
+
                 <!-- Document Status -->
 
                 <div>

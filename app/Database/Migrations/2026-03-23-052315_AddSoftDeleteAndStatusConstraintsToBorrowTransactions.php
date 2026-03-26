@@ -8,21 +8,37 @@ class AddSoftDeleteAndStatusConstraintsToBorrowTransactions extends Migration
 {
 	public function up()
 	{
-		// Add soft delete column
-		$this->forge->addColumn('borrow_transactions', [
-			'deleted_at' => [
-				'type' => 'DATETIME',
-				'null' => true,
-				'comment' => 'Soft delete timestamp',
-			],
-		]);
+		// Add soft delete column if it doesn't exist
+		$db = \Config\Database::connect();
+		$fields = $db->getFieldData('borrow_transactions');
+		$columnExists = false;
+		foreach ($fields as $field) {
+			if ($field->name === 'deleted_at') {
+				$columnExists = true;
+				break;
+			}
+		}
+
+		if (!$columnExists) {
+			$this->forge->addColumn('borrow_transactions', [
+				'deleted_at' => [
+					'type' => 'DATETIME',
+					'null' => true,
+					'comment' => 'Soft delete timestamp',
+				],
+			]);
+		}
 
 		// Add CHECK constraint on status values (MySQL 8.0+)
 		// Allowed values: Pending, Borrowed, Returned
-		$sql = "ALTER TABLE borrow_transactions 
-				ADD CONSTRAINT chk_status_valid 
-				CHECK (status IN ('Pending', 'Borrowed', 'Returned'))";
-		$this->db->query($sql);
+		try {
+			$sql = "ALTER TABLE borrow_transactions 
+					ADD CONSTRAINT chk_status_valid 
+					CHECK (status IN ('Pending', 'Borrowed', 'Returned'))";
+			$this->db->query($sql);
+		} catch (\Throwable $e) {
+			// Constraint might already exist, ignore
+		}
 	}
 
 	public function down()

@@ -8,17 +8,38 @@ class DropBorrowerIdForeignKey extends Migration
 {
 	public function up()
 	{
-		// Drop the foreign key constraint on borrower_id
-		$this->forge->dropForeignKey('borrow_transactions', 'borrow_transactions_borrower_id_foreign');
+		// Only drop the foreign key constraint if it exists
+		$db = \Config\Database::connect();
+		$tables = $db->listTables();
 		
-		// Make borrower_id nullable
-		$this->forge->modifyColumn('borrow_transactions', [
-			'borrower_id' => [
-				'type' => 'INT',
-				'constraint' => 11,
-				'null' => true,
-			],
-		]);
+		if (in_array('borrow_transactions', $tables)) {
+			// Check if the foreign key exists before attempting to drop it
+			try {
+				$this->forge->dropForeignKey('borrow_transactions', 'borrow_transactions_borrower_id_foreign');
+			} catch (\Exception $e) {
+				// Foreign key doesn't exist, which is fine
+			}
+			
+			// Make borrower_id nullable if the column exists
+			$fields = $db->getFieldData('borrow_transactions');
+			$columnExists = false;
+			foreach ($fields as $field) {
+				if ($field->name === 'borrower_id') {
+					$columnExists = true;
+					break;
+				}
+			}
+			
+			if ($columnExists) {
+				$this->forge->modifyColumn('borrow_transactions', [
+					'borrower_id' => [
+						'type' => 'INT',
+						'constraint' => 11,
+						'null' => true,
+					],
+				]);
+			}
+		}
 	}
 
 	public function down()

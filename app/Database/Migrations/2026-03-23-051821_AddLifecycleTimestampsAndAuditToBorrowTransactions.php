@@ -8,20 +8,36 @@ class AddLifecycleTimestampsAndAuditToBorrowTransactions extends Migration
 {
 	public function up()
 	{
-		// Add lifecycle timestamp columns
-		$this->forge->addColumn('borrow_transactions', [
-			'approved_at' => [
+		// Check which columns exist before adding them
+		$db = \Config\Database::connect();
+		$fields = $db->getFieldData('borrow_transactions');
+		$existingColumns = [];
+		foreach ($fields as $field) {
+			$existingColumns[] = $field->name;
+		}
+
+		$columnsToAdd = [];
+		
+		if (!in_array('approved_at', $existingColumns)) {
+			$columnsToAdd['approved_at'] = [
 				'type' => 'DATETIME',
 				'null' => true,
 				'comment' => 'When admin approved the borrow request',
-			],
-			'approved_by' => [
+			];
+		}
+		
+		if (!in_array('approved_by', $existingColumns)) {
+			$columnsToAdd['approved_by'] = [
 				'type' => 'INT',
 				'constraint' => 11,
 				'null' => true,
 				'comment' => 'User ID who approved the request',
-			],
-		]);
+			];
+		}
+		
+		if (!empty($columnsToAdd)) {
+			$this->forge->addColumn('borrow_transactions', $columnsToAdd);
+		}
 	}
 
 	public function down()

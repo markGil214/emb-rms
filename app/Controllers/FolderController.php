@@ -53,6 +53,7 @@ class FolderController extends BaseController
             'cabinet' => 'required',
             'rack' => 'required',
             'status' => 'required|in_list[Available,Borrowed,Archived,Disposed]',
+            'folder_type' => 'in_list[Commercial sand and gravel,Telecommunication,Local Government Unit,Mining Company,Hydro Power Plants]|max_length[50]',
         ])) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
@@ -74,10 +75,11 @@ class FolderController extends BaseController
             'file_code' => $nextCode,
             'location_code' => $locationCode,
             'company_name' => $this->request->getPost('company_name'),
+            'folder_type' => $this->request->getPost('folder_type'),
             'issuance_date' => $this->request->getPost('issuance_date'),
             'expiry_date' => $this->request->getPost('expiry_date'),
             'status' => $this->request->getPost('status'),
-            'location_id' => $this->request->getPost('location_id'),
+            'location_id' => $this->request->getPost('location_id') ? (int)$this->request->getPost('location_id') : null,
             'created_by' => auth_user()['user_id'] ?? null,
         ];
 
@@ -130,12 +132,14 @@ class FolderController extends BaseController
             'company_name' => 'required|max_length[255]',
             'issuance_date' => 'required|valid_date',
             'expiry_date' => 'required|valid_date',
+            'folder_type' => 'in_list[Commercial sand and gravel,Telecommunication,Local Government Unit,Mining Company,Hydro Power Plants]|max_length[50]',
         ])) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
         $data = [
             'company_name' => $this->request->getPost('company_name'),
+            'folder_type' => $this->request->getPost('folder_type'),
             'issuance_date' => $this->request->getPost('issuance_date'),
             'expiry_date' => $this->request->getPost('expiry_date'),
             'status' => $this->request->getPost('status'),
