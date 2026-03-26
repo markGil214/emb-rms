@@ -23,7 +23,11 @@ class FolderController extends BaseController
      */
     public function index()
     {
-        $folders = $this->folderModel->orderBy('file_code', 'ASC')->findAll();
+        $folders = $this->folderModel
+            ->select('folders.*, locations.cabinet, locations.rack')
+            ->join('locations', 'locations.location_id = folders.location_id', 'left')
+            ->orderBy('file_code', 'ASC')
+            ->findAll();
 
         return view('layouts/superadmin/document-records/permits', [
             'title' => 'Folders',
@@ -36,8 +40,12 @@ class FolderController extends BaseController
      */
     public function create()
     {
+        $db = \Config\Database::connect();
+        $locations = $db->table('locations')->get()->getResultArray();
+        
         return view('layouts/superadmin/document-records/create', [
-            'title' => 'Create New Folder'
+            'title' => 'Create New Folder',
+            'locations' => $locations
         ]);
     }
 
@@ -50,8 +58,7 @@ class FolderController extends BaseController
             'company_name' => 'required|max_length[255]',
             'issuance_date' => 'required|valid_date',
             'expiry_date' => 'required|valid_date',
-            'cabinet' => 'required',
-            'rack' => 'required',
+            'location_id' => 'required|integer',
             'status' => 'required|in_list[Available,Borrowed,Archived,Disposed]',
             'folder_type' => 'in_list[Commercial sand and gravel,Telecommunication,Local Government Unit,Mining Company,Hydro Power Plants]|max_length[50]',
         ])) {
@@ -65,10 +72,19 @@ class FolderController extends BaseController
         $companyName = $this->request->getPost('company_name');
         $nextCode = FileCodeGenerator::getNextFromCompany($companyName);
 
-        // Generate location code
+        // Get location details to generate location code
+        $locationId = (int)$this->request->getPost('location_id');
+        $location = $db->table('locations')->where('location_id', $locationId)->get()->getRow();
+        
+        if (!$location) {
+            $db->transRollback();
+            return redirect()->back()->withInput()->with('error', 'Selected location not found');
+        }
+
+        // Generate location code from location details
         $locationCode = FileCodeGenerator::generateLocationCode(
-            $this->request->getPost('cabinet'),
-            $this->request->getPost('rack')
+            $location->cabinet ?? '',
+            $location->shelf ?? ''
         );
 
         $data = [
@@ -79,7 +95,7 @@ class FolderController extends BaseController
             'issuance_date' => $this->request->getPost('issuance_date'),
             'expiry_date' => $this->request->getPost('expiry_date'),
             'status' => $this->request->getPost('status'),
-            'location_id' => $this->request->getPost('location_id') ? (int)$this->request->getPost('location_id') : null,
+            'location_id' => $locationId,
             'created_by' => auth_user()['user_id'] ?? null,
         ];
 
@@ -99,6 +115,15 @@ class FolderController extends BaseController
     public function show(int $folderId)
     {
         $folder = $this->findFolderOrFail($folderId);
+        $db = \Config\Database::connect();
+        $location = $db->table('locations')
+            ->where('location_id', $folder['location_id'])
+            ->get()
+            ->getRowArray();
+
+        // Keep the current view contract: expose cabinet and rack in $folder.
+        $folder['cabinet'] = $location['cabinet'] ?? null;
+        $folder['rack'] = $location['rack'] ?? ($location['shelf'] ?? null);
         $files = $this->folderFileModel->getByFolder($folderId);
 
         return view('layouts/superadmin/document-records/show', [

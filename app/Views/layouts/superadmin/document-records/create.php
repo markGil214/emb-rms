@@ -20,7 +20,19 @@
 
         
 
-        <form action="<?= route_to('records.store') ?>" method="POST" class="p-4 space-y-4" id="folderForm">
+        <!-- Display All Validation Errors -->
+        <?php if (!empty($errors)): ?>
+            <div class="bg-red-50 border border-red-200 rounded p-4 m-4">
+                <h3 class="text-red-800 font-bold mb-2">⚠️ Please fix the following errors:</h3>
+                <ul class="text-red-700 text-sm space-y-1">
+                    <?php foreach ($errors as $field => $message): ?>
+                        <li>• <?= $message ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
+
+        <form action="<?= route_to('records.store') ?>" method="POST" class="p-4 space-y-4" id="folderForm" onsubmit="validateForm(event)">
 
             <?= csrf_field() ?>
 
@@ -242,7 +254,9 @@
 
                 
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Cabinet Dropdown -->
 
                     <div>
 
@@ -252,69 +266,15 @@
 
                         </label>
 
-                        <input type="text" id="cabinet" name="cabinet" 
+                        <select id="cabinet" name="cabinet" 
 
-                            value="<?= old('cabinet') ?>"
+                                class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
 
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                required>
 
-                            placeholder="e.g., A-01" required>
+                            <option value="">-- Select Cabinet --</option>
 
-                        <?php if (isset($errors['cabinet'])): ?>
-
-                            <p class="mt-1 text-sm text-red-600"><?= $errors['cabinet'] ?></p>
-
-                        <?php endif; ?>
-
-                    </div>
-
-
-
-                    <div>
-
-                        <label for="rack" class="block text-sm font-medium text-gray-700 mb-1">
-
-                            Rack <span class="text-red-500">*</span>
-
-                        </label>
-
-                        <input type="text" id="rack" name="rack" 
-
-                            value="<?= old('rack') ?>"
-
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-
-                            placeholder="e.g., R-01" required>
-
-                        <?php if (isset($errors['rack'])): ?>
-
-                            <p class="mt-1 text-sm text-red-600"><?= $errors['rack'] ?></p>
-
-                        <?php endif; ?>
-
-                    </div>
-
-                </div>
-
-
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-
-                    <label for="location_id" class="block text-sm font-medium text-gray-700 pt-2">
-
-                        Location ID <span class="text-red-500">*</span>
-
-                    </label>
-
-                    <div class="md:col-span-2">
-
-                        <input type="number" id="location_id" name="location_id" 
-
-                            value="<?= old('location_id') ?>"
-
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-
-                            placeholder="Enter location ID" required>
+                        </select>
 
                         <?php if (isset($errors['location_id'])): ?>
 
@@ -324,9 +284,166 @@
 
                     </div>
 
+
+
+                    <!-- Shelf Dropdown (auto-populated) -->
+
+                    <div>
+
+                        <label for="shelf" class="block text-sm font-medium text-gray-700 mb-1">
+
+                            Shelf <span class="text-red-500">*</span>
+
+                        </label>
+
+                        <select id="shelf" name="shelf" 
+
+                                class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+
+                                required disabled>
+
+                            <option value="">-- Select Shelf --</option>
+
+                        </select>
+
+                    </div>
+
                 </div>
 
+
+
+                <!-- Hidden location_id field (auto-set by JS) -->
+
+                <input type="hidden" id="location_id" name="location_id" value="">
+
             </div>
+
+
+
+            <script>
+
+                // Build location data from PHP
+                const locationsData = <?= json_encode($locations ?? []) ?>;
+
+                const cabinetSelect = document.getElementById('cabinet');
+
+                const shelfSelect = document.getElementById('shelf');
+
+                const locationIdInput = document.getElementById('location_id');
+
+
+
+                // Get unique cabinets and build dropdown
+                const cabinets = [...new Set(locationsData.map(loc => loc.cabinet))].sort();
+
+                cabinets.forEach(cabinet => {
+
+                    const option = document.createElement('option');
+
+                    option.value = cabinet;
+
+                    option.textContent = 'Cabinet ' + cabinet;
+
+                    cabinetSelect.appendChild(option);
+
+                });
+
+
+
+                // Handle Cabinet selection
+                cabinetSelect.addEventListener('change', function() {
+
+                    const selectedCabinet = this.value;
+
+                    shelfSelect.innerHTML = '<option value="">-- Select Shelf --</option>';
+
+                    locationIdInput.value = '';
+
+
+
+                    if (selectedCabinet) {
+
+                        // Filter shelves for this cabinet
+                        const shelves = locationsData
+
+                            .filter(loc => loc.cabinet === selectedCabinet)
+
+                            .map(loc => ({
+
+                                shelf: loc.shelf || loc.rack,
+
+                                locationId: loc.location_id
+
+                            }));
+
+
+
+                        // Remove duplicates and sort
+                        const uniqueShelves = [...new Map(shelves.map(s => [s.shelf, s])).values()].sort((a, b) => 
+
+                            a.shelf.localeCompare(b.shelf)
+
+                        );
+
+
+
+                        uniqueShelves.forEach(item => {
+
+                            const option = document.createElement('option');
+
+                            option.value = JSON.stringify({ shelf: item.shelf, locationId: item.locationId });
+
+                            option.textContent = 'Shelf ' + item.shelf;
+
+                            shelfSelect.appendChild(option);
+
+                        });
+
+
+
+                        shelfSelect.disabled = false;
+
+                    } else {
+
+                        shelfSelect.disabled = true;
+
+                    }
+
+                });
+
+
+
+                // Handle Shelf selection
+                shelfSelect.addEventListener('change', function() {
+
+                    locationIdInput.value = '';
+
+                    if (this.value) {
+
+                        const selected = JSON.parse(this.value);
+
+                        locationIdInput.value = selected.locationId;
+
+                    }
+
+                });
+
+                // Client-side validation before form submit
+                function validateForm(event) {
+                    const locationId = document.getElementById('location_id').value;
+                    const cabinet = document.getElementById('cabinet').value;
+                    const shelf = document.getElementById('shelf').value;
+
+                    if (!cabinet || !shelf || !locationId) {
+                        event.preventDefault();
+                        alert('❌ Please select both Cabinet and Shelf before creating the record.');
+                        return false;
+                    }
+                    
+                    console.log('✅ Form validation passed. Submitting with location_id:', locationId);
+                }
+
+            </script>
 
 
 

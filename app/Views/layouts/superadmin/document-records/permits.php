@@ -194,7 +194,7 @@
 
                             <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
 
-                                Location Code
+                                Location
 
                             </th>
 
@@ -267,7 +267,7 @@
 
                                         </svg>
 
-                                        <span class="text-sm text-gray-900" x-text="folder.location_code"></span>
+                                        <span class="text-sm text-gray-900" x-text="formatLocation(folder)"></span>
 
                                     </div>
 
@@ -559,7 +559,7 @@ function permitsManager() {
 
                     folder.file_code.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
 
-                    folder.location_code.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                    this.formatLocation(folder).toLowerCase().includes(this.searchQuery.toLowerCase()) ||
 
                     folder.company_name.toLowerCase().includes(this.searchQuery.toLowerCase());
 
@@ -649,18 +649,39 @@ function permitsManager() {
 
         formatDate(dateString) {
 
-            const date = new Date(dateString);
+            if (!dateString) {
+                return 'N/A';
+            }
 
-            return date.toLocaleDateString('en-US', { 
+            const trimmed = String(dateString).trim();
+            if (!trimmed || trimmed === '1970-01-01' || trimmed === '1970-01-01 00:00:00') {
+                return 'N/A';
+            }
 
-                year: 'numeric', 
+            const date = new Date(trimmed);
+            if (isNaN(date.getTime())) {
+                return 'N/A';
+            }
 
-                month: 'short', 
-
-                day: 'numeric' 
-
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
             });
 
+        },
+
+        formatLocation(folder) {
+            const cabinet = folder.cabinet || '';
+            const shelf = folder.shelf || folder.rack || '';
+            const building = folder.building || '';
+            const room = folder.room || '';
+
+            const readable = [building, room, cabinet ? `Cabinet ${cabinet}` : '', shelf ? `Shelf ${shelf}` : '']
+                .filter(Boolean)
+                .join(' - ');
+
+            return readable || (folder.location_code || 'N/A');
         }
 
     }
