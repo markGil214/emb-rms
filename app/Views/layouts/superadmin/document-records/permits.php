@@ -66,6 +66,26 @@
 
                 
 
+                <!-- Folder Type Filter -->
+
+                <select x-model="folderTypeFilter" @change="filterFolders()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+
+                    <option value="">All Types</option>
+
+                    <option value="Commercial sand and gravel">Commercial sand and gravel</option>
+
+                    <option value="Telecommunication">Telecommunication</option>
+
+                    <option value="Local Government Unit">Local Government Unit</option>
+
+                    <option value="Mining Company">Mining Company</option>
+
+                    <option value="Hydro Power Plants">Hydro Power Plants</option>
+
+                </select>
+
+                
+
                 <!-- Entries Per Page -->
 
                 <select x-model="entriesPerPage" @change="updatePagination()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -186,6 +206,12 @@
 
                             <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
 
+                                Folder Type
+
+                            </th>
+
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+
                                 Date
 
                             </th>
@@ -250,6 +276,14 @@
                                 <td class="px-6 py-4">
 
                                     <div class="text-sm text-gray-900" x-text="folder.company_name"></div>
+
+                                </td>
+
+                                <td class="px-6 py-4 whitespace-nowrap">
+
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+
+                                          x-text="folder.folder_type || 'Not Set'"></span>
 
                                 </td>
 
@@ -471,6 +505,8 @@ function permitsManager() {
 
         statusFilter: '',
 
+        folderTypeFilter: '',
+
         entriesPerPage: '25',
 
         currentPage: 1,
@@ -535,7 +571,13 @@ function permitsManager() {
 
                 
 
-                return matchesSearch && matchesStatus;
+                const matchesFolderType = !this.folderTypeFilter || 
+
+                    folder.folder_type === this.folderTypeFilter;
+
+                
+
+                return matchesSearch && matchesStatus && matchesFolderType;
 
             }).sort((a, b) => a.file_code.localeCompare(b.file_code));
 

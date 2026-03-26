@@ -7,6 +7,15 @@ use App\Libraries\FileCodeGenerator;
 
 class FolderModel extends Model
 {
+    //Folder Type Constants
+    const FOLDER_TYPES = [
+        'Commercial sand and gravel',
+        'Telecommunication',
+        'Local Government Unit',
+        'Mining Company',
+        'Hydro Power Plants'
+    ];
+
     protected $DBGroup          = 'default';
     protected $table            = 'folders';
     protected $primaryKey       = 'folder_id';
@@ -14,7 +23,7 @@ class FolderModel extends Model
     protected $returnType       = 'array';
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'file_code', 'company_name',
+        'file_code', 'company_name', 'folder_type',
         'location_code', 'issuance_date', 'expiry_date',
         'status', 'location_id', 'created_by', 'updated_by'
     ];
@@ -32,7 +41,7 @@ class FolderModel extends Model
         'file_code'      => 'required|max_length[50]|is_unique[folders.file_code,folder_id,{folder_id}]',
         'location_code'  => 'required|max_length[50]',
         'company_name'   => 'required|max_length[100]',
-        'location_id'    => 'required',
+        'folder_type'    => 'in_list[Commercial sand and gravel,Telecommunication,Local Government Unit,Mining Company,Hydro Power Plants]|max_length[50]',
         'status'         => 'in_list[Available,Borrowed,Archived,Disposed]',
     ];
 
@@ -48,6 +57,10 @@ class FolderModel extends Model
         ],
         'company_name' => [
             'required' => 'Company name is required',
+        ],
+        'folder_type' => [
+            'permit_in_list' => 'Please select a valid folder type.',
+            'max_length'     => 'Folder type cannot exceed 50 characters.',
         ],
         'location_id' => [
             'required' => 'Location is required',
@@ -118,5 +131,13 @@ class FolderModel extends Model
     public function byStatus($status)
     {
         return $this->where('status', $status);
+    }
+
+    /**
+     * Get folders by folder type (chainable)
+     */
+    public function byFolderType($folderType)
+    {
+        return $this->where('folder_type', $folderType);
     }
 }
