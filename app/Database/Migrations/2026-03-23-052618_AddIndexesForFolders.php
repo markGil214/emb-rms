@@ -28,6 +28,23 @@ class AddIndexesForFolders extends Migration
 
     public function down()
     {
-        $this->forge->dropKey('folders', 'status');
+        $this->dropIndexIfExists('folders', 'status');
+    }
+
+    private function dropIndexIfExists(string $table, string $indexName): void
+    {
+        $dbName = $this->db->getDatabase();
+        $index = $this->db->query(
+            "SELECT index_name
+             FROM information_schema.statistics
+             WHERE table_schema = ?
+               AND table_name = ?
+               AND index_name = ?",
+            [$dbName, $table, $indexName]
+        )->getRowArray();
+
+        if (!empty($index)) {
+            $this->db->query("ALTER TABLE {$table} DROP INDEX {$indexName}");
+        }
     }
 }

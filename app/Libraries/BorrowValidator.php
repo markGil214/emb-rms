@@ -102,18 +102,21 @@ class BorrowValidator
             throw new DomainException("Transaction {$transactionId} not found");
         }
 
-        // ✅ IDEMPOTENCY CHECK: Is this already returned?
-        if ($borrow['status'] !== 'Borrowed') {
+        // Normalize legacy/computed states that are still logically returnable.
+        $statusForReturn = $this->normalizeReturnableStatus($borrow['status']);
+
+        // ✅ IDEMPOTENCY CHECK: Is this already returned or not returnable?
+        if ($statusForReturn !== 'Borrowed') {
             throw new DomainException(
                 "Cannot return transaction in '{$borrow['status']}' status. " .
-                "Only 'Borrowed' items can be returned. " .
+                "Only 'Borrowed', 'Overdue', or legacy 'Active' items can be returned. " .
                 "(If you returned this already, this is idempotent—no action needed.)"
             );
         }
 
         // ✅ BUSINESS RULE: Status transition allowed?
-        if (!$this->borrowModel->isValidTransition($borrow['status'], 'Returned')) {
-            throw new DomainException('Invalid status transition: Borrowed → Returned failed validation');
+        if (!$this->borrowModel->isValidTransition($statusForReturn, 'Returned')) {
+            throw new DomainException("Invalid status transition: {$borrow['status']} → Returned failed validation");
         }
 
         // ✅ SECURITY: IDOR Protection
@@ -128,6 +131,15 @@ class BorrowValidator
         }
 
         return $borrow;
+    }
+
+    private function normalizeReturnableStatus(string $status): string
+    {
+        if (in_array($status, ['Overdue', 'Active'], true)) {
+            return 'Borrowed';
+        }
+
+        return $status;
     }
 
     /**

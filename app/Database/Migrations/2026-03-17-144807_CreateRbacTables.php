@@ -35,7 +35,7 @@ class CreateRbacTables extends Migration
             ],
         ]);
         $this->forge->addPrimaryKey('role_id');
-        $this->forge->createTable('roles');
+        $this->forge->createTable('roles', true);
 
         // Role Permissions table
         $this->forge->addField([
@@ -62,7 +62,7 @@ class CreateRbacTables extends Migration
         $this->forge->addPrimaryKey('role_permission_id');
         $this->forge->addForeignKey('role_id', 'roles', 'role_id', 'CASCADE', 'CASCADE');
         $this->forge->addUniqueKey(['role_id', 'permission_key']);
-        $this->forge->createTable('role_permissions');
+        $this->forge->createTable('role_permissions', true);
 
         // User Roles table
         $this->forge->addField([
@@ -97,7 +97,7 @@ class CreateRbacTables extends Migration
         $this->forge->addForeignKey('user_id', 'users', 'user_id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('role_id', 'roles', 'role_id', 'CASCADE', 'CASCADE');
         $this->forge->addUniqueKey('user_id');
-        $this->forge->createTable('user_roles');
+        $this->forge->createTable('user_roles', true);
 
         // User Permissions table (custom overrides)
         $this->forge->addField([
@@ -130,7 +130,7 @@ class CreateRbacTables extends Migration
         $this->forge->addPrimaryKey('user_permission_id');
         $this->forge->addForeignKey('user_id', 'users', 'user_id', 'CASCADE', 'CASCADE');
         $this->forge->addUniqueKey(['user_id', 'permission_key']);
-        $this->forge->createTable('user_permissions');
+        $this->forge->createTable('user_permissions', true);
 
         // Audit Logs table
         $this->forge->addField([
@@ -168,15 +168,15 @@ class CreateRbacTables extends Migration
         $this->forge->addPrimaryKey('audit_log_id');
         $this->forge->addForeignKey('user_id', 'users', 'user_id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('target_user_id', 'users', 'user_id', 'CASCADE', 'CASCADE');
-        $this->forge->createTable('audit_logs');
+        $this->forge->createTable('audit_logs', true);
     }
 
     public function down()
     {
-        $this->forge->dropTable('audit_logs');
-        $this->forge->dropTable('user_permissions');
-        $this->forge->dropTable('user_roles');
-        $this->forge->dropTable('role_permissions');
-        $this->forge->dropTable('roles');
+        $this->forge->dropTable('audit_logs', true);
+        $this->forge->dropTable('user_permissions', true);
+        $this->forge->dropTable('user_roles', true);
+        $this->forge->dropTable('role_permissions', true);
+        $this->forge->dropTable('roles', true);
     }
 }

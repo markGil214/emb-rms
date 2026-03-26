@@ -8,6 +8,12 @@ class MigrateExistingUsers extends Seeder
 {
     public function run()
     {
+        $existingAssignments = $this->db->table('user_roles')->countAllResults();
+        if ($existingAssignments > 0) {
+            echo "Info: user_roles already seeded. Skipping migration.\n";
+            return;
+        }
+
         $users = $this->db->table('users')->get()->getResult('array');
 
         if (empty($users)) {
@@ -31,6 +37,10 @@ class MigrateExistingUsers extends Seeder
         $userRoles = [];
         foreach ($users as $user) {
             $newRoleName = $roleMap[$user['role']] ?? 'records_officer';
+            if (!isset($roleIdMap[$newRoleName])) {
+                continue;
+            }
+
             $newRoleId = $roleIdMap[$newRoleName];
 
             $userRoles[] = [

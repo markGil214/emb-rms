@@ -23,6 +23,7 @@ class UserPermissionModel extends Model
     {
         return $this->where('user_id', $userId)
             ->select('permission_key')
+            ->orderBy('user_permission_id', 'ASC')
             ->findAll();
     }
 

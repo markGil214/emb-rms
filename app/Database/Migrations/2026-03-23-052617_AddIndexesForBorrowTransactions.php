@@ -38,10 +38,27 @@ class AddIndexesForBorrowTransactions extends Migration
 
     public function down()
     {
-        $this->forge->dropKey('borrow_transactions', 'status');
-        $this->forge->dropKey('borrow_transactions', 'folder_id');
-        $this->forge->dropKey('borrow_transactions', 'created_by');
-        $this->forge->dropKey('borrow_transactions', 'expected_return_date');
-        $this->forge->dropKey('borrow_transactions', 'created_by_status');
+        $this->dropIndexIfExists('borrow_transactions', 'status');
+        $this->dropIndexIfExists('borrow_transactions', 'folder_id');
+        $this->dropIndexIfExists('borrow_transactions', 'created_by');
+        $this->dropIndexIfExists('borrow_transactions', 'expected_return_date');
+        $this->dropIndexIfExists('borrow_transactions', 'created_by_status');
+    }
+
+    private function dropIndexIfExists(string $table, string $indexName): void
+    {
+        $dbName = $this->db->getDatabase();
+        $index = $this->db->query(
+            "SELECT index_name
+             FROM information_schema.statistics
+             WHERE table_schema = ?
+               AND table_name = ?
+               AND index_name = ?",
+            [$dbName, $table, $indexName]
+        )->getRowArray();
+
+        if (!empty($index)) {
+            $this->db->query("ALTER TABLE {$table} DROP INDEX {$indexName}");
+        }
     }
 }

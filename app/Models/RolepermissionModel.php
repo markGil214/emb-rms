@@ -23,6 +23,7 @@ class RolePermissionModel extends Model
     {
         return $this->where('role_id', $roleId)
             ->select('permission_key')
+            ->orderBy('role_permission_id', 'ASC')
             ->findAll();
     }
 }

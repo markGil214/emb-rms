@@ -42,8 +42,27 @@ class AddLifecycleTimestampsAndAuditToBorrowTransactions extends Migration
 
 	public function down()
 	{
-		// Drop the new columns
-		$this->forge->dropColumn('borrow_transactions', 'approved_at');
-		$this->forge->dropColumn('borrow_transactions', 'approved_by');
+		if ($this->columnExists('borrow_transactions', 'approved_at')) {
+			$this->forge->dropColumn('borrow_transactions', 'approved_at');
+		}
+
+		if ($this->columnExists('borrow_transactions', 'approved_by')) {
+			$this->forge->dropColumn('borrow_transactions', 'approved_by');
+		}
+	}
+
+	private function columnExists(string $table, string $column): bool
+	{
+		$dbName = $this->db->getDatabase();
+		$result = $this->db->query(
+			"SELECT column_name
+			 FROM information_schema.columns
+			 WHERE table_schema = ?
+			   AND table_name = ?
+			   AND column_name = ?",
+			[$dbName, $table, $column]
+		)->getRowArray();
+
+		return !empty($result);
 	}
 }

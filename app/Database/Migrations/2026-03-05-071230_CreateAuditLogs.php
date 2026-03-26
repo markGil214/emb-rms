@@ -26,11 +26,11 @@ class CreateAuditLogs extends Migration
 
         $this->forge->addKey('log_id', true);
         $this->forge->addForeignKey('user_id', 'users', 'user_id', 'CASCADE', 'CASCADE');
-        $this->forge->createTable('audit_logs');
+        $this->forge->createTable('audit_logs', true);
     }
 
     public function down()
     {
-        $this->forge->dropTable('audit_logs');
+        $this->forge->dropTable('audit_logs', true);
     }
 }

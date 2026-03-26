@@ -38,7 +38,25 @@ class AddForeignKeysToBorrowTransactions extends Migration
 
     public function down()
     {
-        $this->forge->dropForeignKey('borrow_transactions', 'fk_borrow_transactions_created_by');
-        $this->forge->dropForeignKey('borrow_transactions', 'fk_borrow_transactions_approved_by');
+        $dbName = $this->db->getDatabase();
+
+        $constraints = $this->db->query(
+            "SELECT constraint_name
+             FROM information_schema.referential_constraints
+             WHERE constraint_schema = ?
+               AND table_name = 'borrow_transactions'
+               AND constraint_name IN ('fk_borrow_transactions_created_by', 'fk_borrow_transactions_approved_by')",
+            [$dbName]
+        )->getResultArray();
+
+        $existing = array_column($constraints, 'constraint_name');
+
+        if (in_array('fk_borrow_transactions_created_by', $existing, true)) {
+            $this->forge->dropForeignKey('borrow_transactions', 'fk_borrow_transactions_created_by');
+        }
+
+        if (in_array('fk_borrow_transactions_approved_by', $existing, true)) {
+            $this->forge->dropForeignKey('borrow_transactions', 'fk_borrow_transactions_approved_by');
+        }
     }
 }

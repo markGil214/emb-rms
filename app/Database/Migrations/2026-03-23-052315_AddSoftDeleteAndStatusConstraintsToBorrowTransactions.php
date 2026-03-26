@@ -8,18 +8,7 @@ class AddSoftDeleteAndStatusConstraintsToBorrowTransactions extends Migration
 {
 	public function up()
 	{
-		// Add soft delete column if it doesn't exist
-		$db = \Config\Database::connect();
-		$fields = $db->getFieldData('borrow_transactions');
-		$columnExists = false;
-		foreach ($fields as $field) {
-			if ($field->name === 'deleted_at') {
-				$columnExists = true;
-				break;
-			}
-		}
-
-		if (!$columnExists) {
+		if (!$this->columnExists('borrow_transactions', 'deleted_at')) {
 			$this->forge->addColumn('borrow_transactions', [
 				'deleted_at' => [
 					'type' => 'DATETIME',
@@ -29,32 +18,65 @@ class AddSoftDeleteAndStatusConstraintsToBorrowTransactions extends Migration
 			]);
 		}
 
-		// Add CHECK constraint on status values (MySQL 8.0+)
-		// Allowed values: Pending, Borrowed, Returned
-		try {
-			$sql = "ALTER TABLE borrow_transactions 
-					ADD CONSTRAINT chk_status_valid 
-					CHECK (status IN ('Pending', 'Borrowed', 'Returned'))";
-			$this->db->query($sql);
-		} catch (\Throwable $e) {
-			// Constraint might already exist, ignore
+		if ($this->db->DBDriver === 'MySQLi' && !$this->checkConstraintExists('borrow_transactions', 'chk_status_valid')) {
+			try {
+				$sql = "ALTER TABLE borrow_transactions 
+						ADD CONSTRAINT chk_status_valid 
+						CHECK (status IN ('Pending', 'Borrowed', 'Returned'))";
+				$this->db->query($sql);
+			} catch (\Throwable $e) {
+				// Ignore if engine/version does not support CHECK.
+			}
 		}
 	}
 
 	public function down()
 	{
-		// Drop CHECK constraint (syntax differs by engine/version)
-		try {
-			$this->db->query('ALTER TABLE borrow_transactions DROP CHECK chk_status_valid');
-		} catch (\Throwable $e) {
+		if ($this->db->DBDriver === 'MySQLi' && $this->checkConstraintExists('borrow_transactions', 'chk_status_valid')) {
 			try {
-				$this->db->query('ALTER TABLE borrow_transactions DROP CONSTRAINT chk_status_valid');
-			} catch (\Throwable $inner) {
-				// Ignore if constraint does not exist or engine does not support CHECK constraints.
+				$this->db->query('ALTER TABLE borrow_transactions DROP CHECK chk_status_valid');
+			} catch (\Throwable $e) {
+				try {
+					$this->db->query('ALTER TABLE borrow_transactions DROP CONSTRAINT chk_status_valid');
+				} catch (\Throwable $inner) {
+					// Ignore if constraint does not exist or syntax differs.
+				}
 			}
 		}
-		
-		// Drop column
-		$this->forge->dropColumn('borrow_transactions', 'deleted_at');
+
+		if ($this->columnExists('borrow_transactions', 'deleted_at')) {
+			$this->forge->dropColumn('borrow_transactions', 'deleted_at');
+		}
+	}
+
+	private function columnExists(string $table, string $column): bool
+	{
+		$dbName = $this->db->getDatabase();
+		$result = $this->db->query(
+			"SELECT column_name
+			 FROM information_schema.columns
+			 WHERE table_schema = ?
+			   AND table_name = ?
+			   AND column_name = ?",
+			[$dbName, $table, $column]
+		)->getRowArray();
+
+		return !empty($result);
+	}
+
+	private function checkConstraintExists(string $table, string $constraintName): bool
+	{
+		$dbName = $this->db->getDatabase();
+		$result = $this->db->query(
+			"SELECT constraint_name
+			 FROM information_schema.table_constraints
+			 WHERE table_schema = ?
+			   AND table_name = ?
+			   AND constraint_type = 'CHECK'
+			   AND constraint_name = ?",
+			[$dbName, $table, $constraintName]
+		)->getRowArray();
+
+		return !empty($result);
 	}
 }

@@ -20,6 +20,11 @@ class DatabaseSeeder extends Seeder
         echo "Seeding users...\n";
         $this->call('UserSeeder');
 
+        // 2.1 Map legacy users.role string into RBAC user_roles rows
+        // Required for fresh clones so permission checks work immediately.
+        echo "Migrating users to RBAC role assignments...\n";
+        $this->call('MigrateExistingUsers');
+
         // 3. Seed locations and folders
         echo "Seeding folders and locations...\n";
         $this->call('FolderSeeder');
