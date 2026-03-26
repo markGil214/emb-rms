@@ -33,8 +33,8 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
         <!-- Header Item -->
         <li class="bg-green-700 text-white mb-4">
             <div class="flex items-center ml-7">
-                <img src="/images/EMB-Logo.png" alt="EMB Records Logo" class="w-10 h-10 ml-4">
-                <h2 x-show="sidebarOpen" x-transition class="text-10x1 font-bold ml-2">EMBRMS</h2>
+                <img src="/images/EMB-Logo.png" alt="EMB Records Logo" class="w-10 h-10 ml-9">
+                <h2 x-show="sidebarOpen" x-transition class="text-11x1 font-bold ml-2">RMS</h2>
             </div>
             <hr class ="mt-4">
         </li>
