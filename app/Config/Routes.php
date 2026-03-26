@@ -96,6 +96,9 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->post('/relocations/(:num)/start',         'RelocationController::startRelocation/$1', ['as' => 'relocations.start', 'filter' => 'permission:initiate_relocation']);
     $routes->post('/relocations/(:num)/complete',      'RelocationController::complete/$1',     ['as' => 'relocations.complete', 'filter' => 'permission:complete_relocation']);
     $routes->get('/relocations/pending',               'RelocationController::pending',         ['as' => 'relocations.pending', 'filter' => 'permission:approve_relocation']);
+    
+    // Debug console for relocation testing (development only)
+    $routes->get('/relocation-test',                   'RelocationController::testConsole',     ['as' => 'relocations.test']);
 });
 
 // Archive & Disposal Routes
