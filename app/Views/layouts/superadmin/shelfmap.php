@@ -6,6 +6,8 @@
         sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false',
         searchQuery: '',
         selectedShelf: null,
+        selectedRack: null,
+        rackFolders: [],
         clickX: 0,
         clickY: 0,
         hoverX: 0,
@@ -181,6 +183,38 @@
             console.log('Managing shelf:', shelf.name);
             // You can add management functionality here
             alert(`Managing ${shelf.name}\n\nStatus: ${shelf.data.status}\nAvailable space: ${shelf.data.capacity - shelf.data.occupied}`);
+        },
+        showRackFolders(rackNumber) {
+            // Simulate fetching folders for the selected rack
+            this.rackFolders = [
+                { id: 1, file_code: 'F001', company_name: 'Company A', location_code: '1A', status: 'Available' },
+                { id: 2, file_code: 'F002', company_name: 'Company B', location_code: '1A', status: 'Available' },
+                { id: 3, file_code: 'F003', company_name: 'Company C', location_code: '1A', status: 'Borrowed' },
+                { id: 4, file_code: 'F004', company_name: 'Company D', location_code: '1A', status: 'Available' },
+                { id: 5, file_code: 'F005', company_name: 'Company E', location_code: '1A', status: 'Available' }
+            ];
+            
+            // You can customize folders based on rack number
+            if (rackNumber === 2) {
+                this.rackFolders = [
+                    { id: 6, file_code: 'F006', company_name: 'Company F', location_code: '1B', status: 'Available' },
+                    { id: 7, file_code: 'F007', company_name: 'Company G', location_code: '1B', status: 'Available' },
+                    { id: 8, file_code: 'F008', company_name: 'Company H', location_code: '1B', status: 'Archived' }
+                ];
+            } else if (rackNumber === 3) {
+                this.rackFolders = [
+                    { id: 9, file_code: 'F009', company_name: 'Company I', location_code: '1C', status: 'Available' },
+                    { id: 10, file_code: 'F010', company_name: 'Company J', location_code: '1C', status: 'Available' },
+                    { id: 11, file_code: 'F011', company_name: 'Company K', location_code: '1C', status: 'Borrowed' },
+                    { id: 12, file_code: 'F012', company_name: 'Company L', location_code: '1C', status: 'Available' }
+                ];
+            } else if (rackNumber === 4) {
+                this.rackFolders = [
+                    { id: 13, file_code: 'F013', company_name: 'Company M', location_code: '1D', status: 'Available' },
+                    { id: 14, file_code: 'F014', company_name: 'Company N', location_code: '1D', status: 'Available' },
+                    { id: 15, file_code: 'F015', company_name: 'Company O', location_code: '1D', status: 'Available' }
+                ];
+            }
         }
     }" x-init="
         window.addEventListener('storage', (e) => { 
@@ -192,8 +226,13 @@
         
         <!-- Header -->
         <div class="p-4 bg-white border-b border-gray-200">
-            <h2 class="text-xl font-bold text-gray-900">Shelf Map & Search</h2>
-            <p class="text-gray-600 text-sm">Manage and search through document shelves</p>
+            <div class="flex items-center">
+                <img src="<?= base_url('images/EMB-Logo.png') ?>" alt="EMB Logo" class="w-10 h-10 mr-3">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">Shelf Map & Search</h2>
+                    <p class="text-gray-600 text-sm">Manage and search through document shelves</p>
+                </div>
+            </div>
         </div>
 
         <!-- Search -->
@@ -259,72 +298,164 @@
                         </div>
                         
                                                 
-                        <!-- Clicked Shelf Info -->
-                        <div x-show="clickedArea" 
-                             x-transition:enter="transition ease-out duration-200"
-                             class="absolute bottom-2 left-2 bg-white rounded-lg shadow-lg p-4 max-w-xs">
-                            <div class="flex items-center justify-between mb-3">
-                                <h4 class="font-bold text-lg text-gray-900" x-text="clickedArea?.name"></h4>
-                                <button @click="clickedArea = null" class="text-gray-400 hover:text-gray-600">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </div>
+            </div>
+        </div>
+
+        <!-- Shelf Details Popup Container -->
+        <div class="p-4 bg-gray-50">
+            <div x-show="clickedArea" 
+                 x-transition:enter="transition ease-out duration-200"
+                 class="bg-white rounded-lg shadow-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h4 class="font-bold text-lg text-gray-900" x-text="clickedArea?.name"></h4>
+                        <p class="text-sm text-gray-600" x-text="clickedArea?.description"></p>
+                    </div>
+                    <button @click="clickedArea = null" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Shelf Data -->
+                <div x-show="clickedArea?.data" class="space-y-4">
+                    <!-- Occupancy Info -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-medium text-gray-700">Occupancy</span>
+                            <span class="text-xs px-2 py-1 rounded-full"
+                                  :class="clickedArea.data.status === 'Critical' ? 'bg-red-100 text-red-800' : 
+                                          clickedArea.data.status === 'High' ? 'bg-yellow-100 text-yellow-800' : 
+                                          'bg-green-100 text-green-800'"
+                                  x-text="clickedArea.data.status"></span>
+                        </div>
+                        <div class="text-xl font-bold text-gray-900">
+                            <span x-text="clickedArea.data.occupied"></span> / 
+                            <span x-text="clickedArea.data.capacity"></span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 mt-3">
+                            <div class="h-3 rounded-full transition-all duration-300"
+                                 :class="clickedArea.data.status === 'Critical' ? 'bg-red-500' : 
+                                          clickedArea.data.status === 'High' ? 'bg-yellow-500' : 
+                                          'bg-green-500'"
+                                 :style="`width: ${(clickedArea.data.occupied / clickedArea.data.capacity) * 100}%`"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Rack Sections -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="text-sm font-medium text-gray-700 mb-3">Rack Sections</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <!-- Rack 1 -->
+                            <div @click="selectedRack = 1; showRackFolders(1)" 
+                                 class="bg-white p-3 rounded border border-gray-200 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all">
+                                <div class="flex items-center mb-2">
+                                    <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                                     </svg>
-                                </button>
-                            </div>
-                            
-                            <!-- Shelf Data -->
-                            <div x-show="clickedArea?.data" class="space-y-3">
-                                <!-- Occupancy Info -->
-                                <div class="bg-gray-50 p-3 rounded">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="text-sm font-medium text-gray-700">Occupancy</span>
-                                        <span class="text-xs px-2 py-1 rounded"
-                                              :class="clickedArea.data.status === 'Critical' ? 'bg-red-100 text-red-800' : 
-                                                      clickedArea.data.status === 'High' ? 'bg-yellow-100 text-yellow-800' : 
-                                                      'bg-green-100 text-green-800'"
-                                              x-text="clickedArea.data.status"></span>
-                                    </div>
-                                    <div class="text-lg font-bold text-gray-900">
-                                        <span x-text="clickedArea.data.occupied"></span> / 
-                                        <span x-text="clickedArea.data.capacity"></span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                                        <div class="h-2 rounded-full transition-all duration-300"
-                                             :class="clickedArea.data.status === 'Critical' ? 'bg-red-500' : 
-                                                      clickedArea.data.status === 'High' ? 'bg-yellow-500' : 
-                                                      'bg-green-500'"
-                                             :style="`width: ${(clickedArea.data.occupied / clickedArea.data.capacity) * 100}%`"></div>
-                                    </div>
+                                    <span class="font-semibold text-sm">Rack 1</span>
                                 </div>
-                                
-                                <!-- Documents -->
-                                <div class="bg-gray-50 p-3 rounded">
-                                    <h5 class="text-sm font-medium text-gray-700 mb-2">Documents</h5>
-                                    <div class="space-y-1">
-                                        <template x-for="doc in clickedArea.data.documents" :key="doc">
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-600" x-text="doc"></span>
-                                                <button class="text-blue-600 hover:text-blue-800">View</button>
-                                            </div>
-                                        </template>
-                                        <div x-show="clickedArea.data.documents.length === 0" class="text-xs text-gray-500">
-                                            No documents
-                                        </div>
-                                    </div>
+                                <div class="text-xs text-gray-600">25 documents</div>
+                                <div class="text-xs text-green-600">Available: 5</div>
+                                <div class="mt-2 text-xs">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded">Good</span>
                                 </div>
                             </div>
                             
-                            <p class="text-xs text-gray-600" x-text="clickedArea?.description"></p>
+                            <!-- Rack 2 -->
+                            <div @click="selectedRack = 2; showRackFolders(2)" 
+                                 class="bg-white p-3 rounded border border-gray-200 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all">
+                                <div class="flex items-center mb-2">
+                                    <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    <span class="font-semibold text-sm">Rack 2</span>
+                                </div>
+                                <div class="text-xs text-gray-600">30 documents</div>
+                                <div class="text-xs text-yellow-600">Available: 0</div>
+                                <div class="mt-2 text-xs">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">High</span>
+                                </div>
+                            </div>
                             
-                            <div class="mt-3 flex space-x-2">
-                                <button @click="viewShelfDetails(clickedArea)" 
-                                        class="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-                                    View Details
-                                </button>
-                                <button @click="manageShelf(clickedArea)" 
-                                        class="text-xs bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
-                                    Manage
-                                </button>
+                            <!-- Rack 3 -->
+                            <div @click="selectedRack = 3; showRackFolders(3)" 
+                                 class="bg-white p-3 rounded border border-gray-200 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all">
+                                <div class="flex items-center mb-2">
+                                    <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    <span class="font-semibold text-sm">Rack 3</span>
+                                </div>
+                                <div class="text-xs text-gray-600">28 documents</div>
+                                <div class="text-xs text-green-600">Available: 2</div>
+                                <div class="mt-2 text-xs">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded">Good</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Rack 4 -->
+                            <div @click="selectedRack = 4; showRackFolders(4)" 
+                                 class="bg-white p-3 rounded border border-gray-200 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all">
+                                <div class="flex items-center mb-2">
+                                    <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    <span class="font-semibold text-sm">Rack 4</span>
+                                </div>
+                                <div class="text-xs text-gray-600">22 documents</div>
+                                <div class="text-xs text-green-600">Available: 8</div>
+                                <div class="mt-2 text-xs">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded">Good</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Rack Folders Display -->
+                    <div x-show="selectedRack" x-transition:enter="transition ease-out duration-200" class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <h5 class="text-sm font-medium text-blue-900">Rack <span x-text="selectedRack"></span> - Folders</h5>
+                            <button @click="selectedRack = null" class="text-blue-600 hover:text-blue-800">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                            <template x-for="folder in rackFolders" :key="folder.id">
+                                <div class="bg-white p-3 rounded border border-blue-200">
+                                    <div class="flex items-center mb-2">
+                                        <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        <span class="font-semibold text-sm text-gray-900" x-text="folder.file_code"></span>
+                                    </div>
+                                    <div class="text-xs text-gray-600" x-text="folder.company_name"></div>
+                                    <div class="text-xs text-gray-500 mt-1">Location: <span x-text="folder.location_code"></span></div>
+                                    <div class="mt-2 flex justify-between">
+                                        <span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded" x-text="folder.status"></span>
+                                        <button class="text-xs text-blue-600 hover:text-blue-800 font-medium">View</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Documents -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="text-sm font-medium text-gray-700 mb-3">Recent Documents (<span x-text="clickedArea.data.documents.length"></span>)</h5>
+                        <div class="space-y-2 max-h-20 overflow-y-auto">
+                            <template x-for="doc in clickedArea.data.documents" :key="doc">
+                                <div class="flex items-center justify-between text-xs p-2 bg-white rounded border border-gray-200">
+                                    <span class="text-gray-700" x-text="doc"></span>
+                                    <button class="text-blue-600 hover:text-blue-800 font-medium">View</button>
+                                </div>
+                            </template>
+                            <div x-show="clickedArea.data.documents.length === 0" class="text-xs text-gray-500 text-center py-2">
+                                No documents in this shelf
                             </div>
                         </div>
                     </div>

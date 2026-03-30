@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= isset($title) ? esc($title) . ' - ' : '' ?>EMB Records System</title>
+    <link rel="icon" type="image/x-icon" href="<?= base_url('images/EMB-Logo.png') ?>">
+    <link rel="shortcut icon" href="<?= base_url('images/EMB-Logo.png') ?>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -233,6 +235,7 @@
         <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20 max-w-100%">
             <div class="px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center space-x-4">
+                    <img src="<?= base_url('images/EMB-Logo.png') ?>" alt="EMB Logo" class="w-10 h-10 mr-2">
                     <h1 class="text-2xl font-bold text-gray-900"><?= isset($title) ? esc($title) : 'Dashboard' ?></h1>
                 </div>
                 
