@@ -536,6 +536,18 @@ $routes->get('/test-permission-filter', function() {
 
 }, ['filter' => 'permission:approve_disposal']);
 
+
+
+// TEST API ENDPOINT
+$routes->get('api/test', function() {
+    return json_encode(['status' => 'ok', 'message' => 'API routing works!']);
+});
+
+// API Routes - Shelf Map Data
+$routes->get('api/shelfmap/data',          'Api\ShelfMapApiController::getShelfData',     ['as' => 'api.shelfmap.data']);
+$routes->get('api/shelfmap/location/(:num)', 'Api\ShelfMapApiController::getFoldersByLocation/$1', ['as' => 'api.shelfmap.location']);
+$routes->get('api/shelfmap/search',        'Api\ShelfMapApiController::searchFolders',     ['as' => 'api.shelfmap.search']);
+
 /*
 
  * --------------------------------------------------------------------
