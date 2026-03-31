@@ -109,66 +109,8 @@
                     <!-- Rack Sections -->
                     <div class="bg-gray-50 p-4 rounded-lg">
                         <h5 class="text-sm font-medium text-gray-700 mb-3">Rack Sections</h5>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <!-- Rack 1 -->
-                            <div class="rack-section bg-white p-3 rounded border border-gray-200 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all" data-rack="1">
-                                <div class="flex items-center mb-2">
-                                    <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                                    </svg>
-                                    <span class="font-semibold text-sm">Rack 1</span>
-                                </div>
-                                <div class="text-xs text-gray-600">25 documents</div>
-                                <div class="text-xs text-green-600">Available: 5</div>
-                                <div class="mt-2 text-xs">
-                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded">Good</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Rack 2 -->
-                            <div class="rack-section bg-white p-3 rounded border border-gray-200 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all" data-rack="2">
-                                <div class="flex items-center mb-2">
-                                    <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6A2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                                    </svg>
-                                    <span class="font-semibold text-sm">Rack 2</span>
-                                </div>
-                                <div class="text-xs text-gray-600">30 documents</div>
-                                <div class="text-xs text-yellow-600">Available: 0</div>
-                                <div class="mt-2 text-xs">
-                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">High</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Rack 3 -->
-                            <div class="rack-section bg-white p-3 rounded border border-gray-200 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all" data-rack="3">
-                                <div class="flex items-center mb-2">
-                                    <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6A2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                                    </svg>
-                                    <span class="font-semibold text-sm">Rack 3</span>
-                                </div>
-                                <div class="text-xs text-gray-600">28 documents</div>
-                                <div class="text-xs text-green-600">Available: 2</div>
-                                <div class="mt-2 text-xs">
-                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded">Good</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Rack 4 -->
-                            <div class="rack-section bg-white p-3 rounded border border-gray-200 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all" data-rack="4">
-                                <div class="flex items-center mb-2">
-                                    <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6A2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                                    </svg>
-                                    <span class="font-semibold text-sm">Rack 4</span>
-                                </div>
-                                <div class="text-xs text-gray-600">22 documents</div>
-                                <div class="text-xs text-green-600">Available: 8</div>
-                                <div class="mt-2 text-xs">
-                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded">Good</span>
-                                </div>
-                            </div>
+                        <div id="racksContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <!-- Racks will be dynamically populated here -->
                         </div>
                     </div>
                     
@@ -295,107 +237,10 @@ class ShelfMapApp {
         this.showHoverCoordinates = true;
         this.clickedArea = null;
         
-        // Shelf areas data
-        this.areas = [
-            // Yellow Shelves (Bottom Row)
-            { 
-                id: 'shelf1-yellow', 
-                name: 'Shelf 1 (Yellow)', 
-                description: 'Yellow section - Contains 85/100 documents - High occupancy',
-                bounds: { x1: 45, y1: 75, x2: 49, y2: 79 },
-                data: { capacity: 100, occupied: 85, documents: ['DOC-001', 'DOC-002', 'DOC-003'], status: 'High', color: 'yellow' }
-            },
-            { 
-                id: 'shelf2-yellow', 
-                name: 'Shelf 2 (Yellow)', 
-                description: 'Yellow section - Contains 92/100 documents - Critical occupancy',
-                bounds: { x1: 53, y1: 75, x2: 57, y2: 79 },
-                data: { capacity: 100, occupied: 92, documents: ['DOC-004', 'DOC-005'], status: 'Critical', color: 'yellow' }
-            },
-            { 
-                id: 'shelf3-yellow', 
-                name: 'Shelf 3 (Yellow)', 
-                description: 'Yellow section - Contains 120/150 documents - High occupancy',
-                bounds: { x1: 61, y1: 74, x2: 65, y2: 78 },
-                data: { capacity: 150, occupied: 120, documents: ['DOC-006', 'DOC-007', 'DOC-008'], status: 'High', color: 'yellow' }
-            },
-            
-            // Blue Shelves (Top Row)
-            { 
-                id: 'shelf1-blue', 
-                name: 'Shelf 1 (Blue)', 
-
-                bounds: { x1: 51, y1: 28, x2: 55, y2: 32 },
-                data: { capacity: 150, occupied: 75, documents: ['DOC-009'], status: 'Good', color: 'blue' }
-            },
-            { 
-                id: 'shelf2-blue', 
-                name: 'Shelf 2 (Blue)', 
-                description: 'Blue section - Contains 60/80 documents - Good occupancy',
-                bounds: { x1: 60, y1: 28, x2: 64, y2: 32 },
-                data: { capacity: 80, occupied: 60, documents: ['DOC-010', 'DOC-011'], status: 'Good', color: 'blue' }
-            },
-            { 
-                id: 'shelf3-blue', 
-                name: 'Shelf 3 (Blue)', 
-                description: 'Blue section - Contains 45/90 documents - Good occupancy',
-                bounds: { x1: 71, y1: 29, x2: 75, y2: 33 },
-                data: { capacity: 90, occupied: 45, documents: ['DOC-012', 'DOC-013'], status: 'Good', color: 'blue' }
-            },
-            { 
-                id: 'shelf4-blue', 
-                name: 'Shelf 4 (Blue)', 
-                description: 'Blue section - Contains 30/70 documents - Good occupancy',
-                bounds: { x1: 83, y1: 28, x2: 87, y2: 32 },
-                data: { capacity: 70, occupied: 30, documents: ['DOC-014'], status: 'Good', color: 'blue' }
-            },
-            { 
-                id: 'shelf5-blue', 
-                name: 'Shelf 5 (Blue)', 
-                description: 'Blue section - Contains 25/60 documents - Good occupancy',
-                bounds: { x1: 90, y1: 30, x2: 94, y2: 34 },
-                data: { capacity: 60, occupied: 25, documents: [], status: 'Good', color: 'blue' }
-            },
-            { 
-                id: 'shelf6-blue', 
-                name: 'Shelf 6 (Blue)', 
-                description: 'Blue section - Contains 40/80 documents - Good occupancy',
-                bounds: { x1: 46, y1: 42, x2: 50, y2: 46 },
-                data: { capacity: 80, occupied: 40, documents: ['DOC-015', 'DOC-016'], status: 'Good', color: 'blue' }
-            },
-            
-            // Red Shelves (Bottom Right Row)
-            { 
-                id: 'shelf1-red', 
-                name: 'Shelf 1 (Red)', 
-                description: 'Red section - Contains 95/100 documents - Critical occupancy',
-                bounds: { x1: 70, y1: 75, x2: 74, y2: 79 },
-                data: { capacity: 100, occupied: 95, documents: ['DOC-017', 'DOC-018', 'DOC-019'], status: 'Critical', color: 'red' }
-            },
-            { 
-                id: 'shelf2-red', 
-                name: 'Shelf 2 (Red)', 
-                description: 'Red section - Contains 88/100 documents - High occupancy',
-                bounds: { x1: 77, y1: 74, x2: 81, y2: 78 },
-                data: { capacity: 100, occupied: 88, documents: ['DOC-020', 'DOC-021'], status: 'High', color: 'red' }
-            },
-            { 
-                id: 'shelf3-red', 
-                name: 'Shelf 3 (Red)', 
-                description: 'Red section - Contains 70/90 documents - High occupancy',
-                bounds: { x1: 85, y1: 74, x2: 89, y2: 78 },
-                data: { capacity: 90, occupied: 70, documents: ['DOC-022', 'DOC-023', 'DOC-024'], status: 'High', color: 'red' }
-            }
-        ];
-        
-        this.shelves = [
-            { id: 'A1', name: 'Shelf A-1', capacity: 100, occupied: 85, documents: ['DOC-001', 'DOC-002', 'DOC-003'] },
-            { id: 'A2', name: 'Shelf A-2', capacity: 100, occupied: 92, documents: ['DOC-004', 'DOC-005'] },
-            { id: 'B1', name: 'Shelf B-1', capacity: 150, occupied: 120, documents: ['DOC-006', 'DOC-007', 'DOC-008'] },
-            { id: 'B2', name: 'Shelf B-2', capacity: 150, occupied: 75, documents: ['DOC-009'] },
-            { id: 'C1', name: 'Shelf C-1', capacity: 80, occupied: 60, documents: ['DOC-010', 'DOC-011'] },
-            { id: 'C2', name: 'Shelf C-2', capacity: 80, occupied: 40, documents: [] }
-        ];
+        // Will be populated from API
+        this.areas = [];
+        this.shelves = [];
+        this.locations = [];
         
         this.init();
     }
@@ -403,6 +248,55 @@ class ShelfMapApp {
     init() {
         this.bindEvents();
         this.updateSidebarState();
+        this.loadShelfData(); // Fetch data from API
+    }
+    
+    /**
+     * Fetch shelf data from the API
+     */
+    async loadShelfData() {
+        try {
+            const response = await fetch('<?= base_url('api/shelfmap/data') ?>', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error Response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: errorText.substring(0, 500)
+                });
+                throw new Error(`API Error ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            if (result.status === 'success' && result.data) {
+                this.areas = result.data.areas || [];
+                this.shelves = result.data.shelves || [];
+                this.locations = result.data.locations || [];
+                
+                console.log('✓ Shelf data loaded successfully', {
+                    areas: this.areas.length,
+                    shelves: this.shelves.length,
+                    locations: this.locations.length,
+                    totalFolders: result.data.totalFolders,
+                    totalLocations: result.data.totalLocations
+                });
+            } else {
+                console.warn('API returned unexpected data:', result);
+                throw new Error(result.message || 'No data returned from API');
+            }
+        } catch (error) {
+            console.error('Error loading shelf data from API:', error);
+            alert(`Failed to load shelf data: ${error.message}. Check browser console and server logs.`);
+        }
     }
     
     bindEvents() {
@@ -433,13 +327,14 @@ class ShelfMapApp {
             this.showHoverCoordinates = true;
         });
         
-        // Rack sections
-        document.querySelectorAll('.rack-section').forEach(rack => {
-            rack.addEventListener('click', (e) => {
-                const rackNumber = parseInt(e.currentTarget.dataset.rack);
+        // Rack sections - use event delegation for dynamic content
+        document.getElementById('racksContainer').addEventListener('click', (e) => {
+            const rackSection = e.target.closest('.rack-section');
+            if (rackSection) {
+                const rackNumber = parseInt(rackSection.dataset.locationId);
                 this.selectedRack = rackNumber;
                 this.showRackFolders(rackNumber);
-            });
+            }
         });
         
         // Modal controls
@@ -482,10 +377,11 @@ class ShelfMapApp {
     get filteredShelves() {
         if (!this.searchQuery) return this.shelves;
         
+        const query = this.searchQuery.toLowerCase();
         return this.shelves.filter(shelf => 
-            shelf.id.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-            shelf.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-            shelf.documents.some(doc => doc.toLowerCase().includes(this.searchQuery.toLowerCase()))
+            shelf.id?.toLowerCase().includes(query) ||
+            shelf.name?.toLowerCase().includes(query) ||
+            shelf.documents?.some(doc => doc.toLowerCase().includes(query))
         );
     }
     
@@ -558,12 +454,24 @@ class ShelfMapApp {
     }
     
     getClickedArea(x, y) {
-        return this.areas.find(area => 
+        // Find all areas that contain the click point
+        const matchingAreas = this.areas.filter(area => 
             x >= area.bounds.x1 && 
             x <= area.bounds.x2 && 
             y >= area.bounds.y1 && 
             y <= area.bounds.y2
         );
+        
+        // If multiple areas match, return the one with the smallest area (most specific)
+        if (matchingAreas.length > 1) {
+            return matchingAreas.reduce((smallest, current) => {
+                const currentSize = (current.bounds.x2 - current.bounds.x1) * (current.bounds.y2 - current.bounds.y1);
+                const smallestSize = (smallest.bounds.x2 - smallest.bounds.x1) * (smallest.bounds.y2 - smallest.bounds.y1);
+                return currentSize < smallestSize ? current : smallest;
+            });
+        }
+        
+        return matchingAreas[0];
     }
     
     showAreaDetails() {
@@ -621,38 +529,25 @@ class ShelfMapApp {
         document.getElementById('documentCount').textContent = this.clickedArea.data.documents.length;
         shelfData.classList.remove('hidden');
         details.classList.remove('hidden');
+        
+        // Render racks for this cabinet
+        this.renderRacksForCabinet();
     }
     
     showRackFolders(rackNumber) {
-        // Simulate fetching folders for selected rack
-        this.rackFolders = [
-            { id: 1, file_code: 'F001', company_name: 'Company A', location_code: '1A', status: 'Available' },
-            { id: 2, file_code: 'F002', company_name: 'Company B', location_code: '1A', status: 'Available' },
-            { id: 3, file_code: 'F003', company_name: 'Company C', location_code: '1A', status: 'Borrowed' },
-            { id: 4, file_code: 'F004', company_name: 'Company D', location_code: '1A', status: 'Available' },
-            { id: 5, file_code: 'F005', company_name: 'Company E', location_code: '1A', status: 'Available' }
-        ];
-        
-        // Customize folders based on rack number
-        if (rackNumber === 2) {
-            this.rackFolders = [
-                { id: 6, file_code: 'F006', company_name: 'Company F', location_code: '1B', status: 'Available' },
-                { id: 7, file_code: 'F007', company_name: 'Company G', location_code: '1B', status: 'Available' },
-                { id: 8, file_code: 'F008', company_name: 'Company H', location_code: '1B', status: 'Archived' }
-            ];
-        } else if (rackNumber === 3) {
-            this.rackFolders = [
-                { id: 9, file_code: 'F009', company_name: 'Company I', location_code: '1C', status: 'Available' },
-                { id: 10, file_code: 'F010', company_name: 'Company J', location_code: '1C', status: 'Available' },
-                { id: 11, file_code: 'F011', company_name: 'Company K', location_code: '1C', status: 'Borrowed' },
-                { id: 12, file_code: 'F012', company_name: 'Company L', location_code: '1C', status: 'Available' }
-            ];
-        } else if (rackNumber === 4) {
-            this.rackFolders = [
-                { id: 13, file_code: 'F013', company_name: 'Company M', location_code: '1D', status: 'Available' },
-                { id: 14, file_code: 'F014', company_name: 'Company N', location_code: '1D', status: 'Available' },
-                { id: 15, file_code: 'F015', company_name: 'Company O', location_code: '1D', status: 'Available' }
-            ];
+        // Get the location for this rack from the areas array
+        if (rackNumber <= this.areas.length) {
+            const area = this.areas[rackNumber - 1];
+            // Use the documents that are already loaded in the area data
+            this.rackFolders = area.data.documents.map((fileCode, index) => ({
+                id: index + 1,
+                file_code: fileCode,
+                company_name: '',
+                location_code: area.data.cabinet + area.data.rack,
+                status: 'Available'
+            })) || [];
+        } else {
+            this.rackFolders = [];
         }
         
         this.renderRackFolders();
@@ -687,6 +582,41 @@ class ShelfMapApp {
         });
         
         rackFoldersDisplay.classList.remove('hidden');
+    }
+    
+    renderRacksForCabinet() {
+        const racksContainer = document.getElementById('racksContainer');
+        racksContainer.innerHTML = '';
+        
+        // Extract cabinet name from clicked area
+        const cabinetName = this.clickedArea.name.split(' - ')[0]; // e.g., "Cabinet 2"
+        
+        // Filter areas to get all racks in this cabinet
+        const rackAreas = this.areas.filter(area => area.name.includes(cabinetName));
+        
+        rackAreas.forEach((area, index) => {
+            const rackDiv = document.createElement('div');
+            rackDiv.className = 'rack-section bg-white p-3 rounded border border-gray-200 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all';
+            rackDiv.dataset.locationId = area.data.location_id;
+            rackDiv.innerHTML = `
+                <div class="flex items-center mb-2">
+                    <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    <span class="font-semibold text-sm">${area.name.split(' - ')[1]}</span>
+                </div>
+                <div class="text-xs text-gray-600">${area.data.occupied} documents</div>
+                <div class="text-xs text-blue-600">Available: ${area.data.capacity - area.data.occupied}</div>
+                <div class="mt-2 text-xs">
+                    <span class="px-2 py-1 ${
+                        area.data.status === 'Critical' ? 'bg-red-100 text-red-800' :
+                        area.data.status === 'High' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                    } rounded">${area.data.status}</span>
+                </div>
+            `;
+            racksContainer.appendChild(rackDiv);
+        });
     }
     
     getOccupancyColor(percentage) {
