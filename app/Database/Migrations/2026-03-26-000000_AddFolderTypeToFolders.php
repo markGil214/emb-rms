@@ -8,11 +8,22 @@ class AddFolderTypeToFolders extends Migration
 {
     public function up()
     {
-        // No-op: This migration is a placeholder for database consistency
+        if (! $this->db->fieldExists('folder_type', 'folders')) {
+            $this->forge->addColumn('folders', [
+                'folder_type' => [
+                    'type'       => 'VARCHAR',
+                    'constraint' => 50,
+                    'null'       => true,
+                    'after'      => 'company_name',
+                ],
+            ]);
+        }
     }
 
     public function down()
     {
-        // No-op
+        if ($this->db->fieldExists('folder_type', 'folders')) {
+            $this->forge->dropColumn('folders', 'folder_type');
+        }
     }
 }
