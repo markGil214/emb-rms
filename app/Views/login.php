@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EMB Records System - Login</title>
     <link rel="stylesheet" href="assets/css/tailwind.css">
+    <link rel="stylesheet" href="/css/loading-animation.css">
 </head>
 
 <body class="font-sans bg-gradient-to-br from-green-50 to-white min-h-screen flex items-center justify-center p-5">
@@ -94,6 +95,9 @@
         </div>
     </div>
 
+    <!-- Loading Animation Script -->
+    <script src="/js/loading-animation.js"></script>
+    
     <script>
         // Add input animations
         document.querySelectorAll('input').forEach(input => {
@@ -122,6 +126,22 @@
                 eyeIcon.classList.remove('hidden');
                 eyeSlashIcon.classList.add('hidden');
             }
+        });
+
+        // Login form submission with loading animation
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading animation
+            showLoading();
+            
+            // Get form data
+            const formData = new FormData(this);
+            
+            // Submit form after showing loading
+            setTimeout(() => {
+                this.submit();
+            }, 500);
         });
     </script>
 </body>

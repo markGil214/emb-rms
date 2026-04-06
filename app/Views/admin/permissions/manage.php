@@ -4,7 +4,7 @@
 <div class="max-w-8xl mx-auto">
 	<!-- Header -->
 	<div class="mb-8">
-		<h1 class="text-4xl font-bold text-gray-900">Team & Permissions</h1>
+	
 		<p class="text-gray-600 mt-2">Control access levels and assign roles to your team</p>
 	</div>
 

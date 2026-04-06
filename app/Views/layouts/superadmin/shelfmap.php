@@ -46,8 +46,8 @@
         <div class="p-4 bg-gray-100">
             <div class="bg-white rounded-lg shadow p-4">
                 <div class="mb-3 text-center">
-                    <h3 class="text-base font-semibold text-gray-900">RMS Layout</h3>
-                    <p class="text-xs text-gray-600">Document management system layout</p>
+                    <h3 class="text-base font-semibold text-gray-900">Cabinet Layout</h3>
+                    <p class="text-xs text-gray-600">Document storage cabinet visualization</p>
                 </div>
                 
                 <!-- Interactive Layout Image -->
@@ -70,73 +70,174 @@
                         <div id="clickCoordinates" class="absolute top-2 right-2 bg-blue-600 bg-opacity-75 text-white text-xs px-2 py-1 rounded hidden">
                             <span id="clickText">Click: X=0, Y=0</span>
                         </div>
+                        
+                        <!-- Click Animation Effect -->
+                        <div id="clickAnimation" class="absolute pointer-events-none hidden">
+                            <div class="w-8 h-8 border-4 border-blue-500 rounded-full animate-ping"></div>
+                        </div>
+                        
+                                                
+                        <!-- Brenda Location Indicator - Hover Profile Card -->
+                        <div 
+                            id="brendaLocation"
+                            class="absolute hidden"
+                            style="left: 39%; top: 35%;"
+                        >
+                            <!-- Profile Card -->
+                            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-white rounded shadow-xl p-1 border border-purple-200 animate-bounce-in" style="width: 4%; height: 5%; min-width: 64px; min-height: 80px; max-width: 96px; max-height: 120px;">
+                                <div class="flex flex-col items-center justify-center h-full">
+                                    <!-- MB Icon -->
+                                    <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mb-1">
+                                        <span class="text-xs font-bold text-purple-700">MB</span>
+                                    </div>
+                                    <!-- Name -->
+                                    <div class="text-center">
+                                        <div class="font-semibold text-gray-900 text-xs">Ma'am Brenda</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Arlene Location Indicator - Hover Profile Card -->
+                        <div 
+                            id="arleneLocation"
+                            class="absolute hidden"
+                            style="left: 40%; top: 9%;"
+                        >
+                            <!-- Profile Card -->
+                            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-white rounded shadow-xl p-1 border border-pink-200 animate-bounce-in" style="width: 4%; height: 5%; min-width: 64px; min-height: 80px; max-width: 96px; max-height: 120px;">
+                                <div class="flex flex-col items-center justify-center h-full">
+                                    <!-- MA Icon -->
+                                    <div class="w-6 h-6 bg-pink-100 rounded-full flex items-center justify-center mb-1">
+                                        <span class="text-xs font-bold text-pink-700">MA</span>
+                                    </div>
+                                    <!-- Name -->
+                                    <div class="text-center">
+                                        <div class="font-semibold text-gray-900 text-xs">Ma'am Arlene</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Liza Location Indicator - Hover Profile Card -->
+                        <div 
+                            id="lizaLocation"
+                            class="absolute hidden"
+                            style="left: 19.5%; top: 70%;"
+                        >
+                            <!-- Profile Card -->
+                            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-white rounded shadow-xl p-1 border border-green-200 animate-bounce-in" style="width: 4%; height: 5%; min-width: 64px; min-height: 80px; max-width: 96px; max-height: 120px;">
+                                <div class="flex flex-col items-center justify-center h-full">
+                                    <!-- ML Icon -->
+                                    <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mb-1">
+                                        <span class="text-xs font-bold text-green-700">ML</span>
+                                    </div>
+                                    <!-- Name -->
+                                    <div class="text-center">
+                                        <div class="font-semibold text-gray-900 text-xs">Ma'am Liza</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Shelf Details Popup Container -->
+        <!-- Cabinet Visualization Popup Container -->
         <div class="p-4 bg-gray-50">
-            <div id="clickedAreaDetails" class="bg-white rounded-lg shadow-xl p-6 hidden">
-                <div class="flex items-center justify-between mb-4">
+            <div id="cabinetVisualization" class="bg-white rounded-lg shadow-xl p-6 hidden">
+                <div class="flex items-center justify-between mb-6">
                     <div>
-                        <h4 id="areaName" class="font-bold text-lg text-gray-900">Shelf Details</h4>
-                        <p id="areaDescription" class="text-sm text-gray-600">Description</p>
+                        <h4 id="cabinetName" class="font-bold text-lg text-gray-900">Cabinet Details</h4>
+                        <p id="cabinetDescription" class="text-sm text-gray-600">Click on a rack to view details</p>
                     </div>
-                    <button id="closeDetails" class="text-gray-400 hover:text-gray-600">
+                    <button id="closeCabinet" class="text-gray-400 hover:text-gray-600">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
                 
-                <!-- Shelf Data -->
-                <div id="shelfData" class="space-y-4 hidden">
-                    <!-- Occupancy Info -->
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-sm font-medium text-gray-700">Occupancy</span>
-                            <span id="occupancyStatus" class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">Good</span>
+                <!-- Simplified Cabinet View -->
+                <div id="cabinetContainer" class="bg-gray-100 rounded-lg p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Storage Section (Left) -->
+                        <div>
+                            <h5 class="font-bold text-gray-800 mb-4 text-center">Storage Racks</h5>
+                            <div class="space-y-3">
+                                <!-- Rack A -->
+                                <div class="rack-slot bg-blue-100 border-2 border-blue-300 rounded-lg p-3 cursor-pointer hover:bg-blue-200 transition-all duration-200 hover:shadow-lg" data-rack="A">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-lg font-bold text-blue-800">Rack A</div>
+                                        <div class="text-sm text-gray-600">
+                                            <span class="rack-occupied">0</span>/<span class="rack-capacity">100</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-gray-300 rounded-full h-2 mt-2">
+                                        <div class="rack-occupancy-bar bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Rack B -->
+                                <div class="rack-slot bg-green-100 border-2 border-green-300 rounded-lg p-3 cursor-pointer hover:bg-green-200 transition-all duration-200 hover:shadow-lg" data-rack="B">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-lg font-bold text-green-800">Rack B</div>
+                                        <div class="text-sm text-gray-600">
+                                            <span class="rack-occupied">0</span>/<span class="rack-capacity">100</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-gray-300 rounded-full h-2 mt-2">
+                                        <div class="rack-occupancy-bar bg-green-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Rack C -->
+                                <div class="rack-slot bg-yellow-100 border-2 border-yellow-300 rounded-lg p-3 cursor-pointer hover:bg-yellow-200 transition-all duration-200 hover:shadow-lg" data-rack="C">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-lg font-bold text-yellow-800">Rack C</div>
+                                        <div class="text-sm text-gray-600">
+                                            <span class="rack-occupied">0</span>/<span class="rack-capacity">100</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-gray-300 rounded-full h-2 mt-2">
+                                        <div class="rack-occupancy-bar bg-yellow-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Rack D -->
+                                <div class="rack-slot bg-red-100 border-2 border-red-300 rounded-lg p-3 cursor-pointer hover:bg-red-200 transition-all duration-200 hover:shadow-lg" data-rack="D">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-lg font-bold text-red-800">Rack D</div>
+                                        <div class="text-sm text-gray-600">
+                                            <span class="rack-occupied">0</span>/<span class="rack-capacity">100</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-gray-300 rounded-full h-2 mt-2">
+                                        <div class="rack-occupancy-bar bg-red-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-xl font-bold text-gray-900">
-                            <span id="occupiedCount">0</span> / <span id="capacityCount">0</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3 mt-3">
-                            <div id="occupancyBar" class="h-3 rounded-full transition-all duration-300 bg-green-500" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Rack Sections -->
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h5 class="text-sm font-medium text-gray-700 mb-3">Rack Sections</h5>
-                        <div id="racksContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <!-- Racks will be dynamically populated here -->
-                        </div>
-                    </div>
-                    
-                    <!-- Rack Folders Display -->
-                    <div id="rackFoldersDisplay" class="bg-blue-50 p-4 rounded-lg border border-blue-200 hidden">
-                        <div class="flex items-center justify-between mb-3">
-                            <h5 class="text-sm font-medium text-blue-900">Rack <span id="selectedRackNumber">1</span> - Folders</h5>
-                            <button id="closeRackFolders" class="text-blue-600 hover:text-blue-800">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div id="rackFoldersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                            <!-- Folders will be dynamically added here -->
-                        </div>
-                    </div>
-                    
-                    <!-- Documents -->
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h5 class="text-sm font-medium text-gray-700 mb-3">Recent Documents (<span id="documentCount">0</span>)</h5>
-                        <div id="documentsList" class="space-y-2 max-h-20 overflow-y-auto">
-                            <!-- Documents will be dynamically added here -->
-                        </div>
-                        <div id="noDocuments" class="text-xs text-gray-500 text-center py-2 hidden">
-                            No documents in this shelf
+                        
+                        <!-- Folders Section (Right) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h5 class="font-bold text-gray-800">Folders</h5>
+                                <button id="closeRackDetails" class="text-gray-600 hover:text-gray-800">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="rackFoldersGrid" class="space-y-2 max-h-96 overflow-y-auto">
+                                <div class="text-center text-gray-500 py-8">
+                                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    <p class="text-sm">Select a rack to view folders</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -218,6 +319,16 @@
     
     .fade-in {
         animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes bounce-in {
+        0% { opacity: 0; transform: translate(-50%, -20px) scale(0.3); }
+        50% { transform: translate(-50%, -20px) scale(1.05); }
+        100% { opacity: 1; transform: translate(-50%, -20px) scale(1); }
+    }
+    
+    .animate-bounce-in {
+        animation: bounce-in 0.5s ease-out;
     }
 </style>
 
@@ -327,25 +438,26 @@ class ShelfMapApp {
             this.showHoverCoordinates = true;
         });
         
-        // Rack sections - use event delegation for dynamic content
-        document.getElementById('racksContainer').addEventListener('click', (e) => {
-            const rackSection = e.target.closest('.rack-section');
-            if (rackSection) {
-                const rackNumber = parseInt(rackSection.dataset.locationId);
-                this.selectedRack = rackNumber;
-                this.showRackFolders(rackNumber);
-            }
-        });
-        
-        // Modal controls
-        document.getElementById('closeDetails').addEventListener('click', () => {
+                
+        // Cabinet controls
+        document.getElementById('closeCabinet').addEventListener('click', () => {
             this.clickedArea = null;
-            document.getElementById('clickedAreaDetails').classList.add('hidden');
+            document.getElementById('cabinetVisualization').classList.add('hidden');
         });
         
-        document.getElementById('closeRackFolders').addEventListener('click', () => {
+        document.getElementById('closeRackDetails').addEventListener('click', () => {
             this.selectedRack = null;
-            document.getElementById('rackFoldersDisplay').classList.add('hidden');
+            document.getElementById('selectedRackDetails').classList.add('hidden');
+        });
+        
+        // Rack slot interactions
+        document.getElementById('cabinetContainer').addEventListener('click', (e) => {
+            const rackSlot = e.target.closest('.rack-slot');
+            if (rackSlot) {
+                const rackLetter = rackSlot.dataset.rack;
+                this.animateRackClick(rackSlot);
+                this.showRackDetails(rackLetter);
+            }
         });
         
         document.getElementById('closeModal').addEventListener('click', () => {
@@ -414,6 +526,9 @@ class ShelfMapApp {
         this.clickY = Math.round(y);
         this.showCoordinates = true;
         
+        // Show click animation at click position
+        this.showClickAnimation(event.clientX - rect.left, event.clientY - rect.top);
+        
         // Update coordinates display
         const clickCoords = document.getElementById('clickCoordinates');
         const clickText = document.getElementById('clickText');
@@ -451,6 +566,151 @@ class ShelfMapApp {
         const hoverText = document.getElementById('hoverText');
         hoverText.textContent = `Hover: X=${this.hoverX}, Y=${this.hoverY}`;
         hoverCoords.classList.remove('hidden');
+        
+        // Check if hovering over Brenda's location area
+        this.checkBrendaLocation(x, y);
+    }
+    
+    checkBrendaLocation(x, y) {
+        const brendaLocation = document.getElementById('brendaLocation');
+        const arleneLocation = document.getElementById('arleneLocation');
+        const lizaLocation = document.getElementById('lizaLocation');
+        
+        // Check Brenda's coordinates (x=39-41%, y=35-40%)
+        if ((x >= 39 && x <= 41) && (y >= 35 && y <= 40)) {
+            brendaLocation.classList.remove('hidden');
+        } else {
+            brendaLocation.classList.add('hidden');
+        }
+        
+        // Check Arlene's coordinates (x=40-42%, y=9-13%)
+        if ((x >= 40 && x <= 42) && (y >= 9 && y <= 13)) {
+            arleneLocation.classList.remove('hidden');
+        } else {
+            arleneLocation.classList.add('hidden');
+        }
+        
+        // Check Liza's coordinates (x=15-17%, y=79-82%)
+        if ((x >= 15 && x <= 17) && (y >= 79 && y <= 82)) {
+            lizaLocation.classList.remove('hidden');
+        } else {
+            lizaLocation.classList.add('hidden');
+        }
+    }
+    
+    showClickAnimation(x, y) {
+        const clickAnimation = document.getElementById('clickAnimation');
+        const img = document.getElementById('rmsLayoutImage');
+        const rect = img.getBoundingClientRect();
+        const containerRect = img.parentElement.getBoundingClientRect();
+        
+        // Calculate position relative to the container
+        const relativeX = x + (rect.left - containerRect.left);
+        const relativeY = y + (rect.top - containerRect.top);
+        
+        // Position animation at click coordinates
+        clickAnimation.style.left = `${relativeX - 16}px`; // Center the 32px animation
+        clickAnimation.style.top = `${relativeY - 16}px`;
+        clickAnimation.classList.remove('hidden');
+        
+        // Remove animation after 1 second
+        setTimeout(() => {
+            clickAnimation.classList.add('hidden');
+        }, 1000);
+        
+        // Add a ripple effect
+        this.createRippleEffect(x, y);
+    }
+    
+    createRippleEffect(x, y) {
+        const img = document.getElementById('rmsLayoutImage');
+        const rect = img.getBoundingClientRect();
+        const containerRect = img.parentElement.getBoundingClientRect();
+        
+        // Calculate position relative to the container
+        const relativeX = x + (rect.left - containerRect.left);
+        const relativeY = y + (rect.top - containerRect.top);
+        
+        // Create ripple element
+        const ripple = document.createElement('div');
+        ripple.className = 'absolute pointer-events-none';
+        ripple.style.left = `${relativeX - 20}px`;
+        ripple.style.top = `${relativeY - 20}px`;
+        ripple.innerHTML = `
+            <div class="w-10 h-10 border-2 border-blue-400 rounded-full animate-ping"></div>
+        `;
+        
+        // Add ripple to image container
+        img.parentElement.appendChild(ripple);
+        
+        // Remove ripple after animation
+        setTimeout(() => {
+            ripple.remove();
+        }, 1000);
+    }
+    
+    animateRackClick(rackSlot) {
+        // Add scale animation to the rack slot
+        rackSlot.style.transform = 'scale(0.95)';
+        rackSlot.style.transition = 'transform 0.1s ease';
+        
+        // Create ripple effect on the rack slot
+        const rect = rackSlot.getBoundingClientRect();
+        const rackRipple = document.createElement('div');
+        rackRipple.className = 'absolute pointer-events-none';
+        rackRipple.style.left = `${rect.width / 2 - 15}px`;
+        rackRipple.style.top = `${rect.height / 2 - 15}px`;
+        rackRipple.style.width = '30px';
+        rackRipple.style.height = '30px';
+        rackRipple.innerHTML = `
+            <div class="w-full h-full border-2 border-white rounded-full animate-ping"></div>
+        `;
+        
+        rackSlot.style.position = 'relative';
+        rackSlot.appendChild(rackRipple);
+        
+        // Restore scale and remove ripple
+        setTimeout(() => {
+            rackSlot.style.transform = 'scale(1)';
+            rackRipple.remove();
+        }, 300);
+        
+        // Add glow effect
+        rackSlot.classList.add('ring-4', 'ring-blue-300', 'ring-opacity-50');
+        setTimeout(() => {
+            rackSlot.classList.remove('ring-4', 'ring-blue-300', 'ring-opacity-50');
+        }, 600);
+    }
+    
+    animateCabinetOpen(cabinet) {
+        // Set initial state
+        cabinet.style.opacity = '0';
+        cabinet.style.transform = 'scale(0.9) translateY(-20px)';
+        cabinet.style.transition = 'all 0.3s ease-out';
+        
+        // Show the cabinet
+        cabinet.classList.remove('hidden');
+        
+        // Animate to final state
+        setTimeout(() => {
+            cabinet.style.opacity = '1';
+            cabinet.style.transform = 'scale(1) translateY(0)';
+        }, 50);
+        
+        // Animate rack slots appearing
+        setTimeout(() => {
+            const rackSlots = cabinet.querySelectorAll('.rack-slot');
+            rackSlots.forEach((slot, index) => {
+                slot.style.opacity = '0';
+                slot.style.transform = 'translateX(-20px)';
+                slot.style.transition = 'all 0.3s ease-out';
+                
+                setTimeout(() => {
+                    slot.style.opacity = '1';
+                    slot.style.transform = 'translateX(0)';
+                }, 200 + (index * 100));
+            });
+        }, 200);
     }
     
     getClickedArea(x, y) {
@@ -475,150 +735,129 @@ class ShelfMapApp {
     }
     
     showAreaDetails() {
-        const details = document.getElementById('clickedAreaDetails');
-        const areaName = document.getElementById('areaName');
-        const areaDescription = document.getElementById('areaDescription');
-        const shelfData = document.getElementById('shelfData');
-        const documentsList = document.getElementById('documentsList');
-        const noDocuments = document.getElementById('noDocuments');
+        const cabinet = document.getElementById('cabinetVisualization');
+        const cabinetName = document.getElementById('cabinetName');
+        const cabinetDescription = document.getElementById('cabinetDescription');
         
-        areaName.textContent = this.clickedArea.name;
-        areaDescription.textContent = this.clickedArea.description;
+        cabinetName.textContent = this.clickedArea.name || 'Storage Cabinet';
+        cabinetDescription.textContent = this.clickedArea.description || 'Click on a rack to view details';
         
-        // Update occupancy info
-        const occupancyStatus = document.getElementById('occupancyStatus');
-        const occupiedCount = document.getElementById('occupiedCount');
-        const capacityCount = document.getElementById('capacityCount');
-        const occupancyBar = document.getElementById('occupancyBar');
+        // Update rack data with actual data from API if available
+        this.updateRackData();
         
-        occupancyStatus.textContent = this.clickedArea.data.status;
-        occupancyStatus.className = `text-xs px-2 py-1 rounded-full ${
-            this.clickedArea.data.status === 'Critical' ? 'bg-red-100 text-red-800' : 
-            this.clickedArea.data.status === 'High' ? 'bg-yellow-100 text-yellow-800' : 
-            'bg-green-100 text-green-800'
-        }`;
+        // Animate cabinet appearance
+        this.animateCabinetOpen(cabinet);
+    }
+    
+    updateRackData() {
+        // Use real data from the areas array loaded from API
+        const rackData = {};
         
-        occupiedCount.textContent = this.clickedArea.data.occupied;
-        capacityCount.textContent = this.clickedArea.data.capacity;
+        // Group locations by rack letter
+        this.areas.forEach(area => {
+            const rackLetter = area.data.rack;
+            if (rackLetter && ['A', 'B', 'C', 'D'].includes(rackLetter)) {
+                if (!rackData[rackLetter]) {
+                    rackData[rackLetter] = {
+                        capacity: 0,
+                        occupied: 0,
+                        folders: []
+                    };
+                }
+                
+                rackData[rackLetter].capacity += area.data.capacity;
+                rackData[rackLetter].occupied += area.data.occupied;
+                rackData[rackLetter].folders.push(...area.data.documents);
+            }
+        });
         
-        const occupancyPercentage = (this.clickedArea.data.occupied / this.clickedArea.data.capacity) * 100;
-        occupancyBar.style.width = `${occupancyPercentage}%`;
-        occupancyBar.className = `h-3 rounded-full transition-all duration-300 ${
-            this.clickedArea.data.status === 'Critical' ? 'bg-red-500' : 
-            this.clickedArea.data.status === 'High' ? 'bg-yellow-500' : 
-            'bg-green-500'
-        }`;
+        // Update each rack slot with real data
+        ['A', 'B', 'C', 'D'].forEach(rackLetter => {
+            const rackSlot = document.querySelector(`[data-rack="${rackLetter}"]`);
+            if (rackSlot) {
+                const data = rackData[rackLetter] || { capacity: 0, occupied: 0, folders: [] };
+                const capacityEl = rackSlot.querySelector('.rack-capacity');
+                const occupiedEl = rackSlot.querySelector('.rack-occupied');
+                const occupancyBar = rackSlot.querySelector('.rack-occupancy-bar');
+                
+                capacityEl.textContent = data.capacity;
+                occupiedEl.textContent = data.occupied;
+                
+                const percentage = data.capacity > 0 ? (data.occupied / data.capacity) * 100 : 0;
+                occupancyBar.style.width = `${percentage}%`;
+                
+                // Update color based on occupancy
+                if (percentage >= 90) {
+                    occupancyBar.className = occupancyBar.className.replace(/bg-\w+-500/, 'bg-red-500');
+                } else if (percentage >= 75) {
+                    occupancyBar.className = occupancyBar.className.replace(/bg-\w+-500/, 'bg-yellow-500');
+                } else {
+                    occupancyBar.className = occupancyBar.className.replace(/bg-\w+-500/, 'bg-green-500');
+                }
+                
+                // Store real folder data for later use
+                rackSlot.dataset.folders = JSON.stringify(data.folders);
+            }
+        });
+    }
+    
+    showRackDetails(rackLetter) {
+        const rackSlot = document.querySelector(`[data-rack="${rackLetter}"]`);
+        if (!rackSlot) return;
         
-        // Update documents list
-        documentsList.innerHTML = '';
-        if (this.clickedArea.data.documents.length > 0) {
-            this.clickedArea.data.documents.forEach(doc => {
-                const docItem = document.createElement('div');
-                docItem.className = 'flex items-center justify-between text-xs p-2 bg-white rounded border border-gray-200';
-                docItem.innerHTML = `
-                    <span class="text-gray-700">${doc}</span>
-                    <button class="text-blue-600 hover:text-blue-800 font-medium">View</button>
+        const folders = JSON.parse(rackSlot.dataset.folders || '[]');
+        this.selectedRack = rackLetter;
+        
+        // Clear and populate folders grid with animation
+        const foldersGrid = document.getElementById('rackFoldersGrid');
+        foldersGrid.innerHTML = '';
+        
+        if (folders.length === 0) {
+            const emptyElement = document.createElement('div');
+            emptyElement.className = 'text-center text-gray-500 py-8 opacity-0 transform translate-y-4';
+            emptyElement.innerHTML = `
+                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                </svg>
+                <p class="text-sm">No folders in Rack ${rackLetter}</p>
+            `;
+            foldersGrid.appendChild(emptyElement);
+            
+            // Animate empty state appearance
+            setTimeout(() => {
+                emptyElement.classList.remove('opacity-0', 'translate-y-4');
+                emptyElement.classList.add('opacity-100', 'translate-y-0', 'transition-all', 'duration-300');
+            }, 50);
+        } else {
+            folders.forEach((folderCode, index) => {
+                const folderElement = document.createElement('div');
+                folderElement.className = 'bg-white p-3 rounded border border-gray-200 hover:shadow-md transition-shadow cursor-pointer opacity-0 transform translate-y-4';
+                folderElement.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <div>
+                                <div class="font-semibold text-sm text-gray-900">${folderCode}</div>
+                                <div class="text-xs text-gray-500">Rack ${rackLetter}</div>
+                            </div>
+                        </div>
+                        <button class="text-xs text-blue-600 hover:text-blue-800 font-medium">View</button>
+                    </div>
                 `;
-                documentsList.appendChild(docItem);
+                foldersGrid.appendChild(folderElement);
+                
+                // Stagger animation for each folder
+                setTimeout(() => {
+                    folderElement.classList.remove('opacity-0', 'translate-y-4');
+                    folderElement.classList.add('opacity-100', 'translate-y-0', 'transition-all', 'duration-300');
+                }, 100 + (index * 100));
             });
-            noDocuments.classList.add('hidden');
-        } else {
-            noDocuments.classList.remove('hidden');
         }
-        
-        document.getElementById('documentCount').textContent = this.clickedArea.data.documents.length;
-        shelfData.classList.remove('hidden');
-        details.classList.remove('hidden');
-        
-        // Render racks for this cabinet
-        this.renderRacksForCabinet();
     }
     
-    showRackFolders(rackNumber) {
-        // Get the location for this rack from the areas array
-        if (rackNumber <= this.areas.length) {
-            const area = this.areas[rackNumber - 1];
-            // Use the documents that are already loaded in the area data
-            this.rackFolders = area.data.documents.map((fileCode, index) => ({
-                id: index + 1,
-                file_code: fileCode,
-                company_name: '',
-                location_code: area.data.cabinet + area.data.rack,
-                status: 'Available'
-            })) || [];
-        } else {
-            this.rackFolders = [];
-        }
         
-        this.renderRackFolders();
-    }
-    
-    renderRackFolders() {
-        const rackFoldersDisplay = document.getElementById('rackFoldersDisplay');
-        const selectedRackNumber = document.getElementById('selectedRackNumber');
-        const rackFoldersGrid = document.getElementById('rackFoldersGrid');
-        
-        selectedRackNumber.textContent = this.selectedRack;
-        rackFoldersGrid.innerHTML = '';
-        
-        this.rackFolders.forEach(folder => {
-            const folderElement = document.createElement('div');
-            folderElement.className = 'bg-white p-3 rounded border border-blue-200';
-            folderElement.innerHTML = `
-                <div class="flex items-center mb-2">
-                    <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    <span class="font-semibold text-sm text-gray-900">${folder.file_code}</span>
-                </div>
-                <div class="text-xs text-gray-600">${folder.company_name}</div>
-                <div class="text-xs text-gray-500 mt-1">Location: ${folder.location_code}</div>
-                <div class="mt-2 flex justify-between">
-                    <span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">${folder.status}</span>
-                    <button class="text-xs text-blue-600 hover:text-blue-800 font-medium">View</button>
-                </div>
-            `;
-            rackFoldersGrid.appendChild(folderElement);
-        });
-        
-        rackFoldersDisplay.classList.remove('hidden');
-    }
-    
-    renderRacksForCabinet() {
-        const racksContainer = document.getElementById('racksContainer');
-        racksContainer.innerHTML = '';
-        
-        // Extract cabinet name from clicked area
-        const cabinetName = this.clickedArea.name.split(' - ')[0]; // e.g., "Cabinet 2"
-        
-        // Filter areas to get all racks in this cabinet
-        const rackAreas = this.areas.filter(area => area.name.includes(cabinetName));
-        
-        rackAreas.forEach((area, index) => {
-            const rackDiv = document.createElement('div');
-            rackDiv.className = 'rack-section bg-white p-3 rounded border border-gray-200 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all';
-            rackDiv.dataset.locationId = area.data.location_id;
-            rackDiv.innerHTML = `
-                <div class="flex items-center mb-2">
-                    <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                    </svg>
-                    <span class="font-semibold text-sm">${area.name.split(' - ')[1]}</span>
-                </div>
-                <div class="text-xs text-gray-600">${area.data.occupied} documents</div>
-                <div class="text-xs text-blue-600">Available: ${area.data.capacity - area.data.occupied}</div>
-                <div class="mt-2 text-xs">
-                    <span class="px-2 py-1 ${
-                        area.data.status === 'Critical' ? 'bg-red-100 text-red-800' :
-                        area.data.status === 'High' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                    } rounded">${area.data.status}</span>
-                </div>
-            `;
-            racksContainer.appendChild(rackDiv);
-        });
-    }
-    
     getOccupancyColor(percentage) {
         if (percentage >= 90) return 'bg-red-500';
         if (percentage >= 75) return 'bg-yellow-500';

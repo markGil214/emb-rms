@@ -10,6 +10,7 @@
      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="<?= base_url('assets/css/tailwind.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/loading-animation.css') ?>">
     <style>
         /* Dark mode styles */
         .dark {
@@ -406,5 +407,8 @@
          
         </div>
     </main>
+    
+    <!-- Loading Animation Script -->
+    <script src="<?= base_url('js/loading-animation.js') ?>"></script>
 </body>
 </html>

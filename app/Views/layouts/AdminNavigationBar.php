@@ -165,7 +165,11 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
             <?php if (can('view_disposal_workflow') || can('approve_disposal')): ?>
             <a href="#" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6a4 4 0 004 4h4a4 4 0 004-4v-6"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    <line x1="10" x2="10" y1="11" y2="17"></line>
+                    <line x1="14" x2="14" y1="11" y2="17"></line>
                 </svg>
                 <span x-show="sidebarOpen" x-transition class="ml-3">Disposal Workflow</span>
             </a>
