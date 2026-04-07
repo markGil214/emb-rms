@@ -22,21 +22,51 @@ class RelocationController extends BaseController
 
     /**
      * List all relocations
+     * 
+     * ENHANCEMENT: Joins with folders and locations for human-readable display
      */
     public function index()
     {
         $permissionService = service('permissionService');
         $userId = auth_user()['user_id'];
 
-        $relocations = $this->relocationModel->orderBy('requested_date', 'DESC')->findAll();
+        $db = \Config\Database::connect();
+        
+        // Get relocations with joined data
+        $relocations = $db->table('relocation_requests as r')
+            ->select('r.*, f.file_code, f.company_name, fl.cabinet, tl.cabinet as to_cabinet')
+            ->join('folders as f', 'f.folder_id = r.folder_id', 'left')
+            ->join('locations as fl', 'fl.location_id = r.from_location_id', 'left')
+            ->join('locations as tl', 'tl.location_id = r.to_location_id', 'left')
+            ->orderBy('r.requested_at', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        // Build formatted location strings for display
+        $relocations = array_map(function($rel) {
+            $rel['current_location_display'] = $this->formatLocation($rel['cabinet'] ?? null);
+            $rel['new_location_display'] = $this->formatLocation($rel['to_cabinet'] ?? null);
+            return $rel;
+        }, $relocations);
 
         return view('relocation/index', [
-            'title' => 'Relocation Management',
+            'title' => 'Folder Relocation',
+            'subtitle' => 'Move folders between cabinets and shelves',
             'relocations' => $relocations,
-            'totalPending' => count($this->relocationModel->getPending()),
-            'totalApproved' => count($this->relocationModel->getApproved()),
-            'totalInProgress' => count($this->relocationModel->getInProgress()),
+            'needsApproval' => count($this->relocationModel->where('status', 'Pending')->findAll()),
+            'completed' => count($this->relocationModel->whereIn('status', ['Approved', 'Completed'])->findAll()),
         ]);
+    }
+
+    /**
+     * Helper: Format location display string
+     */
+    private function formatLocation($cabinet)
+    {
+        if (!$cabinet) {
+            return 'Unknown Location';
+        }
+        return "Cabinet {$cabinet}";
     }
 
     /**
@@ -86,7 +116,7 @@ class RelocationController extends BaseController
         $data = [
             'folder_id' => $folderId,
             'from_location_id' => $folder['location_id'],
-            'to_location_id' => $this->request->getPost('new_location_id'),
+            'to_location_id' => $this->request->getPost('to_location_id'),
             'reason' => $this->request->getPost('reason'),
             'reason_type' => $this->request->getPost('reason_type') ?? 'Other',
             'status' => 'Pending',
@@ -116,8 +146,8 @@ class RelocationController extends BaseController
 
         $folder = $this->folderModel->find($relocation['folder_id']);
         $db = \Config\Database::connect();
-        $currentLocation = $db->table('locations')->find($relocation['from_location_id']);
-        $newLocation = $db->table('locations')->find($relocation['to_location_id']);
+        $currentLocation = $db->table('locations')->where('location_id', $relocation['from_location_id'])->get()->getRowArray();
+        $newLocation = $db->table('locations')->where('location_id', $relocation['to_location_id'])->get()->getRowArray();
 
         return view('relocation/show', [
             'title' => 'Relocation Details',
@@ -147,7 +177,98 @@ class RelocationController extends BaseController
         $auditLog = service('auditLog');
         $auditLog->log(auth_user()['user_id'], 'approve_relocation', "relocation_id:{$relocationId}");
 
-        return redirect()->back()->with('success', 'Relocation approved');
+        return redirect()->back()->with('success', 'Relocation completed');
+    }
+
+    /**
+     * Decline/Reject relocation
+     */
+    public function decline(int $relocationId)
+    {
+        if (!can('approve_relocation')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $relocation = $this->relocationModel->find($relocationId);
+        if (!$relocation) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        if ($relocation['status'] !== 'Pending') {
+            return redirect()->back()->with('error', 'Only pending relocations can be declined');
+        }
+
+        $this->relocationModel->update($relocationId, [
+            'status' => 'Declined',
+        ]);
+
+        $auditLog = service('auditLog');
+        $auditLog->log(auth_user()['user_id'], 'decline_relocation', "relocation_id:{$relocationId}");
+
+        return redirect()->back()->with('success', 'Relocation declined');
+    }
+
+    /**
+     * Edit relocation form
+     */
+    public function edit(int $relocationId)
+    {
+        if (!can('initiate_relocation')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $relocation = $this->relocationModel->find($relocationId);
+        if (!$relocation) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        if ($relocation['status'] !== 'Pending') {
+            return redirect()->back()->with('error', 'Only pending relocations can be edited');
+        }
+
+        $folder = $this->folderModel->find($relocation['folder_id']);
+        $db = \Config\Database::connect();
+        $locations = $db->table('locations')->get()->getResultArray();
+
+        return view('relocation/edit', [
+            'title' => 'Edit Relocation Request',
+            'relocation' => $relocation,
+            'folder' => $folder,
+            'locations' => $locations,
+        ]);
+    }
+
+    /**
+     * Update relocation
+     */
+    public function update(int $relocationId)
+    {
+        if (!can('initiate_relocation')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $relocation = $this->relocationModel->find($relocationId);
+        if (!$relocation) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        if ($relocation['status'] !== 'Pending') {
+            return redirect()->back()->with('error', 'Only pending relocations can be edited');
+        }
+
+        if (!$this->validate($this->relocationModel->validationRules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $this->relocationModel->update($relocationId, [
+            'to_location_id' => $this->request->getPost('to_location_id'),
+            'reason' => $this->request->getPost('reason'),
+        ]);
+
+        $auditLog = service('auditLog');
+        $auditLog->log(auth_user()['user_id'], 'update_relocation', "relocation_id:{$relocationId}");
+
+        return redirect()->to('/relocations')->with('success', 'Relocation updated');
     }
 
     /**
@@ -232,7 +353,7 @@ class RelocationController extends BaseController
         $db = \Config\Database::connect();
         $toLocation = $db->table('locations')
             ->where('location_id', $relocation['to_location_id'])
-            ->first();
+            ->get()->getRowArray();
 
         if (!$toLocation) {
             return redirect()->back()->with('error', 'Target location not found');
@@ -290,19 +411,6 @@ class RelocationController extends BaseController
     /**
      * List pending relocations
      */
-    public function pending()
-    {
-        if (!can('approve_relocation')) {
-            return redirect()->back()->with('error', 'Permission denied');
-        }
-
-        $pending = $this->relocationModel->getPending();
-
-        return view('relocation/pending', [
-            'title' => 'Pending Relocations',
-            'pending' => $pending,
-        ]);
-    }
 
     /**
      * Test Console - Debug Dashboard

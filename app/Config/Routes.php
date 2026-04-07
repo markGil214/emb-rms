@@ -188,11 +188,15 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     $routes->post('/relocations/(:num)/approve',       'RelocationController::approve/$1',      ['as' => 'relocations.approve', 'filter' => 'permission:approve_relocation']);
 
+    $routes->post('/relocations/(:num)/decline',       'RelocationController::decline/$1',      ['as' => 'relocations.decline', 'filter' => 'permission:approve_relocation']);
+
+    $routes->get('/relocations/(:num)/edit',           'RelocationController::edit/$1',         ['as' => 'relocations.edit', 'filter' => 'permission:initiate_relocation']);
+
+    $routes->post('/relocations/(:num)',               'RelocationController::update/$1',       ['as' => 'relocations.update', 'filter' => 'permission:initiate_relocation']);
+
     $routes->post('/relocations/(:num)/start',         'RelocationController::startRelocation/$1', ['as' => 'relocations.start', 'filter' => 'permission:initiate_relocation']);
 
     $routes->post('/relocations/(:num)/complete',      'RelocationController::complete/$1',     ['as' => 'relocations.complete', 'filter' => 'permission:complete_relocation']);
-
-    $routes->get('/relocations/pending',               'RelocationController::pending',         ['as' => 'relocations.pending', 'filter' => 'permission:approve_relocation']);
 
     
 

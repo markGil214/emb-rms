@@ -80,8 +80,9 @@
 			relocation: {
 				name: 'Relocation Management',
 				permissions: {
+					'initiate_relocation': 'Initiate Relocation',
 					'request_relocation': 'Request Relocation',
-					'approve_relocations': 'Approve Relocations'
+					'approve_relocation': 'Approve Relocations'
 				}
 			},
 			archive: {

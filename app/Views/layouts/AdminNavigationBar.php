@@ -112,7 +112,7 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
         </li>
 
         <li>
-            <?php if (can('request_relocation') || can('approve_relocations')): ?>
+            <?php if (can('request_relocation') || can('approve_relocation')): ?>
             <a href="#" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>

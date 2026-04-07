@@ -51,7 +51,7 @@ class RelocationRequestSeeder extends Seeder
             'updated_at' => date('Y-m-d H:i:s'),
         ];
 
-        // Approved relocation request
+        // Completed relocation request
         $requests[] = [
             'folder_id' => $folders[1]['folder_id'],
             'from_location_id' => $locations[1]['location_id'],
@@ -59,7 +59,7 @@ class RelocationRequestSeeder extends Seeder
             'requested_by' => $requester['user_id'],
             'requested_at' => date('Y-m-d H:i:s', strtotime('-8 days')),
             'reason' => 'Archive consolidation - high-frequency access documents',
-            'status' => 'Approved',
+            'status' => 'Completed',
             'approved_by' => $approver['user_id'],
             'approved_at' => date('Y-m-d H:i:s', strtotime('-7 days')),
             'rejection_reason' => null,
@@ -67,7 +67,7 @@ class RelocationRequestSeeder extends Seeder
             'updated_at' => date('Y-m-d H:i:s', strtotime('-7 days')),
         ];
 
-        // In-progress relocation request
+        // Completed relocation request
         $requests[] = [
             'folder_id' => $folders[2]['folder_id'],
             'from_location_id' => $locations[2]['location_id'],
@@ -75,7 +75,7 @@ class RelocationRequestSeeder extends Seeder
             'requested_by' => $requester['user_id'],
             'requested_at' => date('Y-m-d H:i:s', strtotime('-5 days')),
             'reason' => 'Climate controlled storage requirement',
-            'status' => 'In Progress',
+            'status' => 'Completed',
             'approved_by' => $approver['user_id'],
             'approved_at' => date('Y-m-d H:i:s', strtotime('-4 days')),
             'rejection_reason' => null,
@@ -98,6 +98,24 @@ class RelocationRequestSeeder extends Seeder
             'created_at' => date('Y-m-d H:i:s', strtotime('-15 days')),
             'updated_at' => date('Y-m-d H:i:s', strtotime('-3 days')),
         ];
+
+        // Declined relocation request
+        if (count($folders) > 4) {
+            $requests[] = [
+                'folder_id' => $folders[4]['folder_id'],
+                'from_location_id' => $locations[0]['location_id'],
+                'to_location_id' => $locations[2]['location_id'],
+                'requested_by' => $requester['user_id'],
+                'requested_at' => date('Y-m-d H:i:s', strtotime('-3 days')),
+                'reason' => 'Insufficient storage space in target location',
+                'status' => 'Declined',
+                'approved_by' => $approver['user_id'],
+                'approved_at' => null,
+                'rejection_reason' => 'Target location does not have sufficient capacity',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-3 days')),
+                'updated_at' => date('Y-m-d H:i:s', strtotime('-2 days')),
+            ];
+        }
 
         $this->db->table('relocation_requests')->insertBatch($requests);
     }
