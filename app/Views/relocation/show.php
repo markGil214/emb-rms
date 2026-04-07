@@ -21,15 +21,15 @@
         </tr>
         <tr>
             <td><strong>Current Location:</strong></td>
-            <td><?= $currentLocation['location_name'] ?? 'N/A' ?></td>
+            <td><?= ($currentLocation && $currentLocation['cabinet']) ? 'Cabinet ' . $currentLocation['cabinet'] : 'N/A' ?></td>
         </tr>
         <tr>
             <td><strong>New Location:</strong></td>
-            <td><?= $newLocation['location_name'] ?? 'N/A' ?></td>
+            <td><?= ($newLocation && $newLocation['cabinet']) ? 'Cabinet ' . $newLocation['cabinet'] : 'N/A' ?></td>
         </tr>
         <tr>
             <td><strong>Requested Date:</strong></td>
-            <td><?= date('M d, Y g:i A', strtotime($relocation['requested_date'])) ?></td>
+            <td><?= date('M d, Y g:i A', strtotime($relocation['requested_at'])) ?></td>
         </tr>
         <tr>
             <td><strong>Reason:</strong></td>

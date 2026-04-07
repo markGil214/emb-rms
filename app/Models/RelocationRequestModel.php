@@ -28,26 +28,20 @@ class RelocationRequestModel extends Model
     // Validation rules
     protected $validationRules = [
         'folder_id'         => 'required|integer',
-        'from_location_id'  => 'required|integer',
         'to_location_id'    => 'required|integer',
-        'reason'            => 'required|min_length[10]|max_length[500]',
-        'status'            => 'in_list[Pending,Approved,In Progress,Completed,Cancelled]',
-        'requested_by'      => 'required|integer',
+        'reason'            => 'permit_empty|max_length[500]',
     ];
 
     protected $validationMessages = [
         'folder_id' => [
             'required' => 'Folder is required',
-        ],
-        'from_location_id' => [
-            'required' => 'Current location is required',
+            'integer' => 'Invalid folder selection',
         ],
         'to_location_id' => [
             'required' => 'New location is required',
+            'integer' => 'Invalid location selection',
         ],
         'reason' => [
-            'required' => 'Reason for relocation is required',
-            'min_length' => 'Reason must be at least 10 characters',
             'max_length' => 'Reason cannot exceed 500 characters',
         ],
     ];
@@ -58,7 +52,7 @@ class RelocationRequestModel extends Model
     public function getPending()
     {
         return $this->where('status', 'Pending')
-                    ->orderBy('requested_date', 'ASC')
+                    ->orderBy('requested_at', 'ASC')
                     ->findAll();
     }
 
@@ -68,7 +62,7 @@ class RelocationRequestModel extends Model
     public function getApproved()
     {
         return $this->where('status', 'Approved')
-                    ->orderBy('approved_date', 'ASC')
+                    ->orderBy('approved_at', 'ASC')
                     ->findAll();
     }
 
@@ -78,7 +72,7 @@ class RelocationRequestModel extends Model
     public function getInProgress()
     {
         return $this->where('status', 'In Progress')
-                    ->orderBy('approved_date', 'ASC')
+                    ->orderBy('approved_at', 'ASC')
                     ->findAll();
     }
 
@@ -88,7 +82,7 @@ class RelocationRequestModel extends Model
     public function getFolderHistory($folderId)
     {
         return $this->where('folder_id', $folderId)
-                    ->orderBy('requested_date', 'DESC')
+                    ->orderBy('requested_at', 'DESC')
                     ->findAll();
     }
 
@@ -97,11 +91,28 @@ class RelocationRequestModel extends Model
      */
     public function approveRelocation($relocationId, $approvedBy)
     {
-        return $this->update($relocationId, [
-            'status' => 'Approved',
+        // Get the relocation request to get folder_id and to_location_id
+        $relocation = $this->find($relocationId);
+        if (!$relocation) {
+            return false;
+        }
+
+        // Update the relocation request status
+        $result = $this->update($relocationId, [
+            'status' => 'Completed',
             'approved_at' => date('Y-m-d H:i:s'),
             'approved_by' => $approvedBy,
         ]);
+
+        // Update the folder's location to the new location
+        if ($result) {
+            $db = \Config\Database::connect();
+            $db->table('folders')->where('folder_id', $relocation['folder_id'])->update([
+                'location_id' => $relocation['to_location_id'],
+            ]);
+        }
+
+        return $result;
     }
 
     /**
