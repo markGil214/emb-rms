@@ -30,6 +30,13 @@
                 </div>
 
                 <div>
+                    <label for="borrower_email" class="block text-sm font-medium text-gray-700">Borrower Email</label>
+                    <input type="email" name="borrower_email" id="borrower_email" 
+                           placeholder="Enter borrower's email address" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+
+                <div>
                     <label for="folder_id" class="block text-sm font-medium text-gray-700">Select Folder</label>
                     <select name="folder_id" id="folder_id" required
                             class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
@@ -66,4 +73,5 @@
         </div>
     </div>
 </div>
+
 <?= $this->endSection() ?>

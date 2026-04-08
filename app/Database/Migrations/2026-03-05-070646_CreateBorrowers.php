@@ -28,6 +28,8 @@ class CreateBorrowers extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('borrowers');
+        if ($this->db->tableExists('borrowers')) {
+            $this->forge->dropTable('borrowers');
+        }
     }
 }

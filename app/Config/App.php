@@ -23,7 +23,7 @@ class App extends BaseConfig
 	 *
 	 * @var string
 	 */
-	public $baseURL = 'http://localhost:8080/';
+	public $baseURL = 'http://localhost:8000/';
 
 	/**
 	 * --------------------------------------------------------------------------
@@ -431,18 +431,26 @@ class App extends BaseConfig
 	 * Content Security Policy
 	 * --------------------------------------------------------------------------
 	 *
-	 * Enables the Response's Content Secure Policy to restrict the sources that
-	 * can be used for images, scripts, CSS files, audio, video, etc. If enabled,
-	 * the Response object will populate default values for the policy from the
-	 * `ContentSecurityPolicy.php` file. Controllers can always add to those
-	 * restrictions at run time.
-	 *
-	 * For a better understanding of CSP, see these documents:
-	 *
-	 * @see http://www.html5rocks.com/en/tutorials/security/content-security-policy/
-	 * @see http://www.w3.org/TR/CSP/
-	 *
-	 * @var boolean
+	 * Detect base URL dynamically based on server variables
+	 * Works with localhost, 127.0.0.1, and network IPs
 	 */
-	public $CSPEnabled = false;
+	private function detectBaseURL(): string
+	{
+		$protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443) ? 'https://' : 'http://';
+		$host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost:8000';
+		$port = '';
+		
+		// Check if port is explicitly set and not standard
+		if (isset($_SERVER['SERVER_PORT'])) {
+			$serverPort = (int)$_SERVER['SERVER_PORT'];
+			if (($protocol === 'http://' && $serverPort !== 80) || ($protocol === 'https://' && $serverPort !== 443)) {
+				if (strpos($host, ':') === false) {
+					$port = ':' . $serverPort;
+				}
+			}
+		}
+		
+		return $protocol . $host . $port . '/';
+	}
 }
+

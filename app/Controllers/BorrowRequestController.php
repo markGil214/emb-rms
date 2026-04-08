@@ -106,6 +106,7 @@ class BorrowRequestController extends BaseController
         $data = [
             'folder_id' => $this->request->getPost('folder_id'),
             'borrower_name' => $this->request->getPost('borrower_name'),
+            'borrower_email' => $this->request->getPost('borrower_email'),
             'purpose' => $this->request->getPost('purpose') ?? 'General request',
             'expected_return_date' => $this->request->getPost('expected_return_date'),
             'status' => 'Pending',  // ✅ Status is Pending, not Borrowed
@@ -223,6 +224,25 @@ class BorrowRequestController extends BaseController
             // ✅ Unexpected error (already logged by service)
             return redirect()->back()->with('error', 'An unexpected error occurred. Please contact support.');
         }
+    }
+
+    /**
+     * Manually send overdue reminder to borrower for one transaction.
+     */
+    public function notify(int $transactionId)
+    {
+        if (!can('process_return')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $notificationService = new \App\Libraries\OverdueNotificationService();
+        $result = $notificationService->sendSingleBorrowerNotification($transactionId);
+
+        if ($result['success']) {
+            return redirect()->back()->with('success', $result['message']);
+        }
+
+        return redirect()->back()->with('error', $result['message']);
     }
 
     /**

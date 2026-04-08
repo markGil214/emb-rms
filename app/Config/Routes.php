@@ -164,6 +164,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     $routes->post('/borrows/(:num)/return',   'BorrowRequestController::return/$1', ['as' => 'borrows.return', 'filter' => 'permission:process_return']);
 
+    $routes->post('/borrows/(:num)/notify',   'BorrowRequestController::notify/$1', ['as' => 'borrows.notify', 'filter' => 'permission:process_return']);
+
     $routes->get('/borrows/pending',          'BorrowRequestController::pending',   ['as' => 'borrows.pending', 'filter' => 'permission:approve_borrow_requests']);
 
     $routes->get('/borrows/borrowed',         'BorrowRequestController::borrowed',  ['as' => 'borrows.borrowed', 'filter' => 'permission:view_own_borrow,view_all_borrow']);
@@ -171,6 +173,17 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->get('/borrows/overdue',          'BorrowRequestController::overdue',   ['as' => 'borrows.overdue', 'filter' => 'permission:view_pending_returns']);
 
 });
+
+// Report Routes - Overdue items, CSV export, etc.
+
+$routes->group('reports', ['filter' => 'auth'], function($routes) {
+
+    $routes->get('/overdue',                  'ReportController::viewOverdue',      ['as' => 'reports.overdue', 'filter' => 'permission:view_all_borrow']);
+
+    $routes->get('/overdue/export',           'ReportController::exportOverdueCSV', ['as' => 'reports.overdue.export', 'filter' => 'permission:view_all_borrow']);
+
+});
+
 
 
 

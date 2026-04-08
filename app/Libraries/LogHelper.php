@@ -61,12 +61,18 @@ class LogHelper
      */
     protected static function format($level, $event, $data = [])
     {
+        $userId = null;
+        if (function_exists('auth_user')) {
+            $user = auth_user();
+            $userId = is_array($user) ? ($user['user_id'] ?? null) : null;
+        }
+
         $log = [
             'timestamp' => date('Y-m-d H:i:s'),
             'timezone' => app_timezone(),
             'level' => strtoupper($level),
             'event' => $event,
-            'user_id' => auth_user()['user_id'] ?? null,
+            'user_id' => $userId,
             'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'CLI',
             'data' => $data,
         ];
