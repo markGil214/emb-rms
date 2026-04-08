@@ -9,12 +9,12 @@ class Email extends BaseConfig
 	/**
 	 * @var string
 	 */
-	public $fromEmail;
+	public $fromEmail = '';
 
 	/**
 	 * @var string
 	 */
-	public $fromName;
+	public $fromName = '';
 
 	/**
 	 * @var string
@@ -29,11 +29,11 @@ class Email extends BaseConfig
 	public $userAgent = 'CodeIgniter';
 
 	/**
-	 * The mail sending protocol: mail, sendmail, smtp
+	 * The mail sending protocol: mail, sendmail, smtp, phpmailer
 	 *
 	 * @var string
 	 */
-	public $protocol = 'mail';
+	public $protocol = 'phpmailer';
 
 	/**
 	 * The server path to Sendmail.
@@ -47,35 +47,35 @@ class Email extends BaseConfig
 	 *
 	 * @var string
 	 */
-	public $SMTPHost;
+	public $SMTPHost = 'smtp.gmail.com';
 
 	/**
-	 * SMTP Username
+	 * SMTP Username (Gmail address or App-specific email)
 	 *
 	 * @var string
 	 */
-	public $SMTPUser;
+	public $SMTPUser = '';
 
 	/**
-	 * SMTP Password
+	 * SMTP Password (Gmail App Password from https://myaccount.google.com/apppasswords)
 	 *
 	 * @var string
 	 */
-	public $SMTPPass;
+	public $SMTPPass = '';
 
 	/**
-	 * SMTP Port
+	 * SMTP Port (587 for TLS, 465 for SSL)
 	 *
 	 * @var integer
 	 */
-	public $SMTPPort = 25;
+	public $SMTPPort = 587;
 
 	/**
 	 * SMTP Timeout (in seconds)
 	 *
 	 * @var integer
 	 */
-	public $SMTPTimeout = 5;
+	public $SMTPTimeout = 10;
 
 	/**
 	 * Enable persistent SMTP connections
@@ -110,7 +110,7 @@ class Email extends BaseConfig
 	 *
 	 * @var string
 	 */
-	public $mailType = 'text';
+	public $mailType = 'html';
 
 	/**
 	 * Character set (utf-8, iso-8859-1, etc.)

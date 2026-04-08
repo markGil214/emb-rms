@@ -1,3 +1,4 @@
+
 #--------------------------------------------------------------------
 # Example Environment Configuration file
 #
@@ -93,6 +94,18 @@
 # encryption.driver = OpenSSL
 # encryption.blockSize = 16
 # encryption.digest = SHA512
+
+#--------------------------------------------------------------------
+# EMAIL CONFIGURATION (Gmail SMTP via PHPMailer)
+#--------------------------------------------------------------------
+
+# From address for system emails
+email.fromEmail = your-email@gmail.com
+email.fromName = "Records Management System"
+
+# Gmail SMTP credentials (use App Password from https://myaccount.google.com/apppasswords)
+email.SMTPUser = your-email@gmail.com
+email.SMTPPass = your-app-password-here
 
 #--------------------------------------------------------------------
 # HONEYPOT

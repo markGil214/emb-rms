@@ -35,10 +35,11 @@ class BorrowTransactionModel extends Model
      * - created_by: Who requested the borrow
      */
     protected $allowedFields    = [
-        'folder_id', 'borrower_id', 'borrower_name', 'purpose',
+        'folder_id', 'borrower_name', 'borrower_email', 'purpose',
         'borrowed_at', 'expected_return_date', 'actual_return_date',
         'status', 'released_by', 'received_by', 'return_notes',
-        'approved_at', 'approved_by', 'created_by'
+        'approved_at', 'approved_by', 'created_by',
+        'notification_status', 'last_notification_sent_at', 'escalated_to_manager'
     ];
 
     // Timestamps
@@ -73,6 +74,7 @@ class BorrowTransactionModel extends Model
         'folder_id'             => 'required|integer|is_natural_no_zero',
         'expected_return_date'  => 'required|valid_date[Y-m-d]',
         'borrower_name'         => 'required|string|min_length[2]|max_length[255]',
+        'borrower_email'        => 'required|valid_email',
         // Status is NOT in creation validation—auto-set to 'Pending'
     ];
 
@@ -164,6 +166,57 @@ class BorrowTransactionModel extends Model
     public function getOverdue()
     {
         return $this->where('status', 'Overdue')->findAll();
+    }
+
+    /**
+     * Get items ready for X-day notification
+     * Checks if X days overdue and notification not yet sent
+     * 
+     * @param int $days Days overdue threshold (1, 3, 7)
+     * @return array Array of borrow transactions
+     */
+    public function getReadyForNotification($days)
+    {
+        $daysAgo = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+        
+        return $this->where('status', 'Borrowed')
+                    ->where('actual_return_date IS NULL')
+                    ->where('expected_return_date <', $daysAgo)
+                    ->findAll();
+    }
+
+    /**
+     * Get all overdue items for reporting/dashboard
+     * 
+     * @return array Array of overdue borrow transactions, ordered by due date
+     */
+    public function getAllOverdue()
+    {
+        return $this->where('status', 'Borrowed')
+                    ->where('expected_return_date <', date('Y-m-d H:i:s'))
+                    ->where('actual_return_date IS NULL')
+                    ->orderBy('expected_return_date', 'ASC')
+                    ->findAll();
+    }
+
+    /**
+     * Get overdue items by days threshold
+     * 
+     * @param int $days Days overdue (1, 3, 7)
+     * @return array Array of items overdue X days
+     */
+    public function getOverdueByDays($days = null)
+    {
+        $query = $this->where('status', 'Borrowed')
+                      ->where('expected_return_date <', date('Y-m-d H:i:s'))
+                      ->where('actual_return_date IS NULL');
+        
+        if ($days !== null) {
+            $daysAgo = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+            $query = $query->where('expected_return_date <', $daysAgo);
+        }
+        
+        return $query->findAll();
     }
 
     /**

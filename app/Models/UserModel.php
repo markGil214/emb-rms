@@ -15,7 +15,7 @@ class UserModel extends Model
 	protected $returnType = 'array';  // Return as array for now - UserEntity has hydration issues
 	protected $useSoftDelete = false;
 	protected $protectFields = true;
-	protected $allowedFields = ['username', 'password', 'email', 'role', 'remember_token'];
+	protected $allowedFields = ['username', 'password', 'email', 'role', 'remember_token', 'manager_id'];
 
 	// Dates
 	protected $useTimestamps = true;  // Enable automatic timestamp management

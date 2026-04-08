@@ -1,3 +1,46 @@
+<?php
+$headerNotifications = [];
+
+try {
+    $borrowModel = new \App\Models\BorrowTransactionModel();
+
+    $overdueCount = count($borrowModel->getAllOverdue());
+    if ($overdueCount > 0 && (can('view_own_borrow') || can('view_all_borrow') || can('view_pending_returns'))) {
+        $headerNotifications[] = [
+            'id' => 1,
+            'type' => 'danger',
+            'message' => $overdueCount . ' overdue borrower request(s) found.',
+            'time' => 'Needs action',
+            'read' => false,
+            'link' => base_url('borrows'),
+            'linkText' => 'View',
+        ];
+    }
+
+    if (can('approve_borrow_requests')) {
+        $newPendingCount = $borrowModel->where('status', 'Pending')
+            ->where('actual_return_date IS NULL')
+            ->where('created_at >=', date('Y-m-d H:i:s', strtotime('-1 day')))
+            ->countAllResults();
+
+        if ($newPendingCount > 0) {
+            $headerNotifications[] = [
+                'id' => 2,
+                'type' => 'warning',
+                'message' => $newPendingCount . ' newly created request(s) need approval.',
+                'time' => 'New today',
+                'read' => false,
+                'link' => base_url('borrows/pending'),
+                'linkText' => 'View',
+            ];
+        }
+    }
+} catch (\Throwable $e) {
+    $headerNotifications = [];
+}
+
+$headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -174,11 +217,7 @@
     darkMode: localStorage.getItem('darkMode') === 'true',
     notificationsOpen: false,
     userDropdownOpen: false,
-    notifications: [
-        { id: 1, type: 'success', message: 'New user registered successfully', time: '2 minutes ago', read: false },
-        { id: 2, type: 'warning', message: 'System maintenance scheduled', time: '1 hour ago', read: false },
-        { id: 3, type: 'info', message: 'Database backup completed', time: '2 hours ago', read: true }
-    ],
+    notifications: <?= esc($headerNotificationsJson ?: '[]', 'attr') ?>,
     alerts: [],
     unreadCount() {
         return this.notifications.filter(n => !n.read).length;
@@ -268,12 +307,16 @@
                                 <h3 class="text-sm font-semibold text-gray-900">Notifications</h3>
                             </div>
                             <div class="max-h-96 overflow-y-auto">
+                                <template x-if="notifications.length === 0">
+                                    <div class="p-4 text-sm text-gray-500">No new notifications</div>
+                                </template>
                                 <template x-for="notification in notifications" :key="notification.id">
-                                    <div class="p-4 hover:bg-gray-50 border-b border-gray-100 last:border-b-0">
+                                    <div class="p-4 hover:bg-gray-50 border-b border-gray-100 last:border-b-0" @click="markAsRead(notification.id)">
                                         <div class="flex items-start">
                                             <div class="flex-shrink-0">
                                                 <div class="w-2 h-2 rounded-full mt-2"
                                                      :class="{
+                                                         'bg-red-500': notification.type === 'danger',
                                                          'bg-green-500': notification.type === 'success',
                                                          'bg-yellow-500': notification.type === 'warning',
                                                          'bg-blue-500': notification.type === 'info'
@@ -282,13 +325,14 @@
                                             <div class="ml-3 flex-1">
                                                 <p class="text-sm text-gray-900" x-text="notification.message"></p>
                                                 <p class="text-xs text-gray-500 mt-1" x-text="notification.time"></p>
+                                                <a :href="notification.link" class="inline-block text-xs text-blue-600 hover:text-blue-800 font-medium mt-2" x-text="notification.linkText || 'View'"></a>
                                             </div>
                                         </div>
                                     </div>
                                 </template>
                             </div>
                             <div class="p-3 border-t border-gray-200">
-                                <a href="#" class="text-sm text-blue-600 hover:text-blue-800 font-medium">View all notifications</a>
+                                <a href="<?= base_url('borrows') ?>" class="text-sm text-blue-600 hover:text-blue-800 font-medium">View Borrow Management</a>
                             </div>
                         </div>
                     </div>

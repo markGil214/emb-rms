@@ -16,6 +16,8 @@ use Psr\Log\LoggerInterface;
  *     class Home extends BaseController
  *
  * For security be sure to declare any new methods as protected or private.
+ *
+ * @property \CodeIgniter\HTTP\IncomingRequest $request
  */
 
 class BaseController extends Controller

@@ -34,18 +34,6 @@
         </div>
         
         <div class="p-6">
-            <?php if (session()->getFlashdata('success')): ?>
-                <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-                    <strong>Success:</strong> <?= esc(session()->getFlashdata('success')) ?>
-                </div>
-            <?php endif; ?>
-            
-            <?php if (session()->getFlashdata('error')): ?>
-                <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                    <strong>Error:</strong> <?= esc(session()->getFlashdata('error')) ?>
-                </div>
-            <?php endif; ?>
-            
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -94,11 +82,17 @@
                                                     <?= csrf_field() ?>
                                                     <button type="submit" class="text-green-600 hover:text-green-900">Approve</button>
                                                 </form>
-                                            <?php elseif ($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Overdue'): ?>
+                                            <?php elseif (($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Overdue') && can('process_return')): ?>
                                                 <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/return" class="inline">
                                                     <?= csrf_field() ?>
                                                     <button type="submit" class="text-red-600 hover:text-red-900">Return</button>
                                                 </form>
+                                                <?php if ($borrow['status'] === 'Overdue'): ?>
+                                                    <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/notify" class="inline" onsubmit="return confirm('Send overdue reminder email to borrower now?');">
+                                                        <?= csrf_field() ?>
+                                                        <button type="submit" class="text-amber-600 hover:text-amber-900">Notify</button>
+                                                    </form>
+                                                <?php endif; ?>
                                             <?php endif; ?>
                                         </div>
                                     </td>

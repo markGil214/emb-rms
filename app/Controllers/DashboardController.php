@@ -177,6 +177,31 @@ class DashboardController extends BaseController
     }
 
     /**
+     * Get overdue borrowed items for dashboard widget
+     * 
+     * @return array Overdue items with calculated days overdue
+     */
+    public function getOverdueStats()
+    {
+        $borrowModel = new \App\Models\BorrowTransactionModel();
+        $overdue = $borrowModel->getAllOverdue();
+
+        // Calculate days overdue for each item
+        $stats = [];
+        foreach ($overdue as $item) {
+            $daysOverdue = (int)ceil((strtotime(date('Y-m-d')) - strtotime($item['expected_return_date'])) / (60 * 60 * 24));
+            $item['days_overdue'] = max(1, $daysOverdue);
+            $stats[] = $item;
+        }
+
+        return [
+            'total_overdue' => count($stats),
+            'items' => array_slice($stats, 0, 5), // Top 5 overdue items
+            'all_items' => $stats,
+        ];
+    }
+
+    /**
      * Display shelf map and search page
      */
     public function shelfmap()
