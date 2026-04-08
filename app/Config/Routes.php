@@ -100,23 +100,23 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
 $routes->group('', ['filter' => 'auth'], function($routes) {
 
-    $routes->get('/permits',                'FolderController::index',    ['as' => 'records', 'filter' => 'permission:search_documents']);
+    $routes->get('/document-records',                'FolderController::index',    ['as' => 'records', 'filter' => 'permission:search_documents']);
 
-    $routes->get('/permits/create',         'FolderController::create',   ['as' => 'records.create', 'filter' => 'permission:create_document_record']);
+    $routes->get('/document-records/create',         'FolderController::create',   ['as' => 'records.create', 'filter' => 'permission:create_document_record']);
 
-    $routes->post('/permits',               'FolderController::store',    ['as' => 'records.store', 'filter' => 'permission:create_document_record']);
+    $routes->post('/document-records',               'FolderController::store',    ['as' => 'records.store', 'filter' => 'permission:create_document_record']);
 
-    $routes->get('/permits/(:num)',         'FolderController::show/$1',  ['as' => 'records.show', 'filter' => 'permission:search_documents']);
+    $routes->get('/document-records/(:num)',         'FolderController::show/$1',  ['as' => 'records.show', 'filter' => 'permission:search_documents']);
 
-    $routes->get('/permits/(:num)/edit',    'FolderController::edit/$1',  ['as' => 'records.edit', 'filter' => 'permission:edit_document_metadata']);
+    $routes->get('/document-records/(:num)/edit',    'FolderController::edit/$1',  ['as' => 'records.edit', 'filter' => 'permission:edit_document_metadata']);
 
-    $routes->put('/permits/(:num)',         'FolderController::update/$1',['as' => 'records.update', 'filter' => 'permission:edit_document_metadata']);
+    $routes->put('/document-records/(:num)',         'FolderController::update/$1',['as' => 'records.update', 'filter' => 'permission:edit_document_metadata']);
 
     
 
     // File upload routes
 
-    $routes->post('/permits/(:num)/upload', 'FileUploadController::upload/$1', ['as' => 'file.upload', 'filter' => 'permission:create_document_record']);
+    $routes->post('/document-records/(:num)/upload', 'FileUploadController::upload/$1', ['as' => 'file.upload', 'filter' => 'permission:create_document_record']);
 
     $routes->get('/files/(:num)/download',  'FileUploadController::download/$1', ['as' => 'file.download', 'filter' => 'permission:search_documents']);
 
@@ -206,6 +206,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->get('/relocations/(:num)/edit',           'RelocationController::edit/$1',         ['as' => 'relocations.edit', 'filter' => 'permission:initiate_relocation']);
 
     $routes->post('/relocations/(:num)',               'RelocationController::update/$1',       ['as' => 'relocations.update', 'filter' => 'permission:initiate_relocation']);
+
+    $routes->get('/relocations/pending',               'RelocationController::pending',         ['as' => 'relocations.pending', 'filter' => 'permission:approve_relocation']);
 
     $routes->post('/relocations/(:num)/start',         'RelocationController::startRelocation/$1', ['as' => 'relocations.start', 'filter' => 'permission:initiate_relocation']);
 

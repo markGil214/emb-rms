@@ -37,14 +37,27 @@
                 </div>
 
                 <div>
-                    <label for="folder_id" class="block text-sm font-medium text-gray-700">Select Folder</label>
-                    <select name="folder_id" id="folder_id" required
-                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        <option value="">-- Choose Folder --</option>
-                        <?php foreach ($folders as $folder): ?>
-                            <option value="<?= $folder['folder_id'] ?>"><?= $folder['file_code'] ?> - <?= $folder['company_name'] ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <label for="folderSearch" class="block text-sm font-medium text-gray-700">Select Folder</label>
+                    <div class="mt-1 relative">
+                        <input type="text" id="folderSearch" 
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                               placeholder="Search by file code or company name..." autocomplete="off">
+                        <div id="searchResults" class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-60 overflow-y-auto hidden shadow-lg"></div>
+                    </div>
+                    
+                    <div id="selectedFolder" class="hidden mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <span class="text-xs font-medium text-gray-500">Selected Folder:</span>
+                                <p id="selectedFolderInfo" class="text-sm font-medium text-gray-900"></p>
+                            </div>
+                            <button type="button" onclick="clearFolderSelection()" 
+                                    class="ml-3 text-sm text-red-600 hover:text-red-800 font-medium">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                    <input type="hidden" name="folder_id" id="folder_id">
                 </div>
 
                 <div>
@@ -73,5 +86,62 @@
         </div>
     </div>
 </div>
+
+<script>
+    const folders = <?= json_encode($folders ?? []) ?>;
+
+    document.getElementById('folderSearch').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        const results = document.getElementById('searchResults');
+        
+        if (query.length === 0) {
+            results.classList.add('hidden');
+            return;
+        }
+
+        const filtered = folders.filter(f => 
+            f.file_code.toLowerCase().includes(query) || 
+            f.company_name.toLowerCase().includes(query)
+        );
+
+        if (filtered.length === 0) {
+            results.innerHTML = '<div class="p-3 text-gray-500 text-sm">No folders found</div>';
+            results.classList.remove('hidden');
+            return;
+        }
+
+        results.innerHTML = filtered.map(f => 
+            `<div onclick="selectFolder(${f.folder_id}, '${f.file_code}', '${f.company_name}')" 
+                  class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-200 last:border-b-0">
+                <div class="font-medium text-gray-900">${f.file_code}</div>
+                <div class="text-sm text-gray-600">${f.company_name}</div>
+            </div>`
+        ).join('');
+        
+        results.classList.remove('hidden');
+    });
+
+    function selectFolder(folderId, fileCode, companyName) {
+        document.getElementById('folder_id').value = folderId;
+        document.getElementById('selectedFolderInfo').textContent = `${fileCode} - ${companyName}`;
+        document.getElementById('selectedFolder').classList.remove('hidden');
+        document.getElementById('searchResults').classList.add('hidden');
+        document.getElementById('folderSearch').value = '';
+    }
+
+    function clearFolderSelection() {
+        document.getElementById('folder_id').value = '';
+        document.getElementById('selectedFolder').classList.add('hidden');
+        document.getElementById('folderSearch').value = '';
+        document.getElementById('folderSearch').focus();
+    }
+
+    // Close search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#folderSearch') && !e.target.closest('#searchResults')) {
+            document.getElementById('searchResults').classList.add('hidden');
+        }
+    });
+</script>
 
 <?= $this->endSection() ?>

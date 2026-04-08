@@ -316,7 +316,7 @@
 
             <div class="flex gap-3 justify-end mt-8 pt-6 border-t">
 
-                <a href="/permits" 
+                <a href="/document-records" 
 
                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
 

@@ -1,8 +1,27 @@
 <?php
 $headerNotifications = [];
+$pendingBorrowCount = 0;
 
 try {
     $borrowModel = new \App\Models\BorrowTransactionModel();
+    $db = \Config\Database::connect();
+
+    // Calculate pending borrow count for notification badge
+    $allBorrows = $borrowModel->findAll();
+    foreach ($allBorrows as $borrow) {
+        $calculatedStatus = $borrowModel->calculateStatus($borrow);
+        if ($calculatedStatus === 'Pending') {
+            $pendingBorrowCount++;
+        }
+    }
+
+    // Add pending relocation requests to the count
+    if (can('approve_relocation') && $db->tableExists('relocation_requests')) {
+        $pendingRelocationCount = $db->table('relocation_requests')
+            ->where('status', 'Pending')
+            ->countAllResults();
+        $pendingBorrowCount += $pendingRelocationCount;
+    }
 
     $overdueCount = count($borrowModel->getAllOverdue());
     if ($overdueCount > 0 && (can('view_own_borrow') || can('view_all_borrow') || can('view_pending_returns'))) {
@@ -18,25 +37,51 @@ try {
     }
 
     if (can('approve_borrow_requests')) {
-        $newPendingCount = $borrowModel->where('status', 'Pending')
-            ->where('actual_return_date IS NULL')
-            ->where('created_at >=', date('Y-m-d H:i:s', strtotime('-1 day')))
-            ->countAllResults();
+        // Get separate counts for notifications
+        $borrowOnlyCount = 0;
+        $allBorrows = $borrowModel->findAll();
+        foreach ($allBorrows as $borrow) {
+            $calculatedStatus = $borrowModel->calculateStatus($borrow);
+            if ($calculatedStatus === 'Pending') {
+                $borrowOnlyCount++;
+            }
+        }
 
-        if ($newPendingCount > 0) {
+        if ($borrowOnlyCount > 0) {
             $headerNotifications[] = [
                 'id' => 2,
                 'type' => 'warning',
-                'message' => $newPendingCount . ' newly created request(s) need approval.',
-                'time' => 'New today',
+                'message' => $borrowOnlyCount . ' borrow request(s) need approval.',
+                'time' => 'Pending approval',
                 'read' => false,
                 'link' => base_url('borrows/pending'),
                 'linkText' => 'View',
             ];
         }
     }
+
+    // Add separate relocation notification
+    if (can('approve_relocation') && $db->tableExists('relocation_requests')) {
+        $relocationOnlyCount = $db->table('relocation_requests')
+            ->where('status', 'Pending')
+            ->countAllResults();
+
+        if ($relocationOnlyCount > 0) {
+            $headerNotifications[] = [
+                'id' => 3,
+                'type' => 'info',
+                'message' => $relocationOnlyCount . ' relocation request(s) pending approval.',
+                'time' => 'Awaiting action',
+                'read' => false,
+                'link' => base_url('relocations/pending'),
+                'linkText' => 'View',
+            ];
+        }
+    }
+
 } catch (\Throwable $e) {
     $headerNotifications = [];
+    $pendingBorrowCount = 0;
 }
 
 $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
@@ -289,10 +334,11 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                             </svg>
                             <!-- Notification Badge -->
-                            <span x-show="unreadCount() > 0" 
-                                  x-text="unreadCount() > 9 ? '9+' : unreadCount()"
-                                  class="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                            <?php if ($pendingBorrowCount > 0): ?>
+                            <span class="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                                <?= $pendingBorrowCount > 9 ? '9+' : $pendingBorrowCount ?>
                             </span>
+                            <?php endif; ?>
                         </button>
                         
                         <div x-show="notificationsOpen" 
@@ -330,9 +376,6 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
                                         </div>
                                     </div>
                                 </template>
-                            </div>
-                            <div class="p-3 border-t border-gray-200">
-                                <a href="<?= base_url('borrows') ?>" class="text-sm text-blue-600 hover:text-blue-800 font-medium">View Borrow Management</a>
                             </div>
                         </div>
                     </div>

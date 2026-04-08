@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\BorrowTransactionModel;
+
 class DashboardController extends BaseController
 {
     /**
@@ -34,7 +36,7 @@ class DashboardController extends BaseController
         if ($userRole === 'super_admin') {
             // Get document status counts from database
             $documentStats = $this->getDocumentStatusCounts($db);
-            
+                
             $data['dashboardTitle'] = 'System Administration Dashboard';
             $data['stats'] = [
                 'totalUsers' => $db->table('users')->countAll(),
@@ -124,18 +126,21 @@ class DashboardController extends BaseController
      */
     private function getPendingApprovalsCount($db, $scope = 'all')
     {
-        $borrowCount = $db->table('document_requests')
-            ->where('status', 'Pending')
-            ->countAllResults();
+        $borrowModel = new \App\Models\BorrowTransactionModel();
         
-        $relocationCount = 0;
-        if ($db->tableExists('relocation_requests')) {
-            $relocationCount = $db->table('relocation_requests')
-                ->where('status', 'Pending')
-                ->countAllResults();
+        // Get all borrow transactions
+        $allBorrows = $borrowModel->findAll();
+        
+        $pendingCount = 0;
+        foreach ($allBorrows as $borrow) {
+            $calculatedStatus = $borrowModel->calculateStatus($borrow);
+            
+            if ($calculatedStatus === 'Pending') {
+                $pendingCount++;
+            }
         }
         
-        return $borrowCount + $relocationCount;
+        return $pendingCount;
     }
 
     /**

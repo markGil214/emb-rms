@@ -39,7 +39,7 @@
                             </tr>
                         <?php else: ?>
                             <?php foreach ($pending as $borrow): ?>
-                                <tr class="bg-yellow-50 hover:bg-yellow-100">
+                                <tr class="bg-gray-50 hover:bg-yellow-100">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><?= $borrow['transaction_id'] ?></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $borrow['folder_id'] ?></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $borrow['borrower_name'] ?? 'N/A' ?></td>

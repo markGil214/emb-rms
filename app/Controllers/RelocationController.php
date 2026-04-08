@@ -411,6 +411,38 @@ class RelocationController extends BaseController
     /**
      * List pending relocations
      */
+    public function pending()
+    {
+        if (!can('approve_relocation')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $db = \Config\Database::connect();
+        
+        // Get only pending relocations with joined data
+        $relocations = $db->table('relocation_requests as r')
+            ->select('r.*, f.file_code, f.company_name, fl.cabinet, tl.cabinet as to_cabinet')
+            ->join('folders as f', 'f.folder_id = r.folder_id', 'left')
+            ->join('locations as fl', 'fl.location_id = r.from_location_id', 'left')
+            ->join('locations as tl', 'tl.location_id = r.to_location_id', 'left')
+            ->where('r.status', 'Pending')
+            ->orderBy('r.requested_at', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        // Build formatted location strings for display
+        $relocations = array_map(function($rel) {
+            $rel['current_location_display'] = $this->formatLocation($rel['cabinet'] ?? null);
+            $rel['new_location_display'] = $this->formatLocation($rel['to_cabinet'] ?? null);
+            return $rel;
+        }, $relocations);
+
+        return view('relocation/pending', [
+            'title' => 'Pending Relocations',
+            'subtitle' => 'Relocation requests awaiting approval',
+            'pending' => $relocations,
+        ]);
+    }
 
     /**
      * Test Console - Debug Dashboard

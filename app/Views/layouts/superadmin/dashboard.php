@@ -63,7 +63,7 @@
                     </div>
                 </div>
 
-                <!-- Pending Approvals -->
+                 <!-- Pending Approvals -->
                 <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
                     <div class="flex items-center justify-between">
                         <div class="flex-1">

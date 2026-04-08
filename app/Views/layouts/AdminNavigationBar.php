@@ -60,42 +60,15 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
             <?php endif; ?>
         </li>
         
-        <li class="document-dropdown">
+        <li>
             <?php if (can('view_documents') || can('create_document_record') || can('edit_document_metadata') || can('search_documents')): ?>
-            <button @click="documentDropdownOpen = !documentDropdownOpen" 
-                    class="w-full flex items-center p-3 rounded hover:bg-green-900 transition-colors group text-left">
+            <a href="<?= route_to('records') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
+               :class="window.location.pathname === '<?= route_to('records') ?>' ? 'bg-green-900' : ''">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                <span x-show="sidebarOpen" x-transition class="ml-3 flex-1">Document Records</span>
-                <svg x-show="sidebarOpen" x-transition class="w-4 h-4 transition-transform" 
-                     :class="documentDropdownOpen ? 'rotate-90' : ''" 
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </button>
-            
-            <div x-show="documentDropdownOpen" 
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="transform opacity-0 scale-95"
-                 x-transition:enter-end="transform opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-75"
-                 x-transition:leave-start="transform opacity-100 scale-100"
-                 x-transition:leave-end="transform opacity-0 scale-95"
-                 class="mt-1 ml-3 space-y-1 bg-green-900 rounded-lg">
-                <a href="<?= route_to('records') ?>" class="flex items-center p-2 rounded hover:bg-green-600 transition-colors group">
-                    
-                    <span x-show="sidebarOpen" x-transition>Permits</span>
-                </a>
-                <a href="<?= route_to('records') ?>" class="flex items-center p-2 rounded hover:bg-green-600 transition-colors group">
-                    
-                    <span x-show="sidebarOpen" x-transition>ECC & IEC</span>
-                </a>
-                <a href="<?= route_to('records') ?>" class="flex items-center p-2 rounded hover:bg-green-600 transition-colors group">
-                    
-                    <span x-show="sidebarOpen" x-transition>CNC</span>
-                </a>
-            </div>
+                <span x-show="sidebarOpen" x-transition class="ml-3">Document Records</span>
+            </a>
             <?php endif; ?>
         </li>
         
@@ -113,7 +86,8 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
 
         <li>
             <?php if (can('request_relocation') || can('approve_relocation')): ?>
-            <a href="#" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
+            <a href="<?= route_to('relocations.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
+               :class="window.location.pathname === '<?= route_to('relocations.index') ?>' ? 'bg-green-900' : ''">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
                 </svg>
@@ -122,42 +96,14 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
             <?php endif; ?>
         </li>
 
-         <li class="archive-dropdown">
+         <li>
             <?php if (can('archive_document') || can('view_archive_module') || can('manage_archive_policies') || can('view_disposal_workflow') || can('approve_disposal')): ?>
-            <button @click="archiveDropdownOpen = !archiveDropdownOpen" 
-                    class="w-full flex items-center p-3 rounded hover:bg-green-900 transition-colors group text-left">
+            <a href="#" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
                 </svg>
-                <span x-show="sidebarOpen" x-transition class="ml-3 flex-1">Archive Modules</span>
-                <svg x-show="sidebarOpen" x-transition class="w-4 h-4 transition-transform" 
-                     :class="archiveDropdownOpen ? 'rotate-90' : ''" 
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </button>
-            
-            <div x-show="archiveDropdownOpen" 
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="transform opacity-0 scale-95"
-                 x-transition:enter-end="transform opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-75"
-                 x-transition:leave-start="transform opacity-100 scale-100"
-                 x-transition:leave-end="transform opacity-0 scale-95"
-                 class="mt-1 ml-3 space-y-1  bg-green-900 rounded-lg">
-                <a href="<?= route_to('#') ?>" class="flex items-center p-2 rounded hover:bg-green-600 transition-colors group">
-                    
-                    <span x-show="sidebarOpen" x-transition>Permits</span>
-                </a>
-                <a href="#" class="flex items-center p-2 rounded hover:bg-green-600 transition-colors group">
-                   
-                    <span x-show="sidebarOpen" x-transition>ECC & IEC</span>
-                </a>
-                <a href="#" class="flex items-center p-2 rounded hover:bg-green-600 transition-colors group">
-                    
-                    <span x-show="sidebarOpen" x-transition>CNC Archive</span>
-                </a>
-            </div>
+                <span x-show="sidebarOpen" x-transition class="ml-3">Archive Modules</span>
+            </a>
             <?php endif; ?>
         </li>
 
@@ -176,16 +122,6 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
             <?php endif; ?>
         </li>
 
-            <li>
-            <?php if (can('view_alerts_module')): ?>
-            <a href="#" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                </svg>
-                <span x-show="sidebarOpen" x-transition class="ml-3">Alert Module</span>
-            </a>
-            <?php endif; ?>
-        </li>
         <li>
             <?php if (can('manage_users')): ?>
             <a href="<?= route_to('admin.permissions') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">

@@ -4,13 +4,13 @@
 
 <?= $this->section('content') ?>
 
-<div x-data="permitsManager()">
+<div x-data="documentRecordsManager()">
 
     <!-- Page Header -->
 
     <div class="mb-8">
 
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Document Records - Permits</h1>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Document Records</h1>
 
         <p class="text-gray-600">Manage and track all permit documents in the system</p>
 
@@ -89,6 +89,8 @@
                 <!-- Entries Per Page -->
 
                 <select x-model="entriesPerPage" @change="updatePagination()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+
+                    <option value="5">5</option>
 
                     <option value="25">25</option>
 
@@ -234,7 +236,7 @@
 
                     <tbody class="bg-white divide-y divide-gray-200">
 
-                        <template x-for="(folder, index) in filteredFolders" :key="folder.folder_id">
+                        <template x-for="(folder, index) in paginatedFolders" :key="folder.folder_id">
 
                             <tr class="hover:bg-gray-200 transition-colors duration-150" 
                                 :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-200'">
@@ -327,7 +329,7 @@
 
                                     <div class="flex items-center justify-end space-x-2">
 
-                                        <a :href="`/permits/${folder.folder_id}`" 
+                                        <a :href="`/document-records/${folder.folder_id}`" 
 
                                            class="text-blue-600 hover:text-blue-900 inline-flex items-center space-x-1"
 
@@ -345,7 +347,7 @@
 
                                         </a>
 
-                                        <a :href="`/permits/${folder.folder_id}/edit`" 
+                                        <a :href="`/document-records/${folder.folder_id}/edit`" 
 
                                            class="text-green-600 hover:text-green-900 inline-flex items-center space-x-1"
 
@@ -431,15 +433,15 @@
 
                         x-show="currentPage > 1"
 
-                        class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7 7m0 14l5-5 5-5z"></path>
-
-                    </svg>
+                        class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center">
 
                     Previous
+
+                    <svg class="w-4 h-4 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+
+                    </svg>
 
                 </button>
 
@@ -497,7 +499,7 @@
 
 <script>
 
-function permitsManager() {
+function documentRecordsManager() {
 
     return {
 
@@ -507,7 +509,7 @@ function permitsManager() {
 
         folderTypeFilter: '',
 
-        entriesPerPage: '25',
+        entriesPerPage: '5',
 
         currentPage: 1,
 

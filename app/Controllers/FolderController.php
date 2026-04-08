@@ -29,7 +29,7 @@ class FolderController extends BaseController
             ->orderBy('file_code', 'ASC')
             ->findAll();
 
-        return view('layouts/superadmin/document-records/permits', [
+        return view('layouts/superadmin/document-records/document-records', [
             'title' => 'Folders',
             'folders' => $folders
         ]);
@@ -106,7 +106,7 @@ class FolderController extends BaseController
 
         $db->transComplete();
 
-        return redirect()->to('/permits')->with('success', 'Folder created successfully');
+        return redirect()->to('/document-records')->with('success', 'Folder created successfully');
     }
 
     /**
@@ -180,7 +180,7 @@ class FolderController extends BaseController
 
         $this->folderModel->update($folderId, $data);
 
-        return redirect()->to('/permits')->with('success', 'Folder updated successfully');
+        return redirect()->to('/document-records')->with('success', 'Folder updated successfully');
     }
 
     /**
