@@ -92,6 +92,13 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     $routes->get('/shelfmap',     'DashboardController::shelfmap', ['as' => 'shelfmap', 'filter' => 'permission:view_shelf_map']);
 
+    $routes->get('/manage-racks', 'RackManagementController::index', ['as' => 'racks.index', 'filter' => 'permission:create_document_record']);
+    $routes->post('/manage-racks', 'RackManagementController::store', ['as' => 'racks.store', 'filter' => 'permission:create_document_record']);
+    $routes->get('/manage-racks/(:num)/edit', 'RackManagementController::edit/$1', ['as' => 'racks.edit', 'filter' => 'permission:create_document_record']);
+    $routes->post('/manage-racks/(:num)/update', 'RackManagementController::update/$1', ['as' => 'racks.update', 'filter' => 'permission:create_document_record']);
+    $routes->post('/manage-racks/(:num)/delete', 'RackManagementController::delete/$1', ['as' => 'racks.delete', 'filter' => 'permission:create_document_record']);
+    $routes->post('/manage-racks/delete-rack', 'RackManagementController::deleteRack', ['as' => 'racks.deleteRack', 'filter' => 'permission:create_document_record']);
+
 });
 
 

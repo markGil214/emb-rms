@@ -86,7 +86,7 @@
                                     }
                                 }
                                 if ($currentLoc) {
-                                    echo 'Cabinet ' . $currentLoc['cabinet'] . ' - Rack ' . $currentLoc['rack'];
+                                    echo 'Rack ' . $currentLoc['rack'] . ' - Shelf ' . $currentLoc['shelf'];
                                 } else {
                                     echo 'Unknown';
                                 }
@@ -108,20 +108,20 @@
                         <?php 
                             $grouped = [];
                             foreach ($locations as $loc) {
-                                $cabinet = $loc['cabinet'] ?? 'Unknown';
-                                if (!isset($grouped[$cabinet])) {
-                                    $grouped[$cabinet] = [];
+                                $rack = $loc['rack'] ?? 'Unknown';
+                                if (!isset($grouped[$rack])) {
+                                    $grouped[$rack] = [];
                                 }
-                                $grouped[$cabinet][] = $loc;
+                                $grouped[$rack][] = $loc;
                             }
                         ?>
-                        <?php foreach ($grouped as $cabinet => $cabinets): ?>
-                            <optgroup label="Cabinet <?= $cabinet ?>">
-                                <?php foreach ($cabinets as $location): ?>
+                        <?php foreach ($grouped as $rack => $shelves): ?>
+                            <optgroup label="Rack <?= $rack ?>">
+                                <?php foreach ($shelves as $location): ?>
                                     <option value="<?= $location['location_id'] ?>" 
                                         <?= $location['location_id'] == $relocation['to_location_id'] ? 'selected' : '' ?> 
                                         <?= $location['location_id'] == $relocation['from_location_id'] ? 'disabled' : '' ?>>
-                                        Rack <?= $location['rack'] ?><?= $location['location_id'] == $relocation['from_location_id'] ? ' (Current Location)' : '' ?>
+                                        Shelf <?= $location['shelf'] ?><?= $location['location_id'] == $relocation['from_location_id'] ? ' (Current Location)' : '' ?>
                                     </option>
                                 <?php endforeach; ?>
                             </optgroup>

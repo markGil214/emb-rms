@@ -24,8 +24,12 @@ class FolderController extends BaseController
     public function index()
     {
         $folders = $this->folderModel
-            ->select('folders.*, locations.cabinet, locations.rack')
+            // Support schemas where locations has rack/shelf (without cabinet).
+            ->select('folders.*, locations.rack AS cabinet, locations.shelf AS shelf, locations.rack AS rack, bt.borrowed_at AS borrowed_date, bt.expected_return_date AS due_date, bt.actual_return_date AS return_date, ar.archived_date AS archived_date')
             ->join('locations', 'locations.location_id = folders.location_id', 'left')
+            ->join('borrow_transactions bt', 'bt.transaction_id = folders.current_borrow_transaction_id', 'left')
+            ->join('archive_records ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = folders.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false)
+            ->where('folders.status !=', 'Archived')
             ->orderBy('file_code', 'ASC')
             ->findAll();
 
@@ -41,7 +45,20 @@ class FolderController extends BaseController
     public function create()
     {
         $db = \Config\Database::connect();
-        $locations = $db->table('locations')->get()->getResultArray();
+        $locations = $db->table('locations')
+            ->select('location_id, rack, shelf')
+            ->orderBy('rack', 'ASC')
+            ->orderBy('shelf', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $locations = array_map(static function (array $location) {
+            return [
+                'location_id' => $location['location_id'],
+                'cabinet' => $location['rack'] ?? '',
+                'shelf' => $location['shelf'] ?? ($location['rack'] ?? ''),
+            ];
+        }, $locations);
         
         return view('layouts/superadmin/document-records/create', [
             'title' => 'Create New Folder',
@@ -54,14 +71,8 @@ class FolderController extends BaseController
      */
     public function store()
     {
-        if (!$this->validate([
-            'company_name' => 'required|max_length[255]',
-            'issuance_date' => 'required|valid_date',
-            'expiry_date' => 'required|valid_date',
-            'location_id' => 'required|integer',
-            'status' => 'required|in_list[Available,Borrowed,Archived,Disposed]',
-            'folder_type' => 'in_list[Commercial sand and gravel,Telecommunication,Local Government Unit,Mining Company,Hydro Power Plants]|max_length[50]',
-        ])) {
+        $rules = $this->getFolderValidationRules(true);
+        if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
@@ -83,7 +94,7 @@ class FolderController extends BaseController
 
         // Generate location code from location details
         $locationCode = FileCodeGenerator::generateLocationCode(
-            $location->cabinet ?? '',
+            $location->rack ?? '',
             $location->shelf ?? ''
         );
 
@@ -92,9 +103,8 @@ class FolderController extends BaseController
             'location_code' => $locationCode,
             'company_name' => $this->request->getPost('company_name'),
             'folder_type' => $this->request->getPost('folder_type'),
-            'issuance_date' => $this->request->getPost('issuance_date'),
-            'expiry_date' => $this->request->getPost('expiry_date'),
-            'status' => $this->request->getPost('status'),
+            'folder_subtype' => $this->request->getPost('folder_subtype'),
+            'status' => 'Available',
             'location_id' => $locationId,
             'created_by' => auth_user()['user_id'] ?? null,
         ];
@@ -122,7 +132,7 @@ class FolderController extends BaseController
             ->getRowArray();
 
         // Keep the current view contract: expose cabinet and rack in $folder.
-        $folder['cabinet'] = $location['cabinet'] ?? null;
+        $folder['cabinet'] = $location['cabinet'] ?? ($location['rack'] ?? null);
         $folder['rack'] = $location['rack'] ?? ($location['shelf'] ?? null);
         $files = $this->folderFileModel->getByFolder($folderId);
 
@@ -153,21 +163,18 @@ class FolderController extends BaseController
     {
         $folder = $this->findFolderOrFail($folderId);
 
-        if (!$this->validate([
-            'company_name' => 'required|max_length[255]',
-            'issuance_date' => 'required|valid_date',
-            'expiry_date' => 'required|valid_date',
-            'folder_type' => 'in_list[Commercial sand and gravel,Telecommunication,Local Government Unit,Mining Company,Hydro Power Plants]|max_length[50]',
-        ])) {
+        $rules = $this->getFolderValidationRules(false);
+        if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
         $data = [
             'company_name' => $this->request->getPost('company_name'),
             'folder_type' => $this->request->getPost('folder_type'),
-            'issuance_date' => $this->request->getPost('issuance_date'),
-            'expiry_date' => $this->request->getPost('expiry_date'),
+            'folder_subtype' => $this->request->getPost('folder_subtype'),
             'status' => $this->request->getPost('status'),
+            'borrowed_date' => $this->request->getPost('borrowed_date') ?: null,
+            'due_date' => $this->request->getPost('due_date') ?: null,
             'updated_by' => auth_user()['user_id'] ?? null,
         ];
 
@@ -178,9 +185,33 @@ class FolderController extends BaseController
             $data['location_code'] = FileCodeGenerator::generateLocationCode($cabinet, $rack);
         }
 
-        $this->folderModel->update($folderId, $data);
+        if (!$this->folderModel->update($folderId, $data)) {
+            return redirect()->back()->withInput()->with('errors', $this->folderModel->errors());
+        }
 
         return redirect()->to('/document-records')->with('success', 'Folder updated successfully');
+    }
+
+    /**
+     * Shared validation rules for folder create/update.
+     */
+    protected function getFolderValidationRules(bool $isCreate): array
+    {
+        $rules = [
+            'company_name'  => 'required|max_length[255]',
+            'folder_type'   => 'permit_empty|in_list[permits,ECC / CNC FILES,IEE / EIS FILES]|max_length[50]',
+            'folder_subtype' => 'permit_empty|max_length[100]',
+        ];
+
+        if ($isCreate) {
+            $rules['location_id'] = 'required|integer';
+        } else {
+            $rules['status'] = 'required|in_list[Available,Borrowed,Archived,Disposed]';
+            $rules['borrowed_date'] = 'permit_empty|valid_date[Y-m-d]';
+            $rules['due_date'] = 'permit_empty|valid_date[Y-m-d]';
+        }
+
+        return $rules;
     }
 
     /**

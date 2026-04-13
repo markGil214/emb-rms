@@ -8,8 +8,13 @@ class UserSeeder extends Seeder
 {
 	public function run()
 	{
+		if (! $this->tableExists('users')) {
+			echo "⚠️  Skipping UserSeeder: users table does not exist. Run migrations first.\n";
+			return;
+		}
+
 		// Check if users already exist
-		$existingUsers = $this->db->table('users')->get()->getNumRows();
+		$existingUsers = $this->db->table('users')->countAllResults();
 		if ($existingUsers > 0) {
 			echo "ℹ️  Users already seeded. Skipping UserSeeder.\n";
 			return;
@@ -43,5 +48,15 @@ class UserSeeder extends Seeder
 		];
 
 		$this->db->table('users')->insertBatch($datas);
+	}
+
+	private function tableExists(string $table): bool
+	{
+		$result = $this->db->query(
+			'SELECT COUNT(*) AS cnt FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
+			[$table]
+		)->getRowArray();
+
+		return !empty($result) && (int) $result['cnt'] > 0;
 	}
 }

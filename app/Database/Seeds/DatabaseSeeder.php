@@ -30,9 +30,6 @@ class DatabaseSeeder extends Seeder
         $this->call('FolderSeeder');
 
         // 4. Seed feature data (depends on users & folders)
-        echo "Seeding borrow transactions...\n";
-        $this->call('BorrowTransactionSeeder');
-
         echo "Seeding relocation requests...\n";
         $this->call('RelocationRequestSeeder');
 

@@ -8,17 +8,10 @@ class ArchiveRecordSeeder extends Seeder
 {
     public function run()
     {
-        // Check if archive records already exist
-        $existing = $this->db->table('archive_records')->get()->getNumRows();
-        if ($existing > 0) {
-            echo "ℹ️  Archive records already seeded. Skipping ArchiveRecordSeeder.\n";
-            return;
-        }
-
         // Get sample users, folders, and locations
         $users = $this->db->table('users')->get()->getResultArray();
-        $folders = $this->db->table('folders')->limit(5)->get()->getResultArray();
-        $locations = $this->db->table('locations')->limit(3)->get()->getResultArray();
+        $folders = $this->db->table('folders')->orderBy('folder_id', 'ASC')->limit(5)->get()->getResultArray();
+        $locations = $this->db->table('locations')->orderBy('location_id', 'ASC')->limit(3)->get()->getResultArray();
 
         if (empty($users) || empty($folders) || empty($locations)) {
             echo "⚠️  Skipping ArchiveRecordSeeder: Requires users, folders, and locations to be seeded first.\n";
@@ -82,6 +75,20 @@ class ArchiveRecordSeeder extends Seeder
             'updated_at' => date('Y-m-d H:i:s'),
         ];
 
-        $this->db->table('archive_records')->insertBatch($archives);
+        foreach ($archives as $archive) {
+            $existing = $this->db->table('archive_records')
+                ->where('folder_id', $archive['folder_id'])
+                ->get()
+                ->getRowArray();
+
+            if ($existing) {
+                $this->db->table('archive_records')
+                    ->where('archive_id', $existing['archive_id'])
+                    ->update($archive);
+                continue;
+            }
+
+            $this->db->table('archive_records')->insert($archive);
+        }
     }
 }

@@ -95,10 +95,9 @@ class ShelfMapApiController extends BaseController
                     'id' => 'shelf-' . $locId,
                     'name' => $locationName,
                     'description' => sprintf(
-                        '%s - Contains %d/%d documents - %s occupancy',
+                        '%s - Contains %d documents - %s occupancy',
                         $locationName,
                         $occupied,
-                        $capacity,
                         $status
                     ),
                     'bounds' => $bounds,
@@ -220,8 +219,8 @@ class ShelfMapApiController extends BaseController
     private function buildLocationName($location)
     {
         $parts = [];
-        if (!empty($location['cabinet'])) $parts[] = 'Cabinet ' . $location['cabinet'];
-        if (!empty($location['rack'])) $parts[] = 'Rack ' . $location['rack'];
+        if (!empty($location['cabinet'])) $parts[] = 'Rack ' . $location['cabinet'];
+        if (!empty($location['rack'])) $parts[] = 'Shelf ' . $location['rack'];
 
         return !empty($parts) ? implode(' - ', $parts) : 'Location #' . $location['location_id'];
     }

@@ -129,17 +129,27 @@ class FolderMovementModel extends Model
             // Get folder current state
             $folderModel = new FolderModel();
             $folder = $folderModel->find($folderId);
-            
+            $currentLocation = $db->table('locations')
+                ->where('location_id', $folder['location_id'])
+                ->get()
+                ->getRowArray();
+
             // Create movement record with location snapshots
             $movementData = [
                 'folder_id' => $folderId,
                 'relocation_request_id' => $relocationRequestId,
                 'from_location_id' => $folder['location_id'],
                 'to_location_id' => $locationData['to_location_id'] ?? null,
-                'from_building' => $folder['building'] ?? null,
-                'from_room' => $folder['room'] ?? null,
-                'from_cabinet' => $folder['cabinet'] ?? null,
-                'from_shelf' => $folder['shelf'] ?? null,
+                'from_building' => $currentLocation['building'] ?? null,
+                'from_room' => $currentLocation['room'] ?? null,
+                'from_cabinet' => $currentLocation['rack'] ?? null,
+                'from_shelf' => $currentLocation['shelf'] ?? null,
+                'from_location_label' => $this->buildLocationLabel([
+                    'building' => $currentLocation['building'] ?? null,
+                    'room' => $currentLocation['room'] ?? null,
+                    'cabinet' => $currentLocation['rack'] ?? null,
+                    'shelf' => $currentLocation['shelf'] ?? null,
+                ]),
                 'movement_code' => $movementCode,
                 'folder_status_at_start' => $folder['status'],
                 'approved_by' => auth_user()['user_id'] ?? null,
@@ -153,12 +163,6 @@ class FolderMovementModel extends Model
             }
             
             $movementId = $this->insertID();
-            
-            // Update folder: mark as in-transit
-            $folderModel->update($folderId, [
-                'is_in_transit' => true,
-                'current_movement_id' => $movementId,
-            ]);
             
             $db->transComplete();
             
@@ -208,7 +212,6 @@ class FolderMovementModel extends Model
                 'to_room' => $updatedLocationFields['room'] ?? null,
                 'to_cabinet' => $updatedLocationFields['cabinet'] ?? null,
                 'to_shelf' => $updatedLocationFields['shelf'] ?? null,
-                'box' => $updatedLocationFields['box'] ?? null,
                 'to_location_label' => $toLabel,
                 'confirmed_to_building' => $updatedLocationFields['building'] ?? null,
                 'completed_by' => auth_user()['user_id'] ?? null,
@@ -217,16 +220,9 @@ class FolderMovementModel extends Model
                 'status_conflict_detected' => $statusConflict,
             ]);
             
-            // Update folder: out of transit, new location
+            // Update folder: new location only
             $folderModel->update($folderId, [
-                'is_in_transit' => false,
-                'current_movement_id' => null,
                 'location_id' => $toLocationId,
-                'building' => $updatedLocationFields['building'] ?? null,
-                'room' => $updatedLocationFields['room'] ?? null,
-                'cabinet' => $updatedLocationFields['cabinet'] ?? null,
-                'shelf' => $updatedLocationFields['shelf'] ?? null,
-                'box' => $updatedLocationFields['box'] ?? null,
             ]);
             
             $db->transComplete();

@@ -9,11 +9,9 @@ class FolderModel extends Model
 {
     //Folder Type Constants
     const FOLDER_TYPES = [
-        'Commercial sand and gravel',
-        'Telecommunication',
-        'Local Government Unit',
-        'Mining Company',
-        'Hydro Power Plants'
+        'permits',
+        'ECC / CNC FILES',
+        'IEE / EIS FILES'
     ];
 
     protected $DBGroup          = 'default';
@@ -23,9 +21,9 @@ class FolderModel extends Model
     protected $returnType       = 'array';
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'file_code', 'company_name', 'folder_type',
-        'location_code', 'issuance_date', 'expiry_date',
-        'status', 'location_id', 'created_by', 'updated_by'
+        'file_code', 'company_name', 'folder_type', 'folder_subtype',
+        'location_code', 'status', 'location_id', 'created_by', 'updated_by',
+        'borrowed_date', 'due_date'
     ];
 
     // Timestamps
@@ -40,9 +38,13 @@ class FolderModel extends Model
     protected $validationRules = [
         'file_code'      => 'required|max_length[50]|is_unique[folders.file_code,folder_id,{folder_id}]',
         'location_code'  => 'required|max_length[50]',
+        'location_id'    => 'required|integer',
         'company_name'   => 'required|max_length[100]',
-        'folder_type'    => 'in_list[Commercial sand and gravel,Telecommunication,Local Government Unit,Mining Company,Hydro Power Plants]|max_length[50]',
+        'folder_type'    => 'in_list[permits,ECC / CNC FILES,IEE / EIS FILES]|max_length[50]',
+        'folder_subtype' => 'permit_empty|max_length[100]',
         'status'         => 'in_list[Available,Borrowed,Archived,Disposed]',
+        'borrowed_date'  => 'permit_empty|valid_date',
+        'due_date'       => 'permit_empty|valid_date',
     ];
 
     protected $validationMessages = [
@@ -59,11 +61,20 @@ class FolderModel extends Model
             'required' => 'Company name is required',
         ],
         'folder_type' => [
-            'permit_in_list' => 'Please select a valid folder type.',
+            'in_list'        => 'Please select a valid folder type.',
             'max_length'     => 'Folder type cannot exceed 50 characters.',
+        ],
+        'folder_subtype' => [
+            'max_length' => 'Folder subtype cannot exceed 100 characters.',
         ],
         'location_id' => [
             'required' => 'Location is required',
+        ],
+        'borrowed_date' => [
+            'valid_date' => 'Please provide a valid borrowed date.',
+        ],
+        'due_date' => [
+            'valid_date' => 'Please provide a valid due date.',
         ],
     ];
 

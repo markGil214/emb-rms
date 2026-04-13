@@ -9,8 +9,13 @@ class RoleSeeder extends Seeder
 {
     public function run()
     {
+        if (! $this->tableExists('roles')) {
+            echo "⚠️  Skipping RoleSeeder: roles table does not exist. Run migrations first.\n";
+            return;
+        }
+
         // Check if roles already exist
-        $existingRoles = $this->db->table('roles')->get()->getNumRows();
+        $existingRoles = $this->db->table('roles')->countAllResults();
         if ($existingRoles > 0) {
             echo "ℹ️  Roles already seeded. Skipping RoleSeeder.\n";
             return;
@@ -64,5 +69,15 @@ class RoleSeeder extends Seeder
         }
 
         echo "✓ Roles and default permissions seeded successfully\n";
+    }
+
+    private function tableExists(string $table): bool
+    {
+        $result = $this->db->query(
+            'SELECT COUNT(*) AS cnt FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
+            [$table]
+        )->getRowArray();
+
+        return !empty($result) && (int) $result['cnt'] > 0;
     }
 }

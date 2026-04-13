@@ -8,16 +8,10 @@ class DisposalRecordSeeder extends Seeder
 {
     public function run()
     {
-        // Check if disposal records already exist
-        $existing = $this->db->table('disposal_records')->get()->getNumRows();
-        if ($existing > 0) {
-            echo "ℹ️  Disposal records already seeded. Skipping DisposalRecordSeeder.\n";
-            return;
-        }
-
         // Get archive records (disposal depends on archives)
         $archives = $this->db->table('archive_records')
             ->select('archive_id, folder_id')
+            ->orderBy('archive_id', 'ASC')
             ->get()
             ->getResultArray();
 
@@ -72,8 +66,20 @@ class DisposalRecordSeeder extends Seeder
             $archiveCount++;
         }
 
-        if (!empty($disposals)) {
-            $this->db->table('disposal_records')->insertBatch($disposals);
+        foreach ($disposals as $disposal) {
+            $existing = $this->db->table('disposal_records')
+                ->where('archive_id', $disposal['archive_id'])
+                ->get()
+                ->getRowArray();
+
+            if ($existing) {
+                $this->db->table('disposal_records')
+                    ->where('disposal_id', $existing['disposal_id'])
+                    ->update($disposal);
+                continue;
+            }
+
+            $this->db->table('disposal_records')->insert($disposal);
         }
     }
 }
