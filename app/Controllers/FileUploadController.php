@@ -96,7 +96,7 @@ class FileUploadController extends BaseController
 
         if ($this->folderFileModel->save($data)) {
             log_message('debug', "File record saved to database with path: " . $filePath);
-            return redirect()->to("/records/$folderId")->with('success', 'File uploaded successfully');
+            return redirect()->to(route_to('records.show', $folderId))->with('success', 'File uploaded successfully');
         } else {
             // Delete uploaded file if database save fails
             unlink($this->uploadPath . $newName);
@@ -175,6 +175,6 @@ class FileUploadController extends BaseController
         // Delete database record
         $this->folderFileModel->delete($fileId);
 
-        return redirect()->to("/records/$folderId")->with('success', 'File deleted successfully');
+        return redirect()->to(route_to('records.show', $folderId))->with('success', 'File deleted successfully');
     }
 }
