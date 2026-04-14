@@ -1,68 +1,64 @@
-<?= $this->extend('layouts/main') ?>
-
-<?= $this->section('content') ?>
-
-<div style="padding: 20px; max-width: 800px;">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= esc($title) ?></title>
+</head>
+<body>
+<div>
     <h1><?= $title ?></h1>
 
-    <div style="border: 1px solid #ddd; padding: 20px; border-radius: 4px; margin: 20px 0;">
+    <div>
         <h2>Disposal Request Details</h2>
         
-        <table style="width: 100%;">
+        <table border="1" cellpadding="6" cellspacing="0">
             <tr>
-                <td style="padding: 10px 0; font-weight: bold; width: 30%;">Disposal ID:</td>
-                <td style="padding: 10px 0;"><?= $disposal['disposal_id'] ?></td>
+                <td>Disposal ID:</td>
+                <td><?= $disposal['disposal_id'] ?></td>
             </tr>
             <tr>
-                <td style="padding: 10px 0; font-weight: bold;">Folder:</td>
-                <td style="padding: 10px 0;">
+                <td>Folder:</td>
+                <td>
                     <strong><?= $folder['file_code'] ?></strong> - <?= $folder['company_name'] ?>
                 </td>
             </tr>
             <tr>
-                <td style="padding: 10px 0; font-weight: bold;">Disposal Method:</td>
-                <td style="padding: 10px 0;"><?= $disposal['disposal_method'] ?></td>
+                <td>Disposal Method:</td>
+                <td><?= $disposal['disposal_method'] ?></td>
             </tr>
             <tr>
-                <td style="padding: 10px 0; font-weight: bold;">Reason:</td>
-                <td style="padding: 10px 0;"><?= nl2br($disposal['reason']) ?></td>
+                <td>Reason:</td>
+                <td><?= nl2br($disposal['reason'] ?? '-') ?></td>
             </tr>
             <tr>
-                <td style="padding: 10px 0; font-weight: bold;">Status:</td>
-                <td style="padding: 10px 0;">
-                    <span style="padding: 5px 10px; border-radius: 4px;
-                        <?php switch($disposal['status']) {
-                            case 'Pending': echo 'background: #fff3cd; color: #856404;'; break;
-                            case 'Approved': echo 'background: #cfe2ff; color: #084298;'; break;
-                            case 'Completed': echo 'background: #d4edda; color: #155724;'; break;
-                            case 'Cancelled': echo 'background: #e2e3e5; color: #383d41;'; break;
-                        } ?>">
-                        <?= $disposal['status'] ?>
-                    </span>
+                <td>Status:</td>
+                <td>
+                    <?= $disposal['status'] ?? (($disposal['disposal_date'] ?? null) ? 'Approved' : 'Pending') ?>
                 </td>
             </tr>
-            <?php if ($disposal['authorization_ref']): ?>
+            <?php if (!empty($disposal['compliance_reference'])): ?>
                 <tr>
-                    <td style="padding: 10px 0; font-weight: bold;">Authorization Ref:</td>
-                    <td style="padding: 10px 0;"><?= $disposal['authorization_ref'] ?></td>
+                    <td>Compliance Reference:</td>
+                    <td><?= nl2br($disposal['compliance_reference']) ?></td>
                 </tr>
             <?php endif; ?>
             <tr>
-                <td style="padding: 10px 0; font-weight: bold;">Requested Date:</td>
-                <td style="padding: 10px 0;"><?= date('M d, Y g:i A', strtotime($disposal['created_at'])) ?></td>
+                <td>Requested Date:</td>
+                <td><?= date('M d, Y g:i A', strtotime($disposal['created_at'])) ?></td>
             </tr>
             <?php if ($disposal['disposal_date']): ?>
                 <tr>
-                    <td style="padding: 10px 0; font-weight: bold;">Completed Date:</td>
-                    <td style="padding: 10px 0;"><?= date('M d, Y g:i A', strtotime($disposal['disposal_date'])) ?></td>
+                    <td>Completed Date:</td>
+                    <td><?= date('M d, Y g:i A', strtotime($disposal['disposal_date'])) ?></td>
                 </tr>
             <?php endif; ?>
         </table>
     </div>
 
-    <div style="margin: 20px 0;">
-        <a href="/archive-disposal" style="padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px;">Back to Dashboard</a>
+    <div>
+        <a href="/archive-disposal">Back to Dashboard</a>
     </div>
 </div>
-
-<?= $this->endSection() ?>
+</body>
+</html>

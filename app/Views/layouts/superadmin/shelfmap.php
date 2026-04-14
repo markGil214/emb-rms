@@ -42,9 +42,9 @@
 
                 <div class="mb-3 text-center">
 
-                    <h3 class="text-base font-semibold text-gray-900">Cabinet Layout</h3>
+                    <h3 class="text-base font-semibold text-gray-900">Rack Layout</h3>
 
-                    <p class="text-xs text-gray-600">Document storage cabinet visualization</p>
+                    <p class="text-xs text-gray-600">Document storage rack visualization</p>
 
                 </div>
 
@@ -248,9 +248,9 @@
 
                     <div>
 
-                        <h4 id="cabinetName" class="font-bold text-lg text-gray-900">Cabinet Details</h4>
+                        <h4 id="cabinetName" class="font-bold text-lg text-gray-900">Rack Details</h4>
 
-                        <p id="cabinetDescription" class="text-sm text-gray-600">Click on a rack to view details</p>
+                        <p id="cabinetDescription" class="text-sm text-gray-600">Click on a shelf to view details</p>
 
                     </div>
 
@@ -278,7 +278,7 @@
 
                         <div>
 
-                            <h5 class="font-bold text-gray-800 mb-4 text-center">Storage Racks</h5>
+                            <h5 class="font-bold text-gray-800 mb-4 text-center">Storage Shelves</h5>
 
                             <div class="space-y-3">
 
@@ -288,11 +288,11 @@
 
                                     <div class="flex items-center justify-between">
 
-                                        <div class="text-lg font-bold text-blue-800">Rack A</div>
+                                        <div class="text-lg font-bold text-blue-800">Shelf A</div>
 
                                         <div class="text-sm text-gray-600">
 
-                                            <span class="rack-occupied">0</span>/<span class="rack-capacity">100</span>
+                                            <span class="rack-occupied">0</span><span class="rack-capacity hidden">100</span>
 
                                         </div>
 
@@ -314,11 +314,11 @@
 
                                     <div class="flex items-center justify-between">
 
-                                        <div class="text-lg font-bold text-green-800">Rack B</div>
+                                        <div class="text-lg font-bold text-green-800">Shelf B</div>
 
                                         <div class="text-sm text-gray-600">
 
-                                            <span class="rack-occupied">0</span>/<span class="rack-capacity">100</span>
+                                            <span class="rack-occupied">0</span><span class="rack-capacity hidden">100</span>
 
                                         </div>
 
@@ -340,11 +340,11 @@
 
                                     <div class="flex items-center justify-between">
 
-                                        <div class="text-lg font-bold text-yellow-800">Rack C</div>
+                                        <div class="text-lg font-bold text-yellow-800">Shelf C</div>
 
                                         <div class="text-sm text-gray-600">
 
-                                            <span class="rack-occupied">0</span>/<span class="rack-capacity">100</span>
+                                            <span class="rack-occupied">0</span><span class="rack-capacity hidden">100</span>
 
                                         </div>
 
@@ -366,11 +366,11 @@
 
                                     <div class="flex items-center justify-between">
 
-                                        <div class="text-lg font-bold text-red-800">Rack D</div>
+                                        <div class="text-lg font-bold text-red-800">Shelf D</div>
 
                                         <div class="text-sm text-gray-600">
 
-                                            <span class="rack-occupied">0</span>/<span class="rack-capacity">100</span>
+                                            <span class="rack-occupied">0</span><span class="rack-capacity hidden">100</span>
 
                                         </div>
 

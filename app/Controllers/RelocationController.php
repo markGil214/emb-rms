@@ -34,7 +34,7 @@ class RelocationController extends BaseController
         
         // Get relocations with joined data
         $relocations = $db->table('relocation_requests as r')
-            ->select('r.*, f.file_code, f.company_name, fl.cabinet, tl.cabinet as to_cabinet')
+            ->select('r.*, f.file_code, f.company_name, fl.rack, tl.rack as to_rack')
             ->join('folders as f', 'f.folder_id = r.folder_id', 'left')
             ->join('locations as fl', 'fl.location_id = r.from_location_id', 'left')
             ->join('locations as tl', 'tl.location_id = r.to_location_id', 'left')
@@ -44,8 +44,8 @@ class RelocationController extends BaseController
 
         // Build formatted location strings for display
         $relocations = array_map(function($rel) {
-            $rel['current_location_display'] = $this->formatLocation($rel['cabinet'] ?? null);
-            $rel['new_location_display'] = $this->formatLocation($rel['to_cabinet'] ?? null);
+            $rel['current_location_display'] = $this->formatLocation($rel['rack'] ?? null);
+            $rel['new_location_display'] = $this->formatLocation($rel['to_rack'] ?? null);
             return $rel;
         }, $relocations);
 
@@ -66,7 +66,7 @@ class RelocationController extends BaseController
         if (!$cabinet) {
             return 'Unknown Location';
         }
-        return "Cabinet {$cabinet}";
+        return "Rack {$cabinet}";
     }
 
     /**
@@ -100,32 +100,60 @@ class RelocationController extends BaseController
             return redirect()->back()->with('error', 'Permission denied');
         }
 
-        if (!$this->validate($this->relocationModel->validationRules)) {
+        $rules = [
+            'folder_id' => 'required|integer',
+            'to_location_id' => 'required|integer',
+            'reason' => 'permit_empty|max_length[500]',
+        ];
+
+        if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $folderId = $this->request->getPost('folder_id');
+        $folderId = (int) $this->request->getPost('folder_id');
         $folder = $this->folderModel->find($folderId);
+        if (!$folder) {
+            return redirect()->back()->withInput()->with('errors', [
+                'folder_id' => 'Selected folder was not found.',
+            ]);
+        }
+
+        $toLocationId = (int) $this->request->getPost('to_location_id');
+        $db = \Config\Database::connect();
+        $toLocation = $db->table('locations')->where('location_id', $toLocationId)->get()->getRowArray();
+        if (!$toLocation) {
+            return redirect()->back()->withInput()->with('errors', [
+                'to_location_id' => 'Selected target location was not found.',
+            ]);
+        }
+
+        if ((int) $folder['location_id'] === $toLocationId) {
+            return redirect()->back()->withInput()->with('errors', [
+                'to_location_id' => 'Target location must be different from current location.',
+            ]);
+        }
 
         // ARCHITECTURAL FIX #4: Lifecycle Guard - prevent relocating unavailable folders
         if ($folder['status'] !== 'Available') {
-            return redirect()->back()->withInput()->with('error', 
-                "Cannot relocate folder with status '{$folder['status']}'. Only Available folders can be relocated.");
+            return redirect()->back()->withInput()->with('errors', [
+                'folder_id' => "Cannot relocate folder with status '{$folder['status']}'. Only Available folders can be relocated.",
+            ]);
         }
 
         $data = [
             'folder_id' => $folderId,
             'from_location_id' => $folder['location_id'],
-            'to_location_id' => $this->request->getPost('to_location_id'),
+            'to_location_id' => $toLocationId,
             'reason' => $this->request->getPost('reason'),
-            'reason_type' => $this->request->getPost('reason_type') ?? 'Other',
             'status' => 'Pending',
             'requested_at' => date('Y-m-d H:i:s'),
             'requested_by' => auth_user()['user_id'],
         ];
 
         if (!$this->relocationModel->save($data)) {
-            return redirect()->back()->withInput()->with('error', 'Failed to create relocation request');
+            return redirect()->back()->withInput()->with('errors',
+                $this->relocationModel->errors() ?: ['general' => 'Failed to create relocation request']
+            );
         }
 
         log_message('info', "User " . auth_user()['user_id'] . " requested relocation for folder {$folderId}");
@@ -256,14 +284,38 @@ class RelocationController extends BaseController
             return redirect()->back()->with('error', 'Only pending relocations can be edited');
         }
 
-        if (!$this->validate($this->relocationModel->validationRules)) {
+        $rules = [
+            'to_location_id' => 'required|integer',
+            'reason' => 'permit_empty|max_length[500]',
+        ];
+
+        if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $this->relocationModel->update($relocationId, [
-            'to_location_id' => $this->request->getPost('to_location_id'),
+        $toLocationId = (int) $this->request->getPost('to_location_id');
+        $db = \Config\Database::connect();
+        $toLocation = $db->table('locations')->where('location_id', $toLocationId)->get()->getRowArray();
+        if (!$toLocation) {
+            return redirect()->back()->withInput()->with('errors', [
+                'to_location_id' => 'Selected target location was not found.',
+            ]);
+        }
+
+        if ((int) $relocation['from_location_id'] === $toLocationId) {
+            return redirect()->back()->withInput()->with('errors', [
+                'to_location_id' => 'Target location must be different from current location.',
+            ]);
+        }
+
+        if (!$this->relocationModel->update($relocationId, [
+            'to_location_id' => $toLocationId,
             'reason' => $this->request->getPost('reason'),
-        ]);
+        ])) {
+            return redirect()->back()->withInput()->with('errors',
+                $this->relocationModel->errors() ?: ['general' => 'Failed to update relocation request']
+            );
+        }
 
         $auditLog = service('auditLog');
         $auditLog->log(auth_user()['user_id'], 'update_relocation', "relocation_id:{$relocationId}");
@@ -274,10 +326,9 @@ class RelocationController extends BaseController
     /**
      * Mark relocation as in progress
      * 
-     * ENTERPRISE UPGRADE:
-     * Transitions folder to "In-Transit" state
-     * Generates unique movement code
-     * Marks as in-transit in folders table
+    * ENTERPRISE UPGRADE:
+    * Creates a movement record for the relocation workflow
+    * Generates unique movement code
      */
     public function startRelocation(int $relocationId)
     {
@@ -290,8 +341,11 @@ class RelocationController extends BaseController
             return redirect()->back()->with('error', 'Invalid status for this action');
         }
 
-        // ENTERPRISE FIX: Use new startMovement() which handles in-transit state
         try {
+            if ($this->movementModel->getActiveMovement($relocation['folder_id'])) {
+                return redirect()->back()->with('error', 'Folder already has an active relocation movement.');
+            }
+
             $movementId = $this->movementModel->startMovement(
                 $relocation['folder_id'],
                 $relocationId,
@@ -309,7 +363,7 @@ class RelocationController extends BaseController
                 "relocation_id:{$relocationId},folder_id:{$relocation['folder_id']},movement_id:{$movementId}"
             );
 
-            return redirect()->back()->with('success', 'Relocation started. Folder marked as in-transit.');
+            return redirect()->back()->with('success', 'Relocation started.');
 
         } catch (\Exception $e) {
             log_message('error', 'Relocation start failed: ' . $e->getMessage());
@@ -323,7 +377,7 @@ class RelocationController extends BaseController
      * ENTERPRISE UPGRADES:
      * 1. Updates folder location to new location
      * 2. Records movement in folder_movements (audit trail)
-     * 3. Transitions folder from "In-Transit" to normal
+    * 3. Finalizes the active movement and updates the folder location
      * 4. Captures complete approval chain (who → when)
      * 5. Detects race conditions (status changes during relocation)
      * 6. Uses transactions for data integrity
@@ -337,16 +391,6 @@ class RelocationController extends BaseController
         $relocation = $this->relocationModel->find($relocationId);
         if (!$relocation) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-        }
-
-        $folder = $this->folderModel->find($relocation['folder_id']);
-        if (!$folder) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-        }
-
-        // Verify folder is actually in-transit (safety check)
-        if (!$folder['is_in_transit']) {
-            return redirect()->back()->with('error', 'Folder is not in transit. Cannot complete relocation.');
         }
 
         // Get new location details
@@ -393,8 +437,8 @@ class RelocationController extends BaseController
                 auth_user()['user_id'],
                 'complete_relocation',
                 "relocation_id:{$relocationId},folder_id:{$relocation['folder_id']}," .
-                "from_location:{$folder['location_id']},to_location:{$relocation['to_location_id']}," .
-                "lifecycle:in_transit→available,race_condition_check:passed"
+                "from_location:{$relocation['from_location_id']},to_location:{$relocation['to_location_id']}," .
+                "lifecycle:movement_finalized,race_condition_check:passed"
             );
 
             return redirect()->to('/relocations')->with(
@@ -421,7 +465,7 @@ class RelocationController extends BaseController
         
         // Get only pending relocations with joined data
         $relocations = $db->table('relocation_requests as r')
-            ->select('r.*, f.file_code, f.company_name, fl.cabinet, tl.cabinet as to_cabinet')
+            ->select('r.*, f.file_code, f.company_name, fl.rack, tl.rack as to_rack')
             ->join('folders as f', 'f.folder_id = r.folder_id', 'left')
             ->join('locations as fl', 'fl.location_id = r.from_location_id', 'left')
             ->join('locations as tl', 'tl.location_id = r.to_location_id', 'left')
@@ -432,8 +476,8 @@ class RelocationController extends BaseController
 
         // Build formatted location strings for display
         $relocations = array_map(function($rel) {
-            $rel['current_location_display'] = $this->formatLocation($rel['cabinet'] ?? null);
-            $rel['new_location_display'] = $this->formatLocation($rel['to_cabinet'] ?? null);
+            $rel['current_location_display'] = $this->formatLocation($rel['rack'] ?? null);
+            $rel['new_location_display'] = $this->formatLocation($rel['to_rack'] ?? null);
             return $rel;
         }, $relocations);
 

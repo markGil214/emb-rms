@@ -67,7 +67,7 @@
                         <h3 class="text-sm font-medium text-gray-500 mb-1">Current Location</h3>
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                             <p class="text-lg font-semibold text-gray-900">
-                                <?= ($currentLocation && $currentLocation['cabinet']) ? 'Cabinet ' . $currentLocation['cabinet'] . ' - Rack ' . $currentLocation['rack'] : 'N/A' ?>
+                                <?= ($currentLocation && $currentLocation['rack']) ? 'Rack ' . $currentLocation['rack'] . ' - Shelf ' . $currentLocation['shelf'] : 'N/A' ?>
                             </p>
                         </div>
                     </div>
@@ -77,7 +77,7 @@
                         <h3 class="text-sm font-medium text-gray-500 mb-1">New Location</h3>
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                             <p class="text-lg font-semibold text-gray-900">
-                                <?= ($newLocation && $newLocation['cabinet']) ? 'Cabinet ' . $newLocation['cabinet'] . ' - Rack ' . $newLocation['rack'] : 'N/A' ?>
+                                <?= ($newLocation && $newLocation['rack']) ? 'Rack ' . $newLocation['rack'] . ' - Shelf ' . $newLocation['shelf'] : 'N/A' ?>
                             </p>
                         </div>
                     </div>

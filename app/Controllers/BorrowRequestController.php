@@ -97,10 +97,14 @@ class BorrowRequestController extends BaseController
         // ✅ SECURITY: Validate folder exists and is available (prevent double borrowing)
         $folder = $this->folderModel->find($this->request->getPost('folder_id'));
         if (!$folder) {
-            return redirect()->back()->withInput()->with('error', 'Folder not found');
+            return redirect()->back()->withInput()->with('errors', [
+                'folder_id' => 'Folder not found',
+            ]);
         }
         if ($folder['status'] !== 'Available') {
-            return redirect()->back()->withInput()->with('error', 'This folder is not available for borrowing');
+            return redirect()->back()->withInput()->with('errors', [
+                'folder_id' => 'This folder is not available for borrowing',
+            ]);
         }
 
         $data = [
@@ -118,7 +122,9 @@ class BorrowRequestController extends BaseController
             // ✅ Model-level validation happens in beforeInsert hook
             if (!$this->borrowModel->save($data)) {
                 log_message('error', "Failed to save borrow request: " . json_encode($this->borrowModel->errors) . " [User: " . auth_user()['user_id'] . "]");
-                return redirect()->back()->withInput()->with('error', 'Failed to create borrow request');
+                return redirect()->back()->withInput()->with('errors',
+                    $this->borrowModel->errors() ?: ['general' => 'Failed to create borrow request']
+                );
             }
 
             // Log to audit
@@ -128,7 +134,9 @@ class BorrowRequestController extends BaseController
         } catch (\InvalidArgumentException $e) {
             // Model validation failed through beforeInsert hook
             log_message('error', "Borrow request validation failed: " . $e->getMessage() . " [User: " . auth_user()['user_id'] . "]");
-            return redirect()->back()->withInput()->with('error', 'Validation failed: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('errors', [
+                'general' => 'Validation failed. Please review the provided values.',
+            ]);
         }
     }
 

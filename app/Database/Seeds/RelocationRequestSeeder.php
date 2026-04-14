@@ -8,17 +8,10 @@ class RelocationRequestSeeder extends Seeder
 {
     public function run()
     {
-        // Check if relocation requests already exist
-        $existing = $this->db->table('relocation_requests')->get()->getNumRows();
-        if ($existing > 0) {
-            echo "ℹ️  Relocation requests already seeded. Skipping RelocationRequestSeeder.\n";
-            return;
-        }
-
         // Get sample users, folders, and locations
         $users = $this->db->table('users')->get()->getResultArray();
-        $folders = $this->db->table('folders')->limit(5)->get()->getResultArray();
-        $locations = $this->db->table('locations')->get()->getResultArray();
+        $folders = $this->db->table('folders')->orderBy('folder_id', 'ASC')->limit(5)->get()->getResultArray();
+        $locations = $this->db->table('locations')->orderBy('location_id', 'ASC')->get()->getResultArray();
 
         if (empty($users) || empty($folders) || empty($locations)) {
             echo "⚠️  Skipping RelocationRequestSeeder: Requires users, folders, and locations to be seeded first.\n";
@@ -42,7 +35,7 @@ class RelocationRequestSeeder extends Seeder
             'to_location_id' => $locations[1]['location_id'],
             'requested_by' => $requester['user_id'],
             'requested_at' => date('Y-m-d H:i:s', strtotime('-10 days')),
-            'reason' => 'Consolidation of related files in secure cabinet',
+            'reason' => 'Consolidation of related files in secure storage area',
             'status' => 'Pending',
             'approved_by' => null,
             'approved_at' => null,
@@ -117,6 +110,21 @@ class RelocationRequestSeeder extends Seeder
             ];
         }
 
-        $this->db->table('relocation_requests')->insertBatch($requests);
+        foreach ($requests as $request) {
+            $existing = $this->db->table('relocation_requests')
+                ->where('folder_id', $request['folder_id'])
+                ->where('requested_at', $request['requested_at'])
+                ->get()
+                ->getRowArray();
+
+            if ($existing) {
+                $this->db->table('relocation_requests')
+                    ->where('relocation_id', $existing['relocation_id'])
+                    ->update($request);
+                continue;
+            }
+
+            $this->db->table('relocation_requests')->insert($request);
+        }
     }
 }

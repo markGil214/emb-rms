@@ -60,8 +60,6 @@
 
                     <option value="borrowed">Borrowed</option>
 
-                    <option value="archived">Archived</option>
-
                 </select>
 
                 
@@ -72,15 +70,11 @@
 
                     <option value="">All Types</option>
 
-                    <option value="Commercial sand and gravel">Commercial sand and gravel</option>
+                    <option value="permits">PERMIT</option>
 
-                    <option value="Telecommunication">Telecommunication</option>
+                    <option value="ECC / CNC FILES">ECC / CNC FILES</option>
 
-                    <option value="Local Government Unit">Local Government Unit</option>
-
-                    <option value="Mining Company">Mining Company</option>
-
-                    <option value="Hydro Power Plants">Hydro Power Plants</option>
+                    <option value="IEE / EIS FILES">IEE / EIS FILES</option>
 
                 </select>
 
@@ -106,6 +100,24 @@
 
             
 
+            <div class="flex items-center space-x-3">
+
+            <!-- Manage Racks Button -->
+
+            <a href="<?= route_to('racks.index') ?>" 
+
+               class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg inline-flex items-center space-x-2 transition-colors duration-200">
+
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h16"></path>
+
+                </svg>
+
+                <span>Manage Racks</span>
+
+            </a>
+
             <!-- Create Button -->
 
             <a href="<?= route_to('records.create') ?>" 
@@ -121,6 +133,8 @@
                 <span>Create Folder</span>
 
             </a>
+
+            </div>
 
         </div>
 
@@ -214,7 +228,19 @@
 
                             <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
 
-                                Date
+                                Folder Subtype
+
+                            </th>
+
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+
+                                Borrowed / Due Date
+
+                            </th>
+
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+
+                                Return Date
 
                             </th>
 
@@ -291,13 +317,25 @@
 
                                 <td class="px-6 py-4 whitespace-nowrap">
 
-                                    <div class="text-sm text-gray-500">
+                                    <span class="text-sm text-gray-900" x-text="folder.folder_subtype || 'Not Set'"></span>
 
-                                        <div>Issued: <span x-text="formatDate(folder.issuance_date)"></span></div>
+                                </td>
 
-                                        <div>Expires: <span x-text="formatDate(folder.expiry_date)"></span></div>
+                                <td class="px-6 py-4 whitespace-nowrap">
+
+                                    <div class="text-sm text-gray-500 space-y-1">
+
+                                        <div>Borrowed Date: <span x-text="formatDate(folder.borrowed_date, 'Not yet borrowed')"></span></div>
+
+                                        <div>Due Date: <span x-text="formatDate(folder.due_date, 'Not yet borrowed')"></span></div>
 
                                     </div>
+
+                                </td>
+
+                                <td class="px-6 py-4 whitespace-nowrap">
+
+                                    <div class="text-sm text-gray-900" x-text="formatDate(folder.return_date, 'Not yet returned')"></div>
 
                                 </td>
 
@@ -649,20 +687,20 @@ function documentRecordsManager() {
 
         
 
-        formatDate(dateString) {
+        formatDate(dateString, fallback = 'Not set') {
 
             if (!dateString) {
-                return 'N/A';
+                return fallback;
             }
 
             const trimmed = String(dateString).trim();
             if (!trimmed || trimmed === '1970-01-01' || trimmed === '1970-01-01 00:00:00') {
-                return 'N/A';
+                return fallback;
             }
 
             const date = new Date(trimmed);
             if (isNaN(date.getTime())) {
-                return 'N/A';
+                return fallback;
             }
 
             return date.toLocaleDateString('en-US', {
@@ -673,13 +711,26 @@ function documentRecordsManager() {
 
         },
 
+        formatReturnDate(folder) {
+            if (folder.return_date) {
+                return this.formatDate(folder.return_date, 'Not yet returned');
+            }
+
+            if (folder.status === 'Borrowed') {
+                return 'Not yet returned';
+            }
+
+            return 'No return record';
+
+        },
+
         formatLocation(folder) {
             const cabinet = folder.cabinet || '';
             const shelf = folder.shelf || folder.rack || '';
             const building = folder.building || '';
             const room = folder.room || '';
 
-            const readable = [building, room, cabinet ? `Cabinet ${cabinet}` : '', shelf ? `Shelf ${shelf}` : '']
+            const readable = [building, room, cabinet ? `Rack ${cabinet}` : '', shelf ? `Shelf ${shelf}` : '']
                 .filter(Boolean)
                 .join(' - ');
 

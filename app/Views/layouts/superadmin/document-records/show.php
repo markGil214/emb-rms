@@ -78,25 +78,25 @@
 
 
 
-                <!-- Issuance Date -->
+                <!-- Borrowed Date -->
 
                 <div class="bg-gray-50 rounded-lg p-3">
 
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Issuance Date</label>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Borrowed Date</label>
 
-                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['issuance_date']) ?></p>
+                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['borrowed_date'] ?? 'N/A') ?></p>
 
                 </div>
 
 
 
-                <!-- Expiry Date -->
+                <!-- Due Date -->
 
                 <div class="bg-gray-50 rounded-lg p-3">
 
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Expiry Date</label>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Due Date</label>
 
-                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['expiry_date']) ?></p>
+                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['due_date'] ?? 'N/A') ?></p>
 
                 </div>
 

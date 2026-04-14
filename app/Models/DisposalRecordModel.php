@@ -26,29 +26,80 @@ class DisposalRecordModel extends Model
 
     // Validation rules
     protected $validationRules = [
-        'archive_id'        => 'required|integer',
-        'disposal_date'     => 'required|valid_date',
-        'disposal_method'   => 'required|in_list[Destruction,Recycling,Transfer,Donation,Return]',
-        'approved_by'       => 'required|integer',
-        'compliance_reference' => 'permit_empty',
+        'archive_id'           => 'required|integer',
+        'disposal_method'      => 'required|in_list[Destruction,Recycling,Transfer,Donation,Return]',
+        'reason'               => 'required|max_length[1000]',
+        'compliance_reference' => 'permit_empty|max_length[1000]',
+        'disposal_date'        => 'permit_empty|valid_date[Y-m-d]',
+        'approved_by'          => 'permit_empty|integer',
     ];
 
     protected $validationMessages = [
         'archive_id' => [
             'required' => 'Archive record is required',
-        ],
-        'disposal_date' => [
-            'required' => 'Disposal date is required',
-            'valid_date' => 'Please enter a valid date',
+            'integer' => 'Invalid archive record selected',
         ],
         'disposal_method' => [
             'required' => 'Disposal method is required',
             'in_list' => 'Invalid disposal method selected',
         ],
+        'reason' => [
+            'required' => 'Reason for disposal is required',
+            'max_length' => 'Reason cannot exceed 1000 characters',
+        ],
+        'disposal_date' => [
+            'valid_date' => 'Please enter a valid date',
+        ],
         'approved_by' => [
-            'required' => 'Approver must be specified',
+            'integer' => 'Invalid approver selected',
         ],
     ];
+
+    protected $lifecycleErrors = [];
+
+    /**
+     * Lifecycle validation guard for disposal records.
+     */
+    public function validateLifecycleState(array $data): bool
+    {
+        $this->lifecycleErrors = [];
+
+        $status = $data['status'] ?? 'Pending';
+        $disposalDate = $data['disposal_date'] ?? null;
+        $approvedBy = $data['approved_by'] ?? null;
+
+        if ($status === 'Pending') {
+            if (!empty($disposalDate)) {
+                $this->lifecycleErrors['disposal_date'] = 'Disposal date must be empty while request is pending.';
+            }
+
+            if (!empty($approvedBy)) {
+                $this->lifecycleErrors['approved_by'] = 'Approver must be empty while request is pending.';
+            }
+        }
+
+        if ($status === 'Approved') {
+            if (empty($disposalDate)) {
+                $this->lifecycleErrors['disposal_date'] = 'Disposal date is required when approving disposal.';
+            }
+
+            if (empty($approvedBy)) {
+                $this->lifecycleErrors['approved_by'] = 'Approver is required when approving disposal.';
+            }
+        }
+
+        return empty($this->lifecycleErrors);
+    }
+
+    public function getLifecycleErrors(): array
+    {
+        return $this->lifecycleErrors;
+    }
+
+    public function inferStatus(array $record): string
+    {
+        return (empty($record['disposal_date']) && empty($record['approved_by'])) ? 'Pending' : 'Approved';
+    }
 
     /**
      * Get all disposals (most recent first)
@@ -56,6 +107,26 @@ class DisposalRecordModel extends Model
     public function getAllDisposals()
     {
         return $this->orderBy('disposal_date', 'DESC')->findAll();
+    }
+
+    /**
+     * Get pending disposal requests.
+     */
+    public function getPending()
+    {
+        return $this->where('disposal_date', null)
+                    ->where('approved_by', null)
+                    ->findAll();
+    }
+
+    /**
+     * Get approved/completed disposals.
+     */
+    public function getApproved()
+    {
+        return $this->where('disposal_date IS NOT NULL', null, false)
+                    ->where('approved_by IS NOT NULL', null, false)
+                    ->findAll();
     }
 
     /**

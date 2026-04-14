@@ -86,15 +86,11 @@
 
                         <option value="">-- Select Folder Type --</option>
 
-                        <option value="Commercial sand and gravel" <?= old('folder_type') === 'Commercial sand and gravel' ? 'selected' : '' ?>>Commercial sand and gravel</option>
+                        <option value="permits" <?= old('folder_type') === 'permits' ? 'selected' : '' ?>>PERMIT</option>
 
-                        <option value="Telecommunication" <?= old('folder_type') === 'Telecommunication' ? 'selected' : '' ?>>Telecommunication</option>
+                        <option value="ECC / CNC FILES" <?= old('folder_type') === 'ECC / CNC FILES' ? 'selected' : '' ?>>ECC / CNC FILES</option>
 
-                        <option value="Local Government Unit" <?= old('folder_type') === 'Local Government Unit' ? 'selected' : '' ?>>Local Government Unit</option>
-
-                        <option value="Mining Company" <?= old('folder_type') === 'Mining Company' ? 'selected' : '' ?>>Mining Company</option>
-
-                        <option value="Hydro Power Plants" <?= old('folder_type') === 'Hydro Power Plants' ? 'selected' : '' ?>>Hydro Power Plants</option>
+                        <option value="IEE / EIS FILES" <?= old('folder_type') === 'IEE / EIS FILES' ? 'selected' : '' ?>>IEE / EIS FILES</option>
 
                     </select>
 
@@ -108,139 +104,25 @@
 
                 
 
-                <!-- Document Status -->
+                <!-- Folder Subtype (UI only) -->
 
                 <div>
 
-                    <label for="status" class="block text-sm font-medium text-gray-700 pt-2">
+                    <label for="folder_subtype" class="block text-sm font-medium text-gray-700 pt-2">
 
-                        Document Status <span class="text-red-500">*</span>
+                        Folder Subtype
 
                     </label>
 
-                    <select id="status" name="status" 
+                    <input type="text" id="folder_subtype" name="folder_subtype"
 
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                        value="<?= old('folder_subtype') ?>"
 
-                            required>
-
-                        <option value="">Select Status</option>
-
-                        <option value="Available" 
-
-                                <?= old('status') === 'Available' ? 'selected' : '' ?>>
-
-                            Available
-
-                        </option>
-
-                        <option value="Borrowed" 
-
-                                <?= old('status') === 'Borrowed' ? 'selected' : '' ?>>
-
-                            Borrowed
-
-                        </option>
-
-                        <option value="Archived" 
-
-                                <?= old('status') === 'Archived' ? 'selected' : '' ?>>
-
-                            Archived
-
-                        </option>
-
-                        <option value="Disposed" 
-
-                                <?= old('status') === 'Disposed' ? 'selected' : '' ?>>
-
-                            Disposed
-
-                        </option>
-
-                    </select>
-
-                    <?php if (isset($errors['status'])): ?>
-
-                        <p class="mt-1 text-sm text-red-600"><?= $errors['status'] ?></p>
-
-                    <?php elseif (session()->getFlashdata('errors.status')): ?>
-
-                        <p class="mt-1 text-sm text-red-600"><?= session()->getFlashdata('errors.status') ?></p>
-
-                    <?php elseif (session()->getFlashdata('errors') && isset(session()->getFlashdata('errors')['status'])): ?>
-
-                        <p class="mt-1 text-sm text-red-600"><?= session()->getFlashdata('errors')['status'] ?></p>
-
-                    <?php endif; ?>
+                        class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent">
 
                 </div>
-
-            </div>
-
-
-
-            <!-- Dates Section -->
-
-            <div class="border-t pt-4">
-
-                <h3 class="text-base font-medium text-gray-900 mb-3">Important Dates</h3>
 
                 
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                    <div>
-
-                        <label for="issuance_date" class="block text-sm font-medium text-gray-700 mb-1">
-
-                            Issuance Date <span class="text-red-500">*</span>
-
-                        </label>
-
-                        <input type="date" id="issuance_date" name="issuance_date" 
-
-                            value="<?= old('issuance_date') ?>"
-
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-
-                            required>
-
-                        <?php if (isset($errors['issuance_date'])): ?>
-
-                            <p class="mt-1 text-sm text-red-600"><?= $errors['issuance_date'] ?></p>
-
-                        <?php endif; ?>
-
-                    </div>
-
-
-
-                    <div>
-
-                        <label for="expiry_date" class="block text-sm font-medium text-gray-700 mb-1">
-
-                            Expiry Date <span class="text-red-500">*</span>
-
-                        </label>
-
-                        <input type="date" id="expiry_date" name="expiry_date" 
-
-                            value="<?= old('expiry_date') ?>"
-
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-
-                            required>
-
-                        <?php if (isset($errors['expiry_date'])): ?>
-
-                            <p class="mt-1 text-sm text-red-600"><?= $errors['expiry_date'] ?></p>
-
-                        <?php endif; ?>
-
-                    </div>
-
-                </div>
 
             </div>
 
@@ -256,13 +138,13 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                    <!-- Cabinet Dropdown -->
+                    <!-- Rack Dropdown -->
 
                     <div>
 
                         <label for="cabinet" class="block text-sm font-medium text-gray-700 mb-1">
 
-                            Cabinet <span class="text-red-500">*</span>
+                            Rack <span class="text-red-500">*</span>
 
                         </label>
 
@@ -272,7 +154,7 @@
 
                                 required>
 
-                            <option value="">-- Select Cabinet --</option>
+                            <option value="">-- Select Rack --</option>
 
                         </select>
 
@@ -322,7 +204,7 @@
 
             <script>
 
-                // Build location data from PHP
+                // Build normalized location data from PHP
                 const locationsData = <?= json_encode($locations ?? []) ?>;
 
                 const cabinetSelect = document.getElementById('cabinet');
@@ -333,8 +215,8 @@
 
 
 
-                // Get unique cabinets and build dropdown
-                const cabinets = [...new Set(locationsData.map(loc => loc.cabinet))].sort();
+                // Get unique racks and build dropdown
+                const cabinets = [...new Set(locationsData.map(loc => loc.cabinet).filter(Boolean))].sort();
 
                 cabinets.forEach(cabinet => {
 
@@ -342,7 +224,7 @@
 
                     option.value = cabinet;
 
-                    option.textContent = 'Cabinet ' + cabinet;
+                    option.textContent = 'Rack ' + cabinet;
 
                     cabinetSelect.appendChild(option);
 
@@ -350,7 +232,7 @@
 
 
 
-                // Handle Cabinet selection
+                // Handle Rack selection
                 cabinetSelect.addEventListener('change', function() {
 
                     const selectedCabinet = this.value;
@@ -370,7 +252,7 @@
 
                             .map(loc => ({
 
-                                shelf: loc.shelf || loc.rack,
+                                shelf: loc.shelf || loc.cabinet,
 
                                 locationId: loc.location_id
 
@@ -433,10 +315,9 @@
                     const locationId = document.getElementById('location_id').value;
                     const cabinet = document.getElementById('cabinet').value;
                     const shelf = document.getElementById('shelf').value;
-
                     if (!cabinet || !shelf || !locationId) {
                         event.preventDefault();
-                        alert('❌ Please select both Cabinet and Shelf before creating the record.');
+                        alert('❌ Please select both Rack and Shelf before creating the record.');
                         return false;
                     }
                     
@@ -508,10 +389,6 @@ document.addEventListener('DOMContentLoaded', function() {
             company_name: '<?= old('company_name') ?>',
 
             status: '<?= old('status') || 'Available' ?>',
-
-            issuance_date: '<?= old('issuance_date') ?>',
-
-            expiry_date: '<?= old('expiry_date') ?>',
 
             cabinet: '<?= old('cabinet') ?>',
 

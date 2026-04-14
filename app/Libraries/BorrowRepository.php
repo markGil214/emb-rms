@@ -61,7 +61,10 @@ class BorrowRepository
             $result = $db->table('folders')
                          ->where('folder_id', $folderId)
                          ->where('status', 'Available')
-                         ->update(['status' => 'Borrowed']);
+                         ->update([
+                             'status' => 'Borrowed',
+                             'current_borrow_transaction_id' => $transactionId,
+                         ]);
 
             if ($result === 0) {
                 throw new DomainException(

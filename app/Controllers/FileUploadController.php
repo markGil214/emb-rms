@@ -32,7 +32,15 @@ class FileUploadController extends BaseController
         // Verify folder exists
         $folder = $this->folderModel->find($folderId);
         if (!$folder) {
-            return redirect()->back()->with('error', 'Folder not found');
+            return redirect()->back()->withInput()->with('errors', [
+                'folder_id' => 'Folder not found',
+            ]);
+        }
+
+        if (($folder['status'] ?? null) !== 'Available') {
+            return redirect()->back()->withInput()->with('errors', [
+                'folder_id' => "Cannot upload files while folder status is '{$folder['status']}'. Only Available folders accept uploads.",
+            ]);
         }
 
         // Validate file upload
@@ -46,7 +54,7 @@ class FileUploadController extends BaseController
                 ]
             ]
         ])) {
-            return redirect()->back()->withInput()->with('error', $this->validator->getError('pdf_file'));
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
         $file = $this->request->getFile('pdf_file');
@@ -62,14 +70,18 @@ class FileUploadController extends BaseController
             log_message('debug', "File moved to: " . $this->uploadPath . $newName);
         } catch (\Exception $e) {
             log_message('error', "File move failed: " . $e->getMessage());
-            return redirect()->back()->withInput()->with('error', 'File upload failed: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('errors', [
+                'pdf_file' => 'File upload failed. Please try again.',
+            ]);
         }
 
         // Verify file was actually saved
         $uploadedPath = $this->uploadPath . $newName;
         if (!file_exists($uploadedPath)) {
             log_message('error', "Uploaded file not found at: " . $uploadedPath);
-            return redirect()->back()->withInput()->with('error', 'File upload verification failed');
+            return redirect()->back()->withInput()->with('errors', [
+                'pdf_file' => 'File upload verification failed',
+            ]);
         }
 
         // Save file info to database
@@ -89,7 +101,9 @@ class FileUploadController extends BaseController
             // Delete uploaded file if database save fails
             unlink($this->uploadPath . $newName);
             log_message('error', "Database save failed: " . implode(', ', $this->folderFileModel->errors()));
-            return redirect()->back()->withInput()->with('error', 'Failed to save file information: ' . implode(', ', $this->folderFileModel->errors()));
+            return redirect()->back()->withInput()->with('errors',
+                $this->folderFileModel->errors() ?: ['pdf_file' => 'Failed to save file information']
+            );
         }
     }
 

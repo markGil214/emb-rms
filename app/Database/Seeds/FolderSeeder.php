@@ -9,70 +9,67 @@ class FolderSeeder extends Seeder
 {
     public function run()
     {
-        // Check if folders already exist
-        $existingFolders = $this->db->table('folders')->get()->getNumRows();
-        if ($existingFolders > 0) {
-            echo "ℹ️  Folders already seeded. Skipping FolderSeeder.\n";
-            return;
-        }
-
         // 1️⃣ Seed locations dynamically
         $locations = [
-            ['cabinet' => 1, 'rack' => 'A'],
-            ['cabinet' => 1, 'rack' => 'B'],
-            ['cabinet' => 1, 'rack' => 'C'],
-            ['cabinet' => 2, 'rack' => 'A'],
-            ['cabinet' => 2, 'rack' => 'B'],
-            ['cabinet' => 3, 'rack' => 'A'],
+            ['rack' => 1, 'shelf' => 'A'],
+            ['rack' => 1, 'shelf' => 'B'],
+            ['rack' => 1, 'shelf' => 'C'],
+            ['rack' => 2, 'shelf' => 'A'],
+            ['rack' => 2, 'shelf' => 'B'],
+            ['rack' => 3, 'shelf' => 'A'],
         ];
 
-        $this->db->table('locations')->insertBatch($locations);
-
-        // Get inserted location IDs
-        $locationIds = $this->db->table('locations')
-            ->select('location_id, cabinet, rack')
-            ->get()
-            ->getResultArray();
+        $locationIds = $this->syncLocations($locations);
 
         // 2️⃣ Prepare folder data dynamically
         $sampleFolders = [
             [
                 'prefix' => 'FI',
                 'company_name' => 'Five Star Inc',
-                'issuance_date' => '2025-01-01',
-                'expiry_date' => '2030-12-31',
+                'folder_type' => 'permits',
+                'folder_subtype' => 'Project A',
+                'borrowed_date' => null,
+                'due_date' => null,
                 'status' => 'Available',
                 'location_index' => 0,
             ],
             [
                 'prefix' => 'FI',
                 'company_name' => 'First Call Services',
-                'issuance_date' => '2025-02-01',
-                'expiry_date' => '2030-12-31',
+                'folder_type' => 'ECC / CNC FILES',
+                'folder_subtype' => 'Operations',
+                'borrowed_date' => null,
+                'due_date' => null,
                 'status' => 'Available',
                 'location_index' => 1,
             ],
             [
                 'prefix' => 'HR',
                 'company_name' => 'HR Records 2024',
-                'issuance_date' => '2024-01-01',
-                'expiry_date' => null,
+                'folder_type' => 'permits',
+                'folder_subtype' => 'Personnel',
+                'borrowed_date' => null,
+                'due_date' => null,
                 'status' => 'Available',
                 'location_index' => 2,
             ],
             [
                 'prefix' => 'OP',
                 'company_name' => 'Operations Archive',
-                'issuance_date' => '2025-01-15',
-                'expiry_date' => null,
+                'folder_type' => 'IEE / EIS FILES',
+                'folder_subtype' => 'Records',
+                'borrowed_date' => null,
+                'due_date' => null,
                 'status' => 'Available',
                 'location_index' => 3,
             ],
             [
                 'prefix' => 'AR',
                 'company_name' => 'Archived Records 2020',
-                'issuance_date' => '2020-01-01',
-                'expiry_date' => '2025-12-31',
+                'folder_type' => 'ECC / CNC FILES',
+                'folder_subtype' => 'Legal',
+                'borrowed_date' => null,
+                'due_date' => null,
                 'status' => 'Archived',
                 'location_index' => 5,
             ],
@@ -94,23 +91,102 @@ class FolderSeeder extends Seeder
             
             // Generate file code with correct sequence
             $fileCode = FileCodeGenerator::generate($prefix, $prefixCounters[$prefix]);
-            $locationCode = FileCodeGenerator::generateLocationCode($location['cabinet'], $location['rack']);
+            $locationCode = FileCodeGenerator::generateLocationCode($location['rack'], $location['shelf']);
 
-            $folders[] = [
+            $folderData = [
                 'file_code' => $fileCode,
                 'location_code' => $locationCode,
                 'company_name' => $folder['company_name'],
-                'issuance_date' => $folder['issuance_date'],
-                'expiry_date' => $folder['expiry_date'],
+                'folder_type' => $folder['folder_type'],
+                'folder_subtype' => $folder['folder_subtype'],
+                'borrowed_date' => $folder['borrowed_date'],
+                'due_date' => $folder['due_date'],
                 'status' => $folder['status'],
                 'location_id' => $location['location_id'],
                 'created_by' => 1,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+
+            $this->syncFolder($folderData);
+        }
+    }
+
+    private function syncLocations(array $locations): array
+    {
+        $results = [];
+
+        foreach ($locations as $location) {
+            $existing = $this->db->table('locations')
+                ->where('rack', $location['rack'])
+                ->where('shelf', $location['shelf'])
+                ->get()
+                ->getRowArray();
+
+            if ($existing) {
+                $this->db->table('locations')
+                    ->where('location_id', $existing['location_id'])
+                    ->update([
+                        'rack' => $location['rack'],
+                        'shelf' => $location['shelf'],
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+
+                $results[] = [
+                    'location_id' => $existing['location_id'],
+                    'rack' => $location['rack'],
+                    'shelf' => $location['shelf'],
+                ];
+                continue;
+            }
+
+            $insertData = [
+                'rack' => $location['rack'],
+                'shelf' => $location['shelf'],
+                'capacity' => 0,
+                'current_count' => 0,
+                'is_archive_location' => 0,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ];
+
+            $this->db->table('locations')->insert($insertData);
+
+            $results[] = [
+                'location_id' => $this->db->insertID(),
+                'rack' => $location['rack'],
+                'shelf' => $location['shelf'],
+            ];
         }
 
-        // 3️⃣ Insert folders
-        $this->db->table('folders')->insertBatch($folders);
+        return $results;
+    }
+
+    private function syncFolder(array $folderData): void
+    {
+        $existing = $this->db->table('folders')
+            ->where('file_code', $folderData['file_code'])
+            ->get()
+            ->getRowArray();
+
+        if ($existing) {
+            $this->db->table('folders')
+                ->where('folder_id', $existing['folder_id'])
+                ->update([
+                    'location_code' => $folderData['location_code'],
+                    'company_name' => $folderData['company_name'],
+                    'folder_type' => $folderData['folder_type'],
+                    'folder_subtype' => $folderData['folder_subtype'],
+                    'borrowed_date' => $folderData['borrowed_date'],
+                    'due_date' => $folderData['due_date'],
+                    'status' => $folderData['status'],
+                    'location_id' => $folderData['location_id'],
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+
+            return;
+        }
+
+        $folderData['created_at'] = date('Y-m-d H:i:s');
+        $this->db->table('folders')->insert($folderData);
     }
 }

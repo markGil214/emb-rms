@@ -30,7 +30,7 @@
 
         
 
-        <form action="<?= route_to('records.update', $folder['folder_id']) ?>" method="POST" class="p-6">
+        <form action="<?= route_to('records.update', $folder['folder_id']) ?>" method="POST" class="p-6" id="editFolderForm">
 
             <?= csrf_field() ?>
 
@@ -98,25 +98,25 @@
 
                     <!-- Issuance Date -->
 
+                    <!-- Borrowed Date -->
+
                     <div>
 
-                        <label for="issuance_date" class="block text-sm font-semibold text-gray-700 mb-1">
+                        <label for="borrowed_date" class="block text-sm font-semibold text-gray-700 mb-1">
 
-                            Issuance Date <span class="text-red-500">*</span>
+                            Borrowed Date
 
                         </label>
 
-                        <input type="date" id="issuance_date" name="issuance_date" 
+                        <input type="date" id="borrowed_date" name="borrowed_date" 
 
-                            value="<?= old('issuance_date', $folder['issuance_date']) ?>"
+                            value="<?= old('borrowed_date', $folder['borrowed_date'] ?? '') ?>"
 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
 
-                            required>
+                        <?php if (isset($errors['borrowed_date'])): ?>
 
-                        <?php if (isset($errors['issuance_date'])): ?>
-
-                            <p class="mt-1 text-sm text-red-600"><?= $errors['issuance_date'] ?></p>
+                            <p class="mt-1 text-sm text-red-600"><?= $errors['borrowed_date'] ?></p>
 
                         <?php endif; ?>
 
@@ -190,21 +190,43 @@
 
                             <option value="">-- Select Folder Type --</option>
 
-                            <option value="Commercial sand and gravel" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'Commercial sand and gravel' ? 'selected' : '' ?>>Commercial sand and gravel</option>
+                            <option value="permits" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'permits' ? 'selected' : '' ?>>PERMIT</option>
 
-                            <option value="Telecommunication" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'Telecommunication' ? 'selected' : '' ?>>Telecommunication</option>
+                            <option value="ECC / CNC FILES" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'ECC / CNC FILES' ? 'selected' : '' ?>>ECC / CNC FILES</option>
 
-                            <option value="Local Government Unit" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'Local Government Unit' ? 'selected' : '' ?>>Local Government Unit</option>
-
-                            <option value="Mining Company" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'Mining Company' ? 'selected' : '' ?>>Mining Company</option>
-
-                            <option value="Hydro Power Plants" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'Hydro Power Plants' ? 'selected' : '' ?>>Hydro Power Plants</option>
+                            <option value="IEE / EIS FILES" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'IEE / EIS FILES' ? 'selected' : '' ?>>IEE / EIS FILES</option>
 
                         </select>
 
                         <?php if (isset($errors['folder_type'])): ?>
 
                             <p class="mt-1 text-sm text-red-600"><?= $errors['folder_type'] ?></p>
+
+                        <?php endif; ?>
+
+                    </div>
+
+                    <!-- Folder Subtype (UI only) -->
+
+                    <div>
+
+                        <label for="folder_subtype" class="block text-sm font-semibold text-gray-700 mb-1">
+
+                            Folder Subtype
+
+                        </label>
+
+                        <input type="text" id="folder_subtype" name="folder_subtype"
+
+                            value="<?= old('folder_subtype', $folder['folder_subtype'] ?? '') ?>"
+
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+
+                            placeholder="Enter folder subtype">
+
+                        <?php if (isset($errors['folder_subtype'])): ?>
+
+                            <p class="mt-1 text-sm text-red-600"><?= $errors['folder_subtype'] ?></p>
 
                         <?php endif; ?>
 
@@ -238,27 +260,25 @@
 
 
 
-                    <!-- Expiry Date -->
+                    <!-- Due Date -->
 
                     <div>
 
-                        <label for="expiry_date" class="block text-sm font-semibold text-gray-700 mb-1">
+                        <label for="due_date" class="block text-sm font-semibold text-gray-700 mb-1">
 
-                            Expiry Date <span class="text-red-500">*</span>
+                            Due Date
 
                         </label>
 
-                        <input type="date" id="expiry_date" name="expiry_date" 
+                        <input type="date" id="due_date" name="due_date" 
 
-                            value="<?= old('expiry_date', $folder['expiry_date']) ?>"
+                            value="<?= old('due_date', $folder['due_date'] ?? '') ?>"
 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
 
-                            required>
+                        <?php if (isset($errors['due_date'])): ?>
 
-                        <?php if (isset($errors['expiry_date'])): ?>
-
-                            <p class="mt-1 text-sm text-red-600"><?= $errors['expiry_date'] ?></p>
+                            <p class="mt-1 text-sm text-red-600"><?= $errors['due_date'] ?></p>
 
                         <?php endif; ?>
 
@@ -292,17 +312,18 @@
 
                     <div>
 
+
                         <label for="notes" class="block text-sm font-semibold text-gray-700 mb-1">
 
                             Notes
 
                         </label>
 
-                        <textarea id="notes" name="notes" rows="3"
+                        <textarea id="notes" rows="3"
 
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 
-                            placeholder="Add any additional notes..."><?= old('notes') ?></textarea>
+                            placeholder="Add any additional notes..."></textarea>
 
                     </div>
 

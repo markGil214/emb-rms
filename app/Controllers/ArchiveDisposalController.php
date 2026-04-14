@@ -72,24 +72,47 @@ class ArchiveDisposalController extends BaseController
             return redirect()->back()->with('error', 'Permission denied');
         }
 
-        if (!$this->validate($this->archiveModel->validationRules)) {
+        $rules = [
+            'folder_id' => 'required|integer',
+            'archive_location_id' => 'required|integer',
+        ];
+
+        if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $folderId = (int) $this->request->getPost('folder_id');
+        $folder = $this->folderModel->find($folderId);
+        if (!$folder) {
+            return redirect()->back()->withInput()->with('errors', [
+                'folder_id' => 'Selected folder was not found.',
+            ]);
+        }
+
+        $archiveLocationId = (int) $this->request->getPost('archive_location_id');
         $db = \Config\Database::connect();
+        $archiveLocation = $db->table('locations')->where('location_id', $archiveLocationId)->get()->getRowArray();
+        if (!$archiveLocation) {
+            return redirect()->back()->withInput()->with('errors', [
+                'archive_location_id' => 'Selected archive location was not found.',
+            ]);
+        }
+
         $db->transStart();
 
         $data = [
-            'folder_id' => $this->request->getPost('folder_id'),
+            'folder_id' => $folderId,
             'archived_date' => date('Y-m-d'),
-            'archive_location_id' => $this->request->getPost('archive_location_id'),
+            'archive_location_id' => $archiveLocationId,
             'retention_status' => 'Active',
             'archived_by' => auth_user()['user_id'],
         ];
 
         if (!$this->archiveModel->save($data)) {
             $db->transRollback();
-            return redirect()->back()->withInput()->with('error', 'Failed to create archive record');
+            return redirect()->back()->withInput()->with('errors',
+                $this->archiveModel->errors() ?: ['general' => 'Failed to create archive record']
+            );
         }
 
         // Update folder status
@@ -157,10 +180,12 @@ class ArchiveDisposalController extends BaseController
 
         // Get archived records that don't have disposals yet
         $db = \Config\Database::connect();
-        $archived = $db->table('archive_records')
-                      ->where('retention_status', 'Active')
-                      ->get()
-                      ->getResultArray();
+        $archived = $db->table('archive_records as ar')
+                  ->select('ar.archive_id, ar.folder_id, ar.archived_date, f.file_code, f.company_name')
+                  ->join('folders as f', 'f.folder_id = ar.folder_id', 'left')
+                  ->where('ar.retention_status', 'Active')
+                  ->get()
+                  ->getResultArray();
 
         return view('archive-disposal/disposal-create', [
             'title' => 'Request Disposal',
@@ -178,20 +203,55 @@ class ArchiveDisposalController extends BaseController
             return redirect()->back()->with('error', 'Permission denied');
         }
 
-        if (!$this->validate($this->disposalModel->validationRules)) {
+        $rules = [
+            'archive_id'           => 'required|integer',
+            'disposal_method'      => 'required|in_list[Destruction,Recycling,Transfer,Donation,Return]',
+            'reason'               => 'required|max_length[1000]',
+            'compliance_reference' => 'permit_empty|max_length[1000]',
+        ];
+
+        if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $archiveId = (int) $this->request->getPost('archive_id');
+        $archive = $this->archiveModel->find($archiveId);
+        if (!$archive) {
+            return redirect()->back()->withInput()->with('errors', [
+                'archive_id' => 'Selected archive record was not found.',
+            ]);
+        }
+
+        $lifecycleContext = [
+            'status' => 'Pending',
+            'disposal_date' => null,
+            'approved_by' => null,
+        ];
+
+        if (!$this->disposalModel->validateLifecycleState($lifecycleContext)) {
+            return redirect()->back()->withInput()->with('errors', $this->disposalModel->getLifecycleErrors());
+        }
+
+        $reason = trim((string) $this->request->getPost('reason'));
+        $reference = trim((string) ($this->request->getPost('compliance_reference') ?? ''));
+
+        $complianceReference = "Reason: {$reason}";
+        if ($reference !== '') {
+            $complianceReference .= "\nReference: {$reference}";
+        }
+
         $data = [
-            'archive_id' => $this->request->getPost('archive_id'),
+            'archive_id' => $archiveId,
             'disposal_method' => $this->request->getPost('disposal_method'),
-            'disposal_date' => null,  // Set when completed
-            'compliance_reference' => $this->request->getPost('compliance_reference') ?? null,
-            'approved_by' => auth_user()['user_id'],  // Current user approving
+            'disposal_date' => null,
+            'compliance_reference' => $complianceReference,
+            'approved_by' => null,
         ];
 
         if (!$this->disposalModel->save($data)) {
-            return redirect()->back()->withInput()->with('error', 'Failed to create disposal record');
+            return redirect()->back()->withInput()->with('errors',
+                $this->disposalModel->errors() ?: ['general' => 'Failed to create disposal record']
+            );
         }
 
         // Log audit
@@ -213,7 +273,10 @@ class ArchiveDisposalController extends BaseController
         }
 
         $db = \Config\Database::connect();
-        $archive = $db->table('archive_records')->find($disposal['archive_id']);
+        $archive = $db->table('archive_records')
+            ->where('archive_id', $disposal['archive_id'])
+            ->get()
+            ->getRowArray();
         $folder = null;
         if ($archive) {
             $folder = $this->folderModel->find($archive['folder_id']);
@@ -238,17 +301,48 @@ class ArchiveDisposalController extends BaseController
 
         $disposal = $this->disposalModel->find($disposalId);
         if (!$disposal) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            return redirect()->back()->withInput()->with('errors', [
+                'disposal_id' => 'Disposal request not found.',
+            ]);
         }
 
-        // Set disposal date to today, marking it as completed/executed
-        $this->disposalModel->update($disposalId, [
+        if ($this->disposalModel->inferStatus($disposal) !== 'Pending') {
+            return redirect()->back()->withInput()->with('errors', [
+                'status' => 'Only Pending disposal requests can be approved.',
+            ]);
+        }
+
+        $archive = $this->archiveModel->find((int) $disposal['archive_id']);
+        if (!$archive) {
+            return redirect()->back()->withInput()->with('errors', [
+                'archive_id' => 'Related archive record not found.',
+            ]);
+        }
+
+        $approvalData = [
+            'status' => 'Approved',
             'disposal_date' => date('Y-m-d'),
-        ]);
+            'approved_by' => auth_user()['user_id'] ?? null,
+        ];
+
+        if (!$this->disposalModel->validateLifecycleState($approvalData)) {
+            return redirect()->back()->withInput()->with('errors', $this->disposalModel->getLifecycleErrors());
+        }
+
+        if (!$this->disposalModel->update($disposalId, [
+            'disposal_date' => $approvalData['disposal_date'],
+            'approved_by' => $approvalData['approved_by'],
+        ])) {
+            return redirect()->back()->withInput()->with('errors',
+                $this->disposalModel->errors() ?: ['general' => 'Failed to approve disposal request']
+            );
+        }
 
         // Update archive retention status
         $db = \Config\Database::connect();
-        $db->table('archive_records')->update($disposal['archive_id'], [
+        $db->table('archive_records')
+           ->where('archive_id', (int) $disposal['archive_id'])
+           ->update([
             'retention_status' => 'Inactive',
         ]);
 

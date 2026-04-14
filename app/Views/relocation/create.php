@@ -110,17 +110,17 @@
                         <?php 
                             $grouped = [];
                             foreach ($locations as $loc) {
-                                $cabinet = $loc['cabinet'] ?? 'Unknown';
-                                if (!isset($grouped[$cabinet])) {
-                                    $grouped[$cabinet] = [];
+                                $rack = $loc['rack'] ?? 'Unknown';
+                                if (!isset($grouped[$rack])) {
+                                    $grouped[$rack] = [];
                                 }
-                                $grouped[$cabinet][] = $loc;
+                                $grouped[$rack][] = $loc;
                             }
                         ?>
-                        <?php foreach ($grouped as $cabinet => $cabinets): ?>
-                            <optgroup label="Cabinet <?= $cabinet ?>">
-                                <?php foreach ($cabinets as $location): ?>
-                                    <option value="<?= $location['location_id'] ?>">Rack <?= $location['rack'] ?></option>
+                        <?php foreach ($grouped as $rack => $shelves): ?>
+                            <optgroup label="Rack <?= $rack ?>">
+                                <?php foreach ($shelves as $location): ?>
+                                    <option value="<?= $location['location_id'] ?>">Shelf <?= $location['shelf'] ?></option>
                                 <?php endforeach; ?>
                             </optgroup>
                         <?php endforeach; ?>
@@ -208,7 +208,7 @@
 
         results.innerHTML = filtered.map(f => {
             const loc = locations.find(l => l.location_id === f.location_id);
-            const locationDisplay = loc ? `Cabinet ${loc.cabinet} - Rack ${loc.rack}` : 'Unknown Location';
+            const locationDisplay = loc ? `Rack ${loc.rack} - Shelf ${loc.shelf}` : 'Unknown Location';
             return `<div onclick="selectFolder(${f.folder_id}, '${f.file_code}', '${f.company_name}', '${locationDisplay}', ${f.location_id})" class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-200 last:border-b-0">${f.file_code} - ${f.company_name} (${locationDisplay})</div>`;
         }).join('');
         
@@ -267,8 +267,8 @@
         const fromLoc = locations.find(l => l.location_id === folder.location_id);
         const toLoc = locations.find(l => l.location_id == locationId);
         document.getElementById('confirmCode').textContent = `${folder.file_code} - ${folder.company_name}`;
-        document.getElementById('confirmFrom').textContent = `Cabinet ${fromLoc.cabinet}`;
-        document.getElementById('confirmTo').textContent = `Cabinet ${toLoc.cabinet}`;
+        document.getElementById('confirmFrom').textContent = `Rack ${fromLoc.rack}`;
+        document.getElementById('confirmTo').textContent = `Rack ${toLoc.rack}`;
         document.getElementById('confirmationBox').classList.remove('hidden');
     }
 
