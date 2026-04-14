@@ -9,9 +9,19 @@ class FolderModel extends Model
 {
     //Folder Type Constants
     const FOLDER_TYPES = [
-        'permits',
+        'PERMITS',
         'ECC / CNC FILES',
         'IEE / EIS FILES'
+    ];
+
+    // Folder Category Constants
+    const FOLDER_CATEGORIES = [
+        'Solid Waste Management System Files',
+        'Mining Companies',
+        'Hydropower Plants',
+        'Telecommunications',
+        'CSAG / ISAG / Batching Plants Files',
+        'Road Projects'
     ];
 
     protected $DBGroup          = 'default';
@@ -21,7 +31,7 @@ class FolderModel extends Model
     protected $returnType       = 'array';
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'file_code', 'company_name', 'folder_type', 'folder_subtype',
+        'file_code', 'company_name', 'folder_type', 'category_id',
         'location_code', 'status', 'location_id', 'created_by', 'updated_by',
         'borrowed_date', 'due_date'
     ];
@@ -40,8 +50,8 @@ class FolderModel extends Model
         'location_code'  => 'required|max_length[50]',
         'location_id'    => 'required|integer',
         'company_name'   => 'required|max_length[100]',
-        'folder_type'    => 'in_list[permits,ECC / CNC FILES,IEE / EIS FILES]|max_length[50]',
-        'folder_subtype' => 'permit_empty|max_length[100]',
+        'folder_type'    => 'required|in_list[PERMITS,ECC / CNC FILES,IEE / EIS FILES]|max_length[50]',
+        'category_id'    => 'required|integer|is_not_unique[categories.category_id]',
         'status'         => 'in_list[Available,Borrowed,Archived,Disposed]',
         'borrowed_date'  => 'permit_empty|valid_date',
         'due_date'       => 'permit_empty|valid_date',
@@ -61,11 +71,13 @@ class FolderModel extends Model
             'required' => 'Company name is required',
         ],
         'folder_type' => [
+            'required'       => 'Folder type is required',
             'in_list'        => 'Please select a valid folder type.',
             'max_length'     => 'Folder type cannot exceed 50 characters.',
         ],
-        'folder_subtype' => [
-            'max_length' => 'Folder subtype cannot exceed 100 characters.',
+        'category_id' => [
+            'required' => 'Folder category is required',
+            'is_not_unique' => 'Please select a valid category.',
         ],
         'location_id' => [
             'required' => 'Location is required',
@@ -102,8 +114,7 @@ class FolderModel extends Model
     protected function generateFileCode(array $data)
     {
         if (empty($data['data']['file_code']) && !empty($data['data']['company_name'])) {
-            $prefix = substr($data['data']['company_name'], 0, 2); // first 2 letters
-            $data['data']['file_code'] = FileCodeGenerator::getNext($prefix);
+            $data['data']['file_code'] = FileCodeGenerator::getNextFromCompany($data['data']['company_name']);
         }
 
         return $data;

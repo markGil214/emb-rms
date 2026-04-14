@@ -4,11 +4,18 @@ namespace App\Database\Seeds;
 
 use CodeIgniter\Database\Seeder;
 use App\Libraries\FileCodeGenerator;
+use App\Models\FolderModel;
 
 class FolderSeeder extends Seeder
 {
+    protected $db;
+
     public function run()
     {
+        $this->db = \Config\Database::connect();
+
+        $categoryIds = $this->syncCategories(FolderModel::FOLDER_CATEGORIES);
+        
         // 1️⃣ Seed locations dynamically
         $locations = [
             ['rack' => 1, 'shelf' => 'A'],
@@ -26,8 +33,8 @@ class FolderSeeder extends Seeder
             [
                 'prefix' => 'FI',
                 'company_name' => 'Five Star Inc',
-                'folder_type' => 'permits',
-                'folder_subtype' => 'Project A',
+                'folder_type' => 'PERMITS',
+                'category_name' => 'Solid Waste Management System Files',
                 'borrowed_date' => null,
                 'due_date' => null,
                 'status' => 'Available',
@@ -37,7 +44,7 @@ class FolderSeeder extends Seeder
                 'prefix' => 'FI',
                 'company_name' => 'First Call Services',
                 'folder_type' => 'ECC / CNC FILES',
-                'folder_subtype' => 'Operations',
+                'category_name' => 'Mining Companies',
                 'borrowed_date' => null,
                 'due_date' => null,
                 'status' => 'Available',
@@ -46,8 +53,8 @@ class FolderSeeder extends Seeder
             [
                 'prefix' => 'HR',
                 'company_name' => 'HR Records 2024',
-                'folder_type' => 'permits',
-                'folder_subtype' => 'Personnel',
+                'folder_type' => 'PERMITS',
+                'category_name' => 'Hydropower Plants',
                 'borrowed_date' => null,
                 'due_date' => null,
                 'status' => 'Available',
@@ -57,7 +64,7 @@ class FolderSeeder extends Seeder
                 'prefix' => 'OP',
                 'company_name' => 'Operations Archive',
                 'folder_type' => 'IEE / EIS FILES',
-                'folder_subtype' => 'Records',
+                'category_name' => 'Telecommunications',
                 'borrowed_date' => null,
                 'due_date' => null,
                 'status' => 'Available',
@@ -67,7 +74,7 @@ class FolderSeeder extends Seeder
                 'prefix' => 'AR',
                 'company_name' => 'Archived Records 2020',
                 'folder_type' => 'ECC / CNC FILES',
-                'folder_subtype' => 'Legal',
+                'category_name' => 'Road Projects',
                 'borrowed_date' => null,
                 'due_date' => null,
                 'status' => 'Archived',
@@ -98,7 +105,7 @@ class FolderSeeder extends Seeder
                 'location_code' => $locationCode,
                 'company_name' => $folder['company_name'],
                 'folder_type' => $folder['folder_type'],
-                'folder_subtype' => $folder['folder_subtype'],
+                'category_id' => $categoryIds[$folder['category_name']],
                 'borrowed_date' => $folder['borrowed_date'],
                 'due_date' => $folder['due_date'],
                 'status' => $folder['status'],
@@ -109,6 +116,35 @@ class FolderSeeder extends Seeder
 
             $this->syncFolder($folderData);
         }
+    }
+
+    private function syncCategories(array $categoryNames): array
+    {
+        $results = [];
+
+        foreach ($categoryNames as $categoryName) {
+            $existing = $this->db->table('categories')
+                ->where('category_name', $categoryName)
+                ->get()
+                ->getRowArray();
+
+            if ($existing) {
+                $results[$categoryName] = (int) $existing['category_id'];
+                continue;
+            }
+
+            $this->db->table('categories')->insert([
+                'category_name' => $categoryName,
+                'created_by' => 1,
+                'updated_by' => null,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            $results[$categoryName] = (int) $this->db->insertID();
+        }
+
+        return $results;
     }
 
     private function syncLocations(array $locations): array
@@ -175,7 +211,7 @@ class FolderSeeder extends Seeder
                     'location_code' => $folderData['location_code'],
                     'company_name' => $folderData['company_name'],
                     'folder_type' => $folderData['folder_type'],
-                    'folder_subtype' => $folderData['folder_subtype'],
+                    'category_id' => $folderData['category_id'],
                     'borrowed_date' => $folderData['borrowed_date'],
                     'due_date' => $folderData['due_date'],
                     'status' => $folderData['status'],

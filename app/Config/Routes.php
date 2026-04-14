@@ -153,6 +153,24 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
 });
 
+// Admin routes - Category Management
+
+$routes->group('', ['filter' => 'auth'], function($routes) {
+
+    $routes->get('/admin/categories',                   'Admin\CategoryController::index',         ['as' => 'admin.categories', 'filter' => 'permission:manage_users']);
+
+    $routes->get('/admin/categories/create',            'Admin\CategoryController::create',        ['as' => 'admin.categories.create', 'filter' => 'permission:manage_users']);
+
+    $routes->post('/admin/categories/store',            'Admin\CategoryController::store',         ['as' => 'admin.categories.store', 'filter' => 'permission:manage_users']);
+
+    $routes->get('/admin/categories/(:num)/edit',       'Admin\CategoryController::edit/$1',       ['as' => 'admin.categories.edit', 'filter' => 'permission:manage_users']);
+
+    $routes->post('/admin/categories/(:num)/update',    'Admin\CategoryController::update/$1',     ['as' => 'admin.categories.update', 'filter' => 'permission:manage_users']);
+
+    $routes->post('/admin/categories/(:num)',           'Admin\CategoryController::delete/$1',     ['as' => 'admin.categories.delete', 'filter' => 'permission:manage_users']);
+
+});
+
 
 
 // Borrow Request Routes

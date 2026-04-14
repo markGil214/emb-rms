@@ -180,17 +180,19 @@
 
                         <label for="folder_type" class="block text-sm font-semibold text-gray-700 mb-1">
 
-                            Folder Type
+                            Folder Type <span class="text-red-500">*</span>
 
                         </label>
 
                         <select id="folder_type" name="folder_type" 
 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+
+                            required>
 
                             <option value="">-- Select Folder Type --</option>
 
-                            <option value="permits" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'permits' ? 'selected' : '' ?>>PERMIT</option>
+                            <option value="PERMITS" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'PERMITS' ? 'selected' : '' ?>>PERMIT</option>
 
                             <option value="ECC / CNC FILES" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'ECC / CNC FILES' ? 'selected' : '' ?>>ECC / CNC FILES</option>
 
@@ -206,27 +208,33 @@
 
                     </div>
 
-                    <!-- Folder Subtype (UI only) -->
+                    <!-- Folder Category -->
 
                     <div>
 
-                        <label for="folder_subtype" class="block text-sm font-semibold text-gray-700 mb-1">
+                        <label for="category_id" class="block text-sm font-semibold text-gray-700 mb-1">
 
-                            Folder Subtype
+                            Folder Category <span class="text-red-500">*</span>
 
                         </label>
 
-                        <input type="text" id="folder_subtype" name="folder_subtype"
-
-                            value="<?= old('folder_subtype', $folder['folder_subtype'] ?? '') ?>"
+                        <select id="category_id" name="category_id"
 
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 
-                            placeholder="Enter folder subtype">
+                            required>
 
-                        <?php if (isset($errors['folder_subtype'])): ?>
+                            <option value="">-- Select Category --</option>
 
-                            <p class="mt-1 text-sm text-red-600"><?= $errors['folder_subtype'] ?></p>
+                            <?php foreach (($categories ?? []) as $category): ?>
+                                <option value="<?= esc($category['category_id']) ?>" <?= (old('category_id', $folder['category_id'] ?? '') == $category['category_id'] ? 'selected' : '') ?>><?= esc($category['category_name']) ?></option>
+                            <?php endforeach; ?>
+
+                        </select>
+
+                        <?php if (isset($errors['category_id'])): ?>
+
+                            <p class="mt-1 text-sm text-red-600"><?= $errors['category_id'] ?></p>
 
                         <?php endif; ?>
 
@@ -360,6 +368,19 @@
     </div>
 
 </div>
+
+
+<script>
+    (function () {
+        const folderTypeSelect = document.getElementById('folder_type');
+        const categorySelect = document.getElementById('category_id');
+        if (!folderTypeSelect || !categorySelect) {
+            return;
+        }
+
+        // Category options come directly from the database and are shown as plain names.
+    })();
+</script>
 
 
 

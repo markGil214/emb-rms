@@ -76,17 +76,19 @@
 
                     <label for="folder_type" class="block text-sm font-medium text-gray-700 pt-2">
 
-                        Folder Type
+                        Folder Type <span class="text-red-500">*</span>
 
                     </label>
 
                     <select id="folder_type" name="folder_type" 
 
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent">
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+
+                            required>
 
                         <option value="">-- Select Folder Type --</option>
 
-                        <option value="permits" <?= old('folder_type') === 'permits' ? 'selected' : '' ?>>PERMIT</option>
+                        <option value="PERMITS" <?= old('folder_type') === 'PERMITS' ? 'selected' : '' ?>>PERMIT</option>
 
                         <option value="ECC / CNC FILES" <?= old('folder_type') === 'ECC / CNC FILES' ? 'selected' : '' ?>>ECC / CNC FILES</option>
 
@@ -104,21 +106,35 @@
 
                 
 
-                <!-- Folder Subtype (UI only) -->
+                <!-- Folder Category -->
 
                 <div>
 
-                    <label for="folder_subtype" class="block text-sm font-medium text-gray-700 pt-2">
+                    <label for="category_id" class="block text-sm font-medium text-gray-700 pt-2">
 
-                        Folder Subtype
+                        Folder Category <span class="text-red-500">*</span>
 
                     </label>
 
-                    <input type="text" id="folder_subtype" name="folder_subtype"
+                    <select id="category_id" name="category_id"
 
-                        value="<?= old('folder_subtype') ?>"
+                        class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
 
-                        class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent">
+                        required>
+
+                        <option value="">-- Select Category --</option>
+
+                        <?php foreach (($categories ?? []) as $category): ?>
+                            <option value="<?= esc($category['category_id']) ?>" <?= (string)($selectedCategoryId ?? '') === (string)$category['category_id'] ? 'selected' : '' ?>><?= esc($category['category_name']) ?></option>
+                        <?php endforeach; ?>
+
+                    </select>
+
+                    <?php if (isset($errors['category_id'])): ?>
+
+                        <p class="mt-1 text-sm text-red-600"><?= $errors['category_id'] ?></p>
+
+                    <?php endif; ?>
 
                 </div>
 
@@ -309,6 +325,8 @@
                     }
 
                 });
+
+                // Category options come directly from the database and are shown as plain names.
 
                 // Client-side validation before form submit
                 function validateForm(event) {
