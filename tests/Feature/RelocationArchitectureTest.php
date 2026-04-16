@@ -363,7 +363,7 @@ class RelocationArchitectureTest extends FeatureTestCase
         $data = [
             'file_code' => 'TEST-' . uniqid(),
             'company_name' => 'Test Company ' . uniqid(),
-            'folder_type' => 'permits',
+            'folder_type' => 'PERMITS',
             'location_code' => 'CA-1-1',
             'issuance_date' => '2026-01-01',
             'expiry_date' => '2027-12-31',

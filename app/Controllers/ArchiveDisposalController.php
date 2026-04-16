@@ -104,7 +104,6 @@ class ArchiveDisposalController extends BaseController
             'folder_id' => $folderId,
             'archived_date' => date('Y-m-d'),
             'archive_location_id' => $archiveLocationId,
-            'retention_status' => 'Active',
             'archived_by' => auth_user()['user_id'],
         ];
 
@@ -183,7 +182,8 @@ class ArchiveDisposalController extends BaseController
         $archived = $db->table('archive_records as ar')
                   ->select('ar.archive_id, ar.folder_id, ar.archived_date, f.file_code, f.company_name')
                   ->join('folders as f', 'f.folder_id = ar.folder_id', 'left')
-                  ->where('ar.retention_status', 'Active')
+                  ->join('disposal_records as dr', 'dr.archive_id = ar.archive_id', 'left')
+                  ->where('dr.disposal_id IS NULL')
                   ->get()
                   ->getResultArray();
 
@@ -338,14 +338,6 @@ class ArchiveDisposalController extends BaseController
             );
         }
 
-        // Update archive retention status
-        $db = \Config\Database::connect();
-        $db->table('archive_records')
-           ->where('archive_id', (int) $disposal['archive_id'])
-           ->update([
-            'retention_status' => 'Inactive',
-        ]);
-
         $auditLog = service('auditLog');
         $auditLog->log(auth_user()['user_id'], 'approve_disposal', "disposal_id:{$disposalId}");
 
@@ -389,5 +381,115 @@ class ArchiveDisposalController extends BaseController
             'title' => 'Completed Disposals',
             'completed' => $completed,
         ]);
+    }
+
+    /**
+     * Archive a folder directly from Document Records list.
+     */
+    public function archiveFolderFromRecords(int $folderId)
+    {
+        if (!can('request_archive') && !can('archive_document')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $folder = $this->folderModel->find($folderId);
+        if (!$folder) {
+            return redirect()->back()->with('error', 'Folder not found');
+        }
+
+        if ($folder['status'] === 'Archived') {
+            return redirect()->back()->with('error', 'Folder is already archived');
+        }
+
+        if ($folder['status'] === 'Disposed') {
+            return redirect()->back()->with('error', 'Disposed folders cannot be archived');
+        }
+
+        $archiveLocationId = (int) ($folder['location_id'] ?? 0);
+        $db = \Config\Database::connect();
+        $archiveLocation = $db->table('locations')->where('location_id', $archiveLocationId)->get()->getRowArray();
+        if (!$archiveLocation) {
+            return redirect()->back()->with('error', 'Folder location is invalid for archive record');
+        }
+
+        $db->transStart();
+
+        $saved = $this->archiveModel->insert([
+            'folder_id' => $folderId,
+            'archived_date' => date('Y-m-d'),
+            'archive_location_id' => $archiveLocationId,
+            'archived_by' => auth_user()['user_id'] ?? null,
+        ]);
+
+        if (!$saved) {
+            $db->transRollback();
+            return redirect()->back()->with('error', 'Failed to create archive record');
+        }
+
+        $updated = $db->table('folders')
+            ->where('folder_id', $folderId)
+            ->update([
+                'status' => 'Archived',
+                'updated_by' => auth_user()['user_id'] ?? null,
+            ]);
+
+        if (!$updated) {
+            $db->transRollback();
+            return redirect()->back()->with('error', 'Failed to update folder status to Archived');
+        }
+
+        $db->transComplete();
+
+        try {
+            $auditLog = service('auditLog');
+            $auditLog->log(auth_user()['user_id'], 'create_archive', "folder_id:{$folderId}");
+        } catch (\Throwable $e) {
+            log_message('error', 'Archive audit logging failed: {message}', ['message' => $e->getMessage()]);
+        }
+
+        return redirect()->to('/document-records')->with('success', 'Folder archived successfully');
+    }
+
+    /**
+     * Restore archived folder back to Available status
+     */
+    public function restoreFolder(int $folderId)
+    {
+        if (!can('request_archive') && !can('archive_document')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $folder = $this->folderModel->find($folderId);
+        if (!$folder) {
+            return redirect()->back()->with('error', 'Folder not found');
+        }
+
+        if ($folder['status'] !== 'Archived') {
+            return redirect()->back()->with('error', 'Only archived folders can be restored');
+        }
+
+        $db = \Config\Database::connect();
+
+        // Use direct table update to avoid full model validation for required create fields.
+        $updated = $db->table('folders')
+            ->where('folder_id', $folderId)
+            ->update([
+                'status' => 'Available',
+                'updated_by' => auth_user()['user_id'] ?? null,
+            ]);
+
+        if (!$updated) {
+            return redirect()->back()->with('error', 'Failed to restore folder status');
+        }
+
+        // Do not block restore if audit table/service is unavailable.
+        try {
+            $auditLog = service('auditLog');
+            $auditLog->log(auth_user()['user_id'], 'restore_folder', "folder_id:{$folderId}");
+        } catch (\Throwable $e) {
+            log_message('error', 'Restore audit logging failed: {message}', ['message' => $e->getMessage()]);
+        }
+
+        return redirect()->to('/archive-disposal')->with('success', 'Folder restored to Available status');
     }
 }

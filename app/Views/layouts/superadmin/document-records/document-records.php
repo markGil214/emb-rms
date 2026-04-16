@@ -16,8 +16,6 @@
 
     </div>
 
-
-
     <!-- Action Bar -->
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-3">
@@ -60,6 +58,10 @@
 
                     <option value="borrowed">Borrowed</option>
 
+                    <option value="archived">Archived</option>
+
+                    <option value="disposed">Disposed</option>
+
                 </select>
 
                 
@@ -70,7 +72,7 @@
 
                     <option value="">All Types</option>
 
-                    <option value="permits">PERMIT</option>
+                    <option value="PERMITS">PERMIT</option>
 
                     <option value="ECC / CNC FILES">ECC / CNC FILES</option>
 
@@ -101,7 +103,6 @@
             
 
             <div class="flex items-center space-x-3">
-
             <!-- Manage Racks Button -->
 
             <a href="<?= route_to('racks.index') ?>" 
@@ -115,6 +116,22 @@
                 </svg>
 
                 <span>Manage Racks</span>
+
+            </a>
+
+            <!-- Manage Categories Button -->
+
+            <a href="<?= route_to('admin.categories') ?>" 
+
+               class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg inline-flex items-center space-x-2 transition-colors duration-200">
+
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+
+                </svg>
+
+                <span>Manage Categories</span>
 
             </a>
 
@@ -139,8 +156,6 @@
         </div>
 
     </div>
-
-
 
     <!-- Data Table -->
 
@@ -317,7 +332,7 @@
 
                                 <td class="px-6 py-4 whitespace-nowrap">
 
-                                    <span class="text-sm text-gray-900" x-text="folder.folder_subtype || 'Not Set'"></span>
+                                    <span class="text-sm text-gray-900" x-text="folder.folder_category || 'Not Set'"></span>
 
                                 </td>
 
@@ -335,7 +350,7 @@
 
                                 <td class="px-6 py-4 whitespace-nowrap">
 
-                                    <div class="text-sm text-gray-900" x-text="formatDate(folder.return_date, 'Not yet returned')"></div>
+                                    <div class="text-sm text-gray-900" x-text="formatDate(folder.return_date, 'Unavailable')"></div>
 
                                 </td>
 
@@ -403,19 +418,22 @@
 
                                         <div class="flex items-center space-x-4">
 
-                                            <a href="#" 
+                                            <form :action="`/document-records/${folder.folder_id}/archive`" method="POST" style="display:inline;" x-show="folder.status !== 'Archived' && folder.status !== 'Disposed'" onsubmit="return confirm('Archive this folder?');">
+                                                <?= csrf_field() ?>
+                                                <button type="submit" class="text-green-600 hover:text-green-900 inline-flex items-center space-x-2 bg-transparent border-0 p-0 cursor-pointer">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                                                    </svg>
+                                                    <span>Archive</span>
+                                                </button>
+                                            </form>
 
-                                               class="text-green-600 hover:text-green-900 inline-flex items-center space-x-2">
-
+                                            <span x-show="folder.status === 'Archived'" class="text-gray-400 inline-flex items-center space-x-2" title="Already archived">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
-
                                                 </svg>
-
-                                                <span>Archive</span>
-
-                                            </a>
+                                                <span>Archived</span>
+                                            </span>
 
                                         </div>
 

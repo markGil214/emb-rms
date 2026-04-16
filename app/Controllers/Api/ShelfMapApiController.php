@@ -20,7 +20,7 @@ class ShelfMapApiController extends BaseController
             $folders = $folderResult->getResultArray();
 
             // Get all locations - select only columns that exist
-            $locResult = $db->query("SELECT location_id, cabinet, rack, capacity, current_count, is_archive_location, coordinates_3d FROM locations");
+            $locResult = $db->query("SELECT location_id, rack, shelf, capacity, current_count, is_archive_location, coordinates_3d FROM locations");
             $locations = $locResult->getResultArray();
 
             if (empty($locations)) {
@@ -108,8 +108,8 @@ class ShelfMapApiController extends BaseController
                         'status' => $status,
                         'color' => $color,
                         'location_id' => $locId,
-                        'cabinet' => $loc['cabinet'] ?? '',
-                        'rack' => $loc['rack'] ?? ''
+                        'cabinet' => $loc['rack'] ?? '',
+                        'rack' => $loc['shelf'] ?? ''
                     ]
                 ];
 
@@ -219,8 +219,8 @@ class ShelfMapApiController extends BaseController
     private function buildLocationName($location)
     {
         $parts = [];
-        if (!empty($location['cabinet'])) $parts[] = 'Rack ' . $location['cabinet'];
-        if (!empty($location['rack'])) $parts[] = 'Shelf ' . $location['rack'];
+        if (!empty($location['rack'])) $parts[] = 'Rack ' . $location['rack'];
+        if (!empty($location['shelf'])) $parts[] = 'Shelf ' . $location['shelf'];
 
         return !empty($parts) ? implode(' - ', $parts) : 'Location #' . $location['location_id'];
     }

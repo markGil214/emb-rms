@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\FolderModel;
 use App\Models\FolderFileModel;
+use App\Models\CategoryModel;
 use App\Libraries\FileCodeGenerator;
 use CodeIgniter\Controller;
 
@@ -11,11 +12,13 @@ class FolderController extends BaseController
 {
     protected $folderModel;
     protected $folderFileModel;
+    protected $categoryModel;
 
     public function __construct()
     {
         $this->folderModel = new FolderModel();
         $this->folderFileModel = new FolderFileModel();
+        $this->categoryModel = new CategoryModel();
     }
 
     /**
@@ -25,8 +28,9 @@ class FolderController extends BaseController
     {
         $folders = $this->folderModel
             // Support schemas where locations has rack/shelf (without cabinet).
-            ->select('folders.*, locations.rack AS cabinet, locations.shelf AS shelf, locations.rack AS rack, bt.borrowed_at AS borrowed_date, bt.expected_return_date AS due_date, bt.actual_return_date AS return_date, ar.archived_date AS archived_date')
+            ->select('folders.*, categories.category_name AS folder_category, locations.rack AS cabinet, locations.shelf AS shelf, locations.rack AS rack, bt.borrowed_at AS borrowed_date, bt.expected_return_date AS due_date, bt.actual_return_date AS return_date, ar.archived_date AS archived_date')
             ->join('locations', 'locations.location_id = folders.location_id', 'left')
+            ->join('categories', 'categories.category_id = folders.category_id', 'left')
             ->join('borrow_transactions bt', 'bt.transaction_id = folders.current_borrow_transaction_id', 'left')
             ->join('archive_records ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = folders.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false)
             ->where('folders.status !=', 'Archived')
@@ -59,10 +63,16 @@ class FolderController extends BaseController
                 'shelf' => $location['shelf'] ?? ($location['rack'] ?? ''),
             ];
         }, $locations);
+
+        $categories = $this->categoryModel
+            ->orderBy('category_name', 'ASC')
+            ->findAll();
         
         return view('layouts/superadmin/document-records/create', [
             'title' => 'Create New Folder',
-            'locations' => $locations
+            'locations' => $locations,
+            'categories' => $categories,
+            'selectedCategoryId' => old('category_id'),
         ]);
     }
 
@@ -103,7 +113,7 @@ class FolderController extends BaseController
             'location_code' => $locationCode,
             'company_name' => $this->request->getPost('company_name'),
             'folder_type' => $this->request->getPost('folder_type'),
-            'folder_subtype' => $this->request->getPost('folder_subtype'),
+            'category_id' => $this->request->getPost('category_id'),
             'status' => 'Available',
             'location_id' => $locationId,
             'created_by' => auth_user()['user_id'] ?? null,
@@ -144,15 +154,42 @@ class FolderController extends BaseController
     }
 
     /**
+     * Show borrow history for a folder
+     */
+    public function history(int $folderId)
+    {
+        $folder = $this->findFolderOrFail($folderId);
+
+        $db = \Config\Database::connect();
+        $history = $db->table('borrow_transactions')
+            ->select('transaction_id, borrower_name, borrower_email, purpose, status, borrowed_at, expected_return_date, actual_return_date, approved_at, created_at')
+            ->where('folder_id', $folderId)
+            ->orderBy('created_at', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        return view('layouts/superadmin/document-records/history', [
+            'title' => 'Borrow History: ' . $folder['file_code'],
+            'folder' => $folder,
+            'history' => $history,
+        ]);
+    }
+
+    /**
      * Show edit form
      */
     public function edit(int $folderId)
     {
         $folder = $this->findFolderOrFail($folderId);
+        $categories = $this->categoryModel
+            ->orderBy('category_name', 'ASC')
+            ->findAll();
 
         return view('layouts/superadmin/document-records/edit', [
             'title' => 'Edit Folder',
-            'folder' => $folder
+            'folder' => $folder,
+            'categories' => $categories,
+            'selectedCategoryId' => old('category_id', $folder['category_id'] ?? ''),
         ]);
     }
 
@@ -171,7 +208,7 @@ class FolderController extends BaseController
         $data = [
             'company_name' => $this->request->getPost('company_name'),
             'folder_type' => $this->request->getPost('folder_type'),
-            'folder_subtype' => $this->request->getPost('folder_subtype'),
+            'category_id' => $this->request->getPost('category_id'),
             'status' => $this->request->getPost('status'),
             'borrowed_date' => $this->request->getPost('borrowed_date') ?: null,
             'due_date' => $this->request->getPost('due_date') ?: null,
@@ -199,8 +236,8 @@ class FolderController extends BaseController
     {
         $rules = [
             'company_name'  => 'required|max_length[255]',
-            'folder_type'   => 'permit_empty|in_list[permits,ECC / CNC FILES,IEE / EIS FILES]|max_length[50]',
-            'folder_subtype' => 'permit_empty|max_length[100]',
+            'folder_type'   => 'required|in_list[PERMITS,ECC / CNC FILES,IEE / EIS FILES]|max_length[50]',
+            'category_id'   => 'required|integer|is_not_unique[categories.category_id]',
         ];
 
         if ($isCreate) {

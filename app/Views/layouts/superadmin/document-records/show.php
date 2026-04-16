@@ -6,9 +6,29 @@
 
 <div class="max-w-8xl mx-auto">
 
+    <?php $uploadErrors = session('errors') ?? []; ?>
+
+    <?php if (session('success')): ?>
+        <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            <?= esc(session('success')) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($uploadErrors['pdf_file'])): ?>
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <?= esc($uploadErrors['pdf_file']) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($uploadErrors['folder_id'])): ?>
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <?= esc($uploadErrors['folder_id']) ?>
+        </div>
+    <?php endif; ?>
+
     <!-- Document Details -->
 
-     <div class="flex justify-start mb-4">
+      <div class="flex justify-between items-center mb-4">
 
         <a href="<?= route_to('records') ?>" 
 
@@ -22,6 +42,14 @@
 
             Back to Records
 
+        </a>
+
+        <a href="<?= route_to('records.history', $folder['folder_id']) ?>"
+           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium inline-flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            History
         </a>
 
     </div>
@@ -204,11 +232,13 @@
 
                         </svg>
 
-                        <input type="file" id="pdf_file" name="pdf_file" 
+                        <input type="file" id="pdf_file" name="pdf_file"
 
-                            accept=".pdf" 
+                            accept=".pdf"
 
-                            class="hidden" required>
+                            class="mb-3 block w-full cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
+
+                            required>
 
                         <label for="pdf_file" class="cursor-pointer">
 

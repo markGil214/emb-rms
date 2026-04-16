@@ -115,6 +115,10 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     $routes->get('/document-records/(:num)',         'FolderController::show/$1',  ['as' => 'records.show', 'filter' => 'permission:search_documents']);
 
+    $routes->get('/document-records/(:num)/history', 'FolderController::history/$1', ['as' => 'records.history', 'filter' => 'permission:search_documents']);
+
+    $routes->post('/document-records/(:num)/archive', 'ArchiveDisposalController::archiveFolderFromRecords/$1', ['as' => 'records.archive']);
+
     $routes->get('/document-records/(:num)/edit',    'FolderController::edit/$1',  ['as' => 'records.edit', 'filter' => 'permission:edit_document_metadata']);
 
     $routes->put('/document-records/(:num)',         'FolderController::update/$1',['as' => 'records.update', 'filter' => 'permission:edit_document_metadata']);
@@ -150,6 +154,24 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->get('/admin/permissions/load-role/(:num)', 'Admin\PermissionController::loadRole/$1', ['as' => 'admin.permissions.load-role', 'filter' => 'permission:manage_users']);
 
     $routes->post('/admin/permissions/save-role-perms', 'Admin\PermissionController::saveRolePerms', ['as' => 'admin.permissions.save-role-perms', 'filter' => 'permission:manage_users']);
+
+});
+
+// Admin routes - Category Management
+
+$routes->group('', ['filter' => 'auth'], function($routes) {
+
+    $routes->get('/admin/categories',                   'Admin\CategoryController::index',         ['as' => 'admin.categories', 'filter' => 'permission:manage_users']);
+
+    $routes->get('/admin/categories/create',            'Admin\CategoryController::create',        ['as' => 'admin.categories.create', 'filter' => 'permission:manage_users']);
+
+    $routes->post('/admin/categories/store',            'Admin\CategoryController::store',         ['as' => 'admin.categories.store', 'filter' => 'permission:manage_users']);
+
+    $routes->get('/admin/categories/(:num)/edit',       'Admin\CategoryController::edit/$1',       ['as' => 'admin.categories.edit', 'filter' => 'permission:manage_users']);
+
+    $routes->post('/admin/categories/(:num)/update',    'Admin\CategoryController::update/$1',     ['as' => 'admin.categories.update', 'filter' => 'permission:manage_users']);
+
+    $routes->post('/admin/categories/(:num)',           'Admin\CategoryController::delete/$1',     ['as' => 'admin.categories.delete', 'filter' => 'permission:manage_users']);
 
 });
 
@@ -245,6 +267,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->post('/archive-disposal/archive',          'ArchiveDisposalController::storeArchive',       ['as' => 'archive.store', 'filter' => 'permission:request_archive']);
 
     $routes->get('/archive-disposal/archive/(:num)',    'ArchiveDisposalController::showArchive/$1',    ['as' => 'archive.show']);
+
+    $routes->post('/archive-disposal/archive/(:num)/restore', 'ArchiveDisposalController::restoreFolder/$1', ['as' => 'archive.restore']);
 
     $routes->get('/archive-disposal/search',            'ArchiveDisposalController::searchArchive',      ['as' => 'archive.search']);
 
