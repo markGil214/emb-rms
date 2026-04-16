@@ -14,7 +14,6 @@ class ArchiveRecordModel extends Model
     protected $protectFields    = true;
     protected $allowedFields    = [
         'folder_id', 'archived_date', 'archive_location_id',
-        'retention_status', 'retention_expiry_date', 'retention_policy_reference',
         'archived_by'
     ];
 
@@ -30,9 +29,6 @@ class ArchiveRecordModel extends Model
         'folder_id'                      => 'required|integer',
         'archived_date'                  => 'required|valid_date',
         'archive_location_id'            => 'required|integer',
-        'retention_status'               => 'in_list[Active,Inactive,Expired]',
-        'retention_expiry_date'          => 'valid_date|permit_empty',
-        'retention_policy_reference'     => 'permit_empty',
         'archived_by'                    => 'required|integer',
     ];
 
@@ -53,11 +49,21 @@ class ArchiveRecordModel extends Model
     ];
 
     /**
-     * Get all archived folders
+     * Get all archived folders (joined with folder metadata)
      */
     public function getAllArchived()
     {
-        return $this->orderBy('archive_date', 'DESC')->findAll();
+        $db = \Config\Database::connect();
+        return $db->table('folders as f')
+                  ->select('f.folder_id, f.file_code, f.company_name, f.folder_type, f.category_id, c.category_name, ar.archive_id, ar.archived_date, ar.archive_location_id, ar.archived_by, l.rack, l.shelf')
+                  ->join('categories as c', 'c.category_id = f.category_id', 'left')
+                  ->join('archive_records as ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = f.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false)
+                  ->join('locations as l', 'l.location_id = ar.archive_location_id', 'left')
+                  ->where('f.status', 'Archived')
+                  ->orderBy('ar.archived_date', 'DESC')
+                  ->orderBy('f.folder_id', 'ASC')
+                  ->get()
+                  ->getResultArray();
     }
 
     /**
@@ -65,19 +71,34 @@ class ArchiveRecordModel extends Model
      */
     public function getFolderArchive($folderId)
     {
-        return $this->where('folder_id', $folderId)->first();
+        $db = \Config\Database::connect();
+        return $db->table('archive_records')
+                  ->where('folder_id', $folderId)
+                  ->orderBy('archive_id', 'DESC')
+                  ->get()
+                  ->getRowArray();
     }
 
     /**
-     * Search archived records
+     * Search archived records/folders by file code or company name
      */
     public function search($query)
     {
-        return $this->join('folders', 'folders.folder_id = archive_records.folder_id')
-                    ->like('folders.file_code', $query)
-                    ->orLike('folders.company_name', $query)
-                    ->select('archive_records.*')
-                    ->findAll();
+        $db = \Config\Database::connect();
+        return $db->table('folders as f')
+                  ->select('f.folder_id, f.file_code, f.company_name, f.folder_type, f.category_id, c.category_name, ar.archive_id, ar.archived_date, ar.archive_location_id, ar.archived_by, l.rack, l.shelf')
+                  ->join('categories as c', 'c.category_id = f.category_id', 'left')
+                                    ->join('archive_records as ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = f.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false)
+                  ->join('locations as l', 'l.location_id = ar.archive_location_id', 'left')
+                  ->where('f.status', 'Archived')
+                  ->groupStart()
+                    ->like('f.file_code', $query)
+                    ->orLike('f.company_name', $query)
+                  ->groupEnd()
+                  ->orderBy('ar.archived_date', 'DESC')
+                  ->orderBy('f.folder_id', 'ASC')
+                  ->get()
+                  ->getResultArray();
     }
 
     /**

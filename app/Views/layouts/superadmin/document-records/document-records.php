@@ -16,8 +16,6 @@
 
     </div>
 
-
-
     <!-- Action Bar -->
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-3">
@@ -59,6 +57,10 @@
                     <option value="available">Available</option>
 
                     <option value="borrowed">Borrowed</option>
+
+                    <option value="archived">Archived</option>
+
+                    <option value="disposed">Disposed</option>
 
                 </select>
 
@@ -416,19 +418,22 @@
 
                                         <div class="flex items-center space-x-4">
 
-                                            <a href="#" 
+                                            <form :action="`/document-records/${folder.folder_id}/archive`" method="POST" style="display:inline;" x-show="folder.status !== 'Archived' && folder.status !== 'Disposed'" onsubmit="return confirm('Archive this folder?');">
+                                                <?= csrf_field() ?>
+                                                <button type="submit" class="text-green-600 hover:text-green-900 inline-flex items-center space-x-2 bg-transparent border-0 p-0 cursor-pointer">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                                                    </svg>
+                                                    <span>Archive</span>
+                                                </button>
+                                            </form>
 
-                                               class="text-green-600 hover:text-green-900 inline-flex items-center space-x-2">
-
+                                            <span x-show="folder.status === 'Archived'" class="text-gray-400 inline-flex items-center space-x-2" title="Already archived">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
-
                                                 </svg>
-
-                                                <span>Archive</span>
-
-                                            </a>
+                                                <span>Archived</span>
+                                            </span>
 
                                         </div>
 

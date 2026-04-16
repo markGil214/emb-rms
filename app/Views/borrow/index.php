@@ -54,7 +54,6 @@
                             </tr>
                         <?php else: ?>
                             <?php foreach ($borrows as $index => $borrow): ?>
-                                <?php if ($borrow['status'] !== 'Returned'): ?>
                                 <tr class="<?= $index % 2 === 0 ? 'bg-white' : 'bg-gray-100' ?> hover:bg-gray-200 transition-colors duration-150">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><?= $borrow['transaction_id'] ?></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -70,7 +69,8 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                             <?= $borrow['status'] === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
-                                               ($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') ?>">
+                                               ($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Active' ? 'bg-green-100 text-green-800' :
+                                               ($borrow['status'] === 'Returned' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800')) ?>">
                                             <?= $borrow['status'] ?>
                                         </span>
                                     </td>
@@ -97,7 +97,6 @@
                                         </div>
                                     </td>
                                 </tr>
-                                <?php endif; ?>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>

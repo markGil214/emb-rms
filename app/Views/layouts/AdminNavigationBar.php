@@ -102,7 +102,7 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
                 </svg>
-                <span x-show="sidebarOpen" x-transition class="ml-3">Archive Modules</span>
+                <span x-show="sidebarOpen" x-transition class="ml-3">Archive</span>
             </a>
             <?php endif; ?>
         </li>

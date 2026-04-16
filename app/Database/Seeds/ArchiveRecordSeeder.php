@@ -28,9 +28,6 @@ class ArchiveRecordSeeder extends Seeder
             'folder_id' => $folders[0]['folder_id'],
             'archived_date' => date('Y-m-d', strtotime('-90 days')),
             'archive_location_id' => $locations[0]['location_id'],
-            'retention_status' => 'Active',
-            'retention_expiry_date' => date('Y-m-d', strtotime('+270 days')), // 5 years from today
-            'retention_policy_reference' => 'POL-RET-2024-001',
             'archived_by' => $archivist['user_id'],
             'created_at' => date('Y-m-d H:i:s', strtotime('-90 days')),
             'updated_at' => date('Y-m-d H:i:s'),
@@ -41,9 +38,6 @@ class ArchiveRecordSeeder extends Seeder
             'folder_id' => $folders[1]['folder_id'],
             'archived_date' => date('Y-m-d', strtotime('-60 days')),
             'archive_location_id' => $locations[1]['location_id'],
-            'retention_status' => 'Active',
-            'retention_expiry_date' => date('Y-m-d', strtotime('+1800 days')), // 10 years
-            'retention_policy_reference' => 'POL-RET-2024-002',
             'archived_by' => $admin['user_id'],
             'created_at' => date('Y-m-d H:i:s', strtotime('-60 days')),
             'updated_at' => date('Y-m-d H:i:s'),
@@ -54,9 +48,6 @@ class ArchiveRecordSeeder extends Seeder
             'folder_id' => $folders[2]['folder_id'],
             'archived_date' => date('Y-m-d', strtotime('-2000 days')), // 5+ years old
             'archive_location_id' => $locations[2]['location_id'],
-            'retention_status' => 'Eligible for Disposal',
-            'retention_expiry_date' => date('Y-m-d', strtotime('-100 days')), // Already expired
-            'retention_policy_reference' => 'POL-RET-2024-001',
             'archived_by' => $archivist['user_id'],
             'created_at' => date('Y-m-d H:i:s', strtotime('-2000 days')),
             'updated_at' => date('Y-m-d H:i:s'),
@@ -67,9 +58,6 @@ class ArchiveRecordSeeder extends Seeder
             'folder_id' => $folders[3]['folder_id'],
             'archived_date' => date('Y-m-d', strtotime('-2100 days')),
             'archive_location_id' => $locations[0]['location_id'],
-            'retention_status' => 'Inactive',
-            'retention_expiry_date' => date('Y-m-d', strtotime('-200 days')),
-            'retention_policy_reference' => 'POL-RET-2024-001',
             'archived_by' => $admin['user_id'],
             'created_at' => date('Y-m-d H:i:s', strtotime('-2100 days')),
             'updated_at' => date('Y-m-d H:i:s'),

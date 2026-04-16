@@ -154,6 +154,28 @@ class FolderController extends BaseController
     }
 
     /**
+     * Show borrow history for a folder
+     */
+    public function history(int $folderId)
+    {
+        $folder = $this->findFolderOrFail($folderId);
+
+        $db = \Config\Database::connect();
+        $history = $db->table('borrow_transactions')
+            ->select('transaction_id, borrower_name, borrower_email, purpose, status, borrowed_at, expected_return_date, actual_return_date, approved_at, created_at')
+            ->where('folder_id', $folderId)
+            ->orderBy('created_at', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        return view('layouts/superadmin/document-records/history', [
+            'title' => 'Borrow History: ' . $folder['file_code'],
+            'folder' => $folder,
+            'history' => $history,
+        ]);
+    }
+
+    /**
      * Show edit form
      */
     public function edit(int $folderId)

@@ -8,6 +8,14 @@
 <body>
     <h1><?= $title ?></h1>
 
+    <?php if (session('success')): ?>
+        <p style="color: green; font-weight: 600;"><?= esc(session('success')) ?></p>
+    <?php endif; ?>
+
+    <?php if (session('error')): ?>
+        <p style="color: #b91c1c; font-weight: 600;"><?= esc(session('error')) ?></p>
+    <?php endif; ?>
+
     <h2>Summary</h2>
     <ul>
         <li>Total Archived: <?= $totalArchived ?></li>
@@ -30,8 +38,8 @@
             <tr>
                 <th>File Code</th>
                 <th>Company</th>
-                <th>Archive Location</th>
-                <th>Archive Date</th>
+                <th>Folder Type</th>
+                <th>Folder Subtype</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -43,11 +51,17 @@
             <?php else: ?>
                 <?php foreach (array_slice($archived, 0, 5) as $archive): ?>
                     <tr>
-                        <td><?= $archive['folder_id'] ?></td>
-                        <td>Archive <?= $archive['archive_id'] ?></td>
-                        <td><?= $archive['archive_location'] ?? '-' ?></td>
-                        <td><?= isset($archive['archive_date']) ? date('M d, Y', strtotime($archive['archive_date'])) : '-' ?></td>
-                        <td><a href="/archive-disposal/archive/<?= $archive['archive_id'] ?>">View</a></td>
+                        <td><?= esc($archive['file_code']) ?></td>
+                        <td><?= esc($archive['company_name']) ?></td>
+                        <td><?= esc($archive['folder_type']) ?></td>
+                        <td><?= !empty($archive['category_name']) ? esc($archive['category_name']) : '-' ?></td>
+                        <td>
+                            <a href="/document-records/<?= $archive['folder_id'] ?>">View</a>
+                            <form action="<?= route_to('archive.restore', $archive['folder_id']) ?>" method="POST" style="display:inline;" onsubmit="return confirm('Restore this folder to Available status?');">
+                                <?= csrf_field() ?>
+                                <button type="submit" style="background:none; border:none; color:blue; cursor:pointer; text-decoration:underline; padding:0; margin-left:8px;">Restore</button>
+                            </form>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>
