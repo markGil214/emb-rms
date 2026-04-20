@@ -256,7 +256,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
 $routes->group('', ['filter' => 'auth'], function($routes) {
 
-    $routes->get('/archive-disposal',                   'ArchiveDisposalController::index',              ['as' => 'archive.index']);
+    $routes->get('/archive',                            'ArchiveDisposalController::index',              ['as' => 'archive.index']);
 
     
 

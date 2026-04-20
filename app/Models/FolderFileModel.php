@@ -13,7 +13,7 @@ class FolderFileModel extends Model
     protected $returnType       = 'array';
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'folder_id', 'file_name', 'file_path', 'file_size', 'uploaded_by'
+        'folder_id', 'file_name', 'file_path', 'file_size', 'uploaded_by', 'retention_type', 'expiration_date'
     ];
 
     // Timestamps
@@ -29,6 +29,8 @@ class FolderFileModel extends Model
         'file_path'  => 'required|max_length[500]',
         'file_size'  => 'required|is_natural_no_zero',
         'uploaded_by'=> 'required',
+        'retention_type' => 'required|in_list[permanent,expiration]',
+        'expiration_date' => 'permit_empty|valid_date[Y-m-d]',
     ];
 
     protected $validationMessages = [
@@ -49,6 +51,13 @@ class FolderFileModel extends Model
         ],
         'uploaded_by' => [
             'required' => 'Uploaded by user ID is required',
+        ],
+        'retention_type' => [
+            'required' => 'Retention type is required',
+            'in_list'  => 'Retention type must be Permanent or Expiration',
+        ],
+        'expiration_date' => [
+            'valid_date' => 'Expiration date must be a valid date',
         ],
     ];
 

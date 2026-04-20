@@ -52,7 +52,14 @@ class FileUploadController extends BaseController
                     'max_size'  => 'File size must not exceed 10MB.',
                     'mime_in'   => 'File must be a valid PDF.',
                 ]
-            ]
+            ],
+            'retention_type' => [
+                'rules' => 'required|in_list[permanent,expiration]',
+                'errors' => [
+                    'required' => 'Please select a retention option.',
+                    'in_list'  => 'Invalid retention option selected.',
+                ],
+            ],
         ])) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
@@ -86,12 +93,16 @@ class FileUploadController extends BaseController
 
         // Save file info to database
         $filePath = 'uploads/folders/' . $newName;
+        $retentionType = (string) $this->request->getPost('retention_type');
+        $expirationDate = $retentionType === 'expiration' ? date('Y-m-d', strtotime('+5 years')) : null;
         $data = [
             'folder_id' => $folderId,
             'file_name' => $file->getClientName(),
             'file_path' => $filePath,
             'file_size' => $file->getSize(),
             'uploaded_by' => auth_user()['user_id'] ?? null,
+            'retention_type' => $retentionType,
+            'expiration_date' => $expirationDate,
         ];
 
         if ($this->folderFileModel->save($data)) {
@@ -99,10 +110,20 @@ class FileUploadController extends BaseController
             return redirect()->to(route_to('records.show', $folderId))->with('success', 'File uploaded successfully');
         } else {
             // Delete uploaded file if database save fails
-            unlink($this->uploadPath . $newName);
-            log_message('error', "Database save failed: " . implode(', ', $this->folderFileModel->errors()));
-            return redirect()->back()->withInput()->with('errors',
-                $this->folderFileModel->errors() ?: ['pdf_file' => 'Failed to save file information']
+            if (file_exists($this->uploadPath . $newName)) {
+                unlink($this->uploadPath . $newName);
+            }
+
+            $modelErrors = $this->folderFileModel->errors();
+            $errorText = is_array($modelErrors) ? implode(', ', $modelErrors) : (string) $modelErrors;
+
+            log_message('error', 'Database save failed: ' . $errorText);
+
+            return redirect()->back()->withInput()->with(
+                'errors',
+                is_array($modelErrors) && !empty($modelErrors)
+                    ? $modelErrors
+                    : ['pdf_file' => 'Failed to save file information. Please try again.']
             );
         }
     }
