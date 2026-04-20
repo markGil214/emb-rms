@@ -24,7 +24,7 @@
                 <select x-model="rackFilter" @change="filterLocations()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">All Racks</option>
                     <?php foreach ($racks as $rack): ?>
-                        <option value="<?= esc($rack) ?>"><?= esc($rack) ?></option>
+                        <option value="<?= esc($rack) ?>">Rack <?= esc($rack) ?></option>
                     <?php endforeach; ?>
                 </select>
 
@@ -64,7 +64,7 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900">
                         <option value="">Choose a rack</option>
                         <?php foreach ($racks as $rack): ?>
-                            <option value="<?= esc($rack) ?>" <?= old('rack') === (string) $rack ? 'selected' : '' ?>><?= esc($rack) ?></option>
+                            <option value="<?= esc($rack) ?>" <?= old('rack') === (string) $rack ? 'selected' : '' ?>>Rack <?= esc($rack) ?></option>
                         <?php endforeach; ?>
                     </select>
                     <?php if (! empty($errors['rack'])): ?>
@@ -135,11 +135,11 @@
                                     <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                                     </svg>
-                                    <span class="text-sm font-medium text-gray-900" x-text="location.rack"></span>
+                                    <span class="text-sm font-medium text-gray-900" x-text="'Rack ' + location.rack"></span>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <span class="text-sm text-gray-900" x-text="location.shelf"></span>
+                                <span class="text-sm text-gray-900" x-text="'Shelf ' + location.shelf"></span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800" x-text="location.current_count"></span>
@@ -228,9 +228,11 @@ function racksManager() {
         
         filterLocations() {
             this.filteredLocations = this.locations.filter(location => {
-                const matchesSearch = !this.searchQuery || 
-                    location.rack.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                    location.shelf.toLowerCase().includes(this.searchQuery.toLowerCase());
+                const searchTerm = (this.searchQuery || '').toLowerCase().trim();
+                const rackValue = String(location.rack || '').toLowerCase();
+                const shelfValue = String(location.shelf || '').toLowerCase();
+                const searchableText = `${rackValue} shelf ${shelfValue} rack ${rackValue} shelf ${shelfValue}`;
+                const matchesSearch = !searchTerm || searchableText.includes(searchTerm);
                 
                 const matchesRack = !this.rackFilter || location.rack === this.rackFilter;
                 

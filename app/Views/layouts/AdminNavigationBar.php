@@ -98,7 +98,8 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
 
          <li>
             <?php if (can('archive_document') || can('view_archive_module') || can('manage_archive_policies') || can('view_disposal_workflow') || can('approve_disposal')): ?>
-            <a href="#" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
+            <a href="<?= route_to('archive.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
+               :class="window.location.pathname === '<?= route_to('archive.index') ?>' ? 'bg-green-900' : ''">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
                 </svg>
