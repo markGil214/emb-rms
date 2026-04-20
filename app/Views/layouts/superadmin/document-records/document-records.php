@@ -20,137 +20,81 @@
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-3">
 
-        <div class="flex items-center justify-between">
-
-            <div class="flex items-center space-x-4">
-
+        <!-- Single Row Layout -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <!-- Left Side: Search and Filters -->
+            <div class="flex flex-wrap items-center gap-2">
                 <!-- Search Bar -->
-
                 <div class="relative">
-
                     <input type="text" 
-
                            x-model="searchQuery"
-
                            @input="filterFolders()"
-
                            placeholder="Search folders..." 
-
-                           class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-
+                           class="w-full lg:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-
                     </svg>
-
                 </div>
 
-                
-
                 <!-- Filter Dropdown -->
-
-                <select x-model="statusFilter" @change="filterFolders()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-
+                <select x-model="statusFilter" @change="filterFolders()" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">All Status</option>
-
                     <option value="available">Available</option>
-
                     <option value="borrowed">Borrowed</option>
-
                     <option value="archived">Archived</option>
-
                     <option value="disposed">Disposed</option>
-
                 </select>
-
-                
 
                 <!-- Folder Type Filter -->
-
-                <select x-model="folderTypeFilter" @change="filterFolders()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-
+                <select x-model="folderTypeFilter" @change="filterFolders()" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">All Types</option>
-
                     <option value="PERMITS">PERMIT</option>
-
                     <option value="ECC / CNC FILES">ECC / CNC FILES</option>
-
                     <option value="IEE / EIS FILES">IEE / EIS FILES</option>
-
                 </select>
 
-                
-
                 <!-- Entries Per Page -->
-
-                <select x-model="entriesPerPage" @change="updatePagination()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-
+                <select x-model="entriesPerPage" @change="updatePagination()" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="5">5</option>
-
                     <option value="25">25</option>
-
                     <option value="50">50</option>
-
                     <option value="100">100</option>
-
                     <option value="">All</option>
-
                 </select>
 
             </div>
 
-            
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Manage Racks Button -->
+                <a href="<?= route_to('racks.index') ?>" 
+                   class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg inline-flex items-center space-x-1 transition-colors duration-200 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h16"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Manage Racks</span>
+                    <span class="sm:hidden">Racks</span>
+                </a>
 
-            <div class="flex items-center space-x-3">
-            <!-- Manage Racks Button -->
+                <!-- Manage Categories Button -->
+                <a href="<?= route_to('admin.categories') ?>" 
+                   class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg inline-flex items-center space-x-1 transition-colors duration-200 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Categories</span>
+                    <span class="sm:hidden">Cats</span>
+                </a>
 
-            <a href="<?= route_to('racks.index') ?>" 
-
-               class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg inline-flex items-center space-x-2 transition-colors duration-200">
-
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h16"></path>
-
-                </svg>
-
-                <span>Manage Racks</span>
-
-            </a>
-
-            <!-- Manage Categories Button -->
-
-            <a href="<?= route_to('admin.categories') ?>" 
-
-               class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg inline-flex items-center space-x-2 transition-colors duration-200">
-
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-
-                </svg>
-
-                <span>Manage Categories</span>
-
-            </a>
-
-            <!-- Create Button -->
-
-            <a href="<?= route_to('records.create') ?>" 
-
-               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-flex items-center space-x-2 transition-colors duration-200">
-
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-
-                </svg>
-
-                <span>Create Folder</span>
-
-            </a>
-
+                <!-- Create Button -->
+                <a href="<?= route_to('records.create') ?>" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg inline-flex items-center space-x-1 transition-colors duration-200 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Create Folder</span>
+                    <span class="sm:hidden">Create</span>
+                </a>
             </div>
 
         </div>

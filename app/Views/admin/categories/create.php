@@ -1,39 +1,69 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Category</title>
-</head>
-<body>
+<?= $this->extend('layouts/main') ?>
+
+<?= $this->section('content') ?>
+
+<!-- Popup Modal -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-8 z-50">
+    <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-12 max-w-2xl w-full">
+        <!-- Alert Header -->
+        <div class="text-center mb-6">
+            <div class="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Create New Category</h2>
+            <p class="text-gray-600 text-sm">Add a new document category to organize your records</p>
+        </div>
     <?php $session = session(); $errors = $session->getFlashdata('errors') ?? []; ?>
 
-    <h1>Create Category</h1>
-
+    <!-- Flash Messages -->
     <?php if ($session->getFlashdata('error')): ?>
-        <p><?= esc($session->getFlashdata('error')) ?></p>
+        <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-6">
+            <?= esc($session->getFlashdata('error')) ?>
+        </div>
     <?php endif; ?>
 
+    <!-- Validation Errors -->
     <?php if (!empty($errors)): ?>
-        <ul>
-            <?php foreach ($errors as $message): ?>
-                <li><?= esc($message) ?></li>
-            <?php endforeach; ?>
-        </ul>
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+            <h4 class="font-semibold mb-2">Please fix the following errors:</h4>
+            <ul class="list-disc list-inside">
+                <?php foreach ($errors as $message): ?>
+                    <li><?= esc($message) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
     <?php endif; ?>
 
     <form action="<?= route_to('admin.categories.store') ?>" method="POST">
         <?= csrf_field() ?>
 
-        <p>
-            <label for="category_name">Category Name</label><br>
-            <input type="text" id="category_name" name="category_name" value="<?= esc(old('category_name')) ?>">
-        </p>
+        <div class="mb-6">
+            <label for="category_name" class="block text-sm font-medium text-gray-700 mb-2">
+                Category Name
+            </label>
+            <input type="text" 
+                   id="category_name" 
+                   name="category_name" 
+                   value="<?= esc(old('category_name')) ?>"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                   placeholder="Enter category name"
+                   required>
+        </div>
 
-        <p>
-            <button type="submit">Save Category</button>
-            <a href="<?= route_to('admin.categories') ?>">Cancel</a>
-        </p>
+        <div class="flex items-center justify-between space-x-3">
+            <a href="<?= route_to('admin.categories') ?>" 
+               class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 text-center">
+                Cancel
+            </a>
+            <button type="submit" 
+                    class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200">
+                Create Category
+            </button>
+        </div>
     </form>
-</body>
-</html>
+    </div>
+</div>
+
+<?= $this->endSection() ?>
