@@ -48,7 +48,7 @@
 
                 <div class="mb-3 text-center">
 
-                    <h3 class="text-base font-semibold text-gray-900">Cabinet Layout</h3>
+                    <h3 class="text-base font-semibold text-gray-900">Records Layout Map</h3>
 
                     <p class="text-xs text-gray-600">Document storage cabinet visualization</p>
 

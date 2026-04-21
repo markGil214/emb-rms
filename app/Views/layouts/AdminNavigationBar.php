@@ -103,22 +103,7 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
                 </svg>
-                <span x-show="sidebarOpen" x-transition class="ml-3">Archive</span>
-            </a>
-            <?php endif; ?>
-        </li>
-
-              <li>
-            <?php if (can('view_disposal_workflow') || can('approve_disposal')): ?>
-            <a href="#" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                    <line x1="10" x2="10" y1="11" y2="17"></line>
-                    <line x1="14" x2="14" y1="11" y2="17"></line>
-                </svg>
-                <span x-show="sidebarOpen" x-transition class="ml-3">Disposal Workflow</span>
+                <span x-show="sidebarOpen" x-transition class="ml-3">Archive and Disposal</span>
             </a>
             <?php endif; ?>
         </li>
