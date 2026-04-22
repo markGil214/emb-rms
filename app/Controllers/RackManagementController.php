@@ -16,12 +16,10 @@ class RackManagementController extends BaseController
 
     public function index()
     {
-        $racks = $this->rackShelfModel->getDistinctRacks();
-
         return view('layouts/superadmin/racks/index', [
             'title' => 'Manage Racks',
             'locations' => $this->rackShelfModel->getAllOrdered(),
-            'racks' => $racks,
+            'racks' => $this->rackShelfModel->getAllowedRacks(),
         ]);
     }
 
@@ -29,13 +27,13 @@ class RackManagementController extends BaseController
     {
         $location = $this->rackShelfModel->find($locationId);
         if (! $location) {
-            return redirect()->to('/manage-racks')->with('error', 'Shelf not found.');
+            return redirect()->to('/manage-racks')->with('error', 'Rack not found.');
         }
 
         return view('layouts/superadmin/racks/index', [
             'title' => 'Manage Racks',
             'locations' => $this->rackShelfModel->getAllOrdered(),
-            'racks' => $this->rackShelfModel->getDistinctRacks(),
+            'racks' => $this->rackShelfModel->getAllowedRacks(),
             'editLocation' => $location,
         ]);
     }
@@ -43,13 +41,15 @@ class RackManagementController extends BaseController
     public function store()
     {
         $rules = [
-            'rack' => 'required|max_length[50]',
+            'rack' => 'required|integer|greater_than_equal_to[1]|less_than_equal_to[20]',
             'shelf' => 'required|max_length[50]|alpha_numeric_space',
         ];
         $messages = [
             'rack' => [
                 'required' => 'Please select a rack.',
-                'max_length' => 'Rack value is too long.',
+                'integer' => 'Rack must be a number.',
+                'greater_than_equal_to' => 'Rack must be between 1 and 20.',
+                'less_than_equal_to' => 'Rack must be between 1 and 20.',
             ],
             'shelf' => [
                 'required' => 'Shelf label is required.',
@@ -59,18 +59,18 @@ class RackManagementController extends BaseController
         ];
 
         if (! $this->validate($rules, $messages)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors())->with('modal', 'add-shelf');
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors())->with('modal', 'add-rack');
         }
 
         $rack = trim((string) $this->request->getPost('rack'));
         $shelf = trim((string) $this->request->getPost('shelf'));
 
-        if (! $this->rackShelfModel->rackExists($rack)) {
-            return redirect()->back()->withInput()->with('error', 'Selected rack was not found. Please refresh and try again.')->with('modal', 'add-shelf');
+        if (! in_array($rack, $this->rackShelfModel->getAllowedRacks(), true)) {
+            return redirect()->back()->withInput()->with('error', 'Selected rack was not found. Please choose a rack between 1 and 20.')->with('modal', 'add-rack');
         }
 
         if ($this->rackShelfModel->rackShelfExists($rack, $shelf)) {
-            return redirect()->back()->withInput()->with('error', 'Shelf "' . $shelf . '" already exists in rack "' . $rack . '".')->with('modal', 'add-shelf');
+            return redirect()->back()->withInput()->with('error', 'Shelf "' . $shelf . '" already exists in rack "' . $rack . '".')->with('modal', 'add-rack');
         }
 
         $saved = $this->rackShelfModel->insert([
@@ -80,7 +80,7 @@ class RackManagementController extends BaseController
         ]);
 
         if (! $saved) {
-            return redirect()->back()->withInput()->with('errors', $this->rackShelfModel->errors())->with('modal', 'add-shelf');
+            return redirect()->back()->withInput()->with('errors', $this->rackShelfModel->errors())->with('modal', 'add-rack');
         }
 
         return redirect()->to('/manage-racks')->with('success', 'Shelf "' . $shelf . '" added to rack "' . $rack . '".');
@@ -90,17 +90,19 @@ class RackManagementController extends BaseController
     {
         $location = $this->rackShelfModel->find($locationId);
         if (! $location) {
-            return redirect()->to('/manage-racks')->with('error', 'Shelf was not found.');
+            return redirect()->to('/manage-racks')->with('error', 'Rack was not found.');
         }
 
         $rules = [
-            'rack' => 'required|max_length[50]',
+            'rack' => 'required|integer|greater_than_equal_to[1]|less_than_equal_to[20]',
             'shelf' => 'required|max_length[50]|alpha_numeric_space',
         ];
         $messages = [
             'rack' => [
                 'required' => 'Please select a rack.',
-                'max_length' => 'Rack value is too long.',
+                'integer' => 'Rack must be a number.',
+                'greater_than_equal_to' => 'Rack must be between 1 and 20.',
+                'less_than_equal_to' => 'Rack must be between 1 and 20.',
             ],
             'shelf' => [
                 'required' => 'Shelf label is required.',
@@ -118,10 +120,6 @@ class RackManagementController extends BaseController
 
         if ($this->rackShelfModel->rackShelfExists($rack, $shelf, $locationId)) {
             return redirect()->back()->withInput()->with('error', 'Rack and shelf combination already exists.');
-        }
-
-        if (! $this->rackShelfModel->rackExists($rack)) {
-            return redirect()->back()->withInput()->with('error', 'Selected rack was not found. Please refresh and try again.');
         }
 
         $updated = $this->rackShelfModel->update($locationId, [

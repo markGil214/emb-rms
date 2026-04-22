@@ -19,7 +19,7 @@
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="/borrows" class="space-y-6">
+            <form method="POST" action="/borrows" class="space-y-6" data-confirm-message="Submit this borrow request?">
                 <?= csrf_field() ?>
 
                 <div>
@@ -61,9 +61,15 @@
                 </div>
 
                 <div>
-                    <label for="expected_return_date" class="block text-sm font-medium text-gray-700">Expected Return Date</label>
-                    <input type="date" name="expected_return_date" id="expected_return_date" required
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <label for="expected_return_days" class="block text-sm font-medium text-gray-700">Expected Return Period</label>
+                    <select id="expected_return_days" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="7">7 days</option>
+                        <option value="15">15 days</option>
+                        <option value="30">30 days</option>
+                    </select>
+                    <p id="expectedReturnPreview" class="mt-2 text-sm text-gray-600"></p>
+                    <input type="hidden" name="expected_return_date" id="expected_return_date" value="<?= esc(old('expected_return_date')) ?>">
                 </div>
 
                 <div>
@@ -89,6 +95,47 @@
 
 <script>
     const folders = <?= json_encode($folders ?? []) ?>;
+
+    function formatDateYmd(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function updateExpectedReturnDate() {
+        const daysSelect = document.getElementById('expected_return_days');
+        const hiddenDateInput = document.getElementById('expected_return_date');
+        const preview = document.getElementById('expectedReturnPreview');
+
+        const selectedDays = parseInt(daysSelect.value, 10);
+        const target = new Date();
+        target.setDate(target.getDate() + selectedDays);
+
+        hiddenDateInput.value = formatDateYmd(target);
+        preview.textContent = `Return date: ${target.toLocaleDateString()}`;
+    }
+
+    function setInitialExpectedReturnDate() {
+        const daysSelect = document.getElementById('expected_return_days');
+        const hiddenDateInput = document.getElementById('expected_return_date');
+        const oldDateValue = hiddenDateInput.value;
+
+        if (oldDateValue) {
+            const today = new Date();
+            const oldDate = new Date(`${oldDateValue}T00:00:00`);
+            const diffMs = oldDate.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+            const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+            if ([7, 15, 30].includes(diffDays)) {
+                daysSelect.value = String(diffDays);
+            }
+        }
+
+        updateExpectedReturnDate();
+    }
+
+    document.getElementById('expected_return_days').addEventListener('change', updateExpectedReturnDate);
+    setInitialExpectedReturnDate();
 
     document.getElementById('folderSearch').addEventListener('input', function(e) {
         const query = e.target.value.toLowerCase();

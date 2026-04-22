@@ -92,12 +92,12 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     $routes->get('/shelfmap',     'DashboardController::shelfmap', ['as' => 'shelfmap', 'filter' => 'permission:view_shelf_map']);
 
-    $routes->get('/manage-racks', 'RackManagementController::index', ['as' => 'racks.index', 'filter' => 'permission:create_document_record']);
-    $routes->post('/manage-racks', 'RackManagementController::store', ['as' => 'racks.store', 'filter' => 'permission:create_document_record']);
-    $routes->get('/manage-racks/(:num)/edit', 'RackManagementController::edit/$1', ['as' => 'racks.edit', 'filter' => 'permission:create_document_record']);
-    $routes->post('/manage-racks/(:num)/update', 'RackManagementController::update/$1', ['as' => 'racks.update', 'filter' => 'permission:create_document_record']);
-    $routes->post('/manage-racks/(:num)/delete', 'RackManagementController::delete/$1', ['as' => 'racks.delete', 'filter' => 'permission:create_document_record']);
-    $routes->post('/manage-racks/delete-rack', 'RackManagementController::deleteRack', ['as' => 'racks.deleteRack', 'filter' => 'permission:create_document_record']);
+    $routes->get('/manage-racks', 'RackManagementController::index', ['as' => 'racks.index', 'filter' => 'permission:manage_racks']);
+    $routes->post('/manage-racks', 'RackManagementController::store', ['as' => 'racks.store', 'filter' => 'permission:manage_racks']);
+    $routes->get('/manage-racks/(:num)/edit', 'RackManagementController::edit/$1', ['as' => 'racks.edit', 'filter' => 'permission:manage_racks']);
+    $routes->post('/manage-racks/(:num)/update', 'RackManagementController::update/$1', ['as' => 'racks.update', 'filter' => 'permission:manage_racks']);
+    $routes->post('/manage-racks/(:num)/delete', 'RackManagementController::delete/$1', ['as' => 'racks.delete', 'filter' => 'permission:manage_racks']);
+    $routes->post('/manage-racks/delete-rack', 'RackManagementController::deleteRack', ['as' => 'racks.deleteRack', 'filter' => 'permission:manage_racks']);
 
 });
 
@@ -113,11 +113,15 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     $routes->post('/document-records',               'FolderController::store',    ['as' => 'records.store', 'filter' => 'permission:create_document_record']);
 
+    $routes->post('/document-records/(:num)/approve', 'FolderController::approve/$1', ['as' => 'records.approve', 'filter' => 'permission:approve_folder_creation']);
+
+    $routes->post('/document-records/(:num)/decline', 'FolderController::decline/$1', ['as' => 'records.decline', 'filter' => 'permission:approve_folder_creation']);
+
     $routes->get('/document-records/(:num)',         'FolderController::show/$1',  ['as' => 'records.show', 'filter' => 'permission:search_documents']);
 
     $routes->get('/document-records/(:num)/history', 'FolderController::history/$1', ['as' => 'records.history', 'filter' => 'permission:search_documents']);
 
-    $routes->post('/document-records/(:num)/archive', 'ArchiveDisposalController::archiveFolderFromRecords/$1', ['as' => 'records.archive']);
+    $routes->post('/document-records/(:num)/archive', 'ArchiveDisposalController::archiveFolderFromRecords/$1', ['as' => 'records.archive', 'filter' => 'permission:approve_folder_archival']);
 
     $routes->get('/document-records/(:num)/edit',    'FolderController::edit/$1',  ['as' => 'records.edit', 'filter' => 'permission:edit_document_metadata']);
 
@@ -161,17 +165,17 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
 $routes->group('', ['filter' => 'auth'], function($routes) {
 
-    $routes->get('/admin/categories',                   'Admin\CategoryController::index',         ['as' => 'admin.categories', 'filter' => 'permission:manage_users']);
+    $routes->get('/admin/categories',                   'Admin\CategoryController::index',         ['as' => 'admin.categories', 'filter' => 'permission:manage_categories']);
 
-    $routes->get('/admin/categories/create',            'Admin\CategoryController::create',        ['as' => 'admin.categories.create', 'filter' => 'permission:manage_users']);
+    $routes->get('/admin/categories/create',            'Admin\CategoryController::create',        ['as' => 'admin.categories.create', 'filter' => 'permission:manage_categories']);
 
-    $routes->post('/admin/categories/store',            'Admin\CategoryController::store',         ['as' => 'admin.categories.store', 'filter' => 'permission:manage_users']);
+    $routes->post('/admin/categories/store',            'Admin\CategoryController::store',         ['as' => 'admin.categories.store', 'filter' => 'permission:manage_categories']);
 
-    $routes->get('/admin/categories/(:num)/edit',       'Admin\CategoryController::edit/$1',       ['as' => 'admin.categories.edit', 'filter' => 'permission:manage_users']);
+    $routes->get('/admin/categories/(:num)/edit',       'Admin\CategoryController::edit/$1',       ['as' => 'admin.categories.edit', 'filter' => 'permission:manage_categories']);
 
-    $routes->post('/admin/categories/(:num)/update',    'Admin\CategoryController::update/$1',     ['as' => 'admin.categories.update', 'filter' => 'permission:manage_users']);
+    $routes->post('/admin/categories/(:num)/update',    'Admin\CategoryController::update/$1',     ['as' => 'admin.categories.update', 'filter' => 'permission:manage_categories']);
 
-    $routes->post('/admin/categories/(:num)',           'Admin\CategoryController::delete/$1',     ['as' => 'admin.categories.delete', 'filter' => 'permission:manage_users']);
+    $routes->post('/admin/categories/(:num)',           'Admin\CategoryController::delete/$1',     ['as' => 'admin.categories.delete', 'filter' => 'permission:manage_categories']);
 
 });
 

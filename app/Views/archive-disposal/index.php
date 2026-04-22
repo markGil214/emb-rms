@@ -107,8 +107,8 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         <a href="<?= route_to('records.show', $archive['folder_id']) ?>" 
                                            class="text-blue-600 hover:text-blue-900 mr-4">View</a>
-                                        <form action="<?= route_to('archive.restore', $archive['folder_id']) ?>" method="POST" 
-                                              class="inline" onsubmit="return confirm('Restore this folder to Available status?');">
+                                            <form action="<?= route_to('archive.restore', $archive['folder_id']) ?>" method="POST" 
+                                                class="inline" data-confirm-message="Restore this folder to Available status?">
                                             <?= csrf_field() ?>
                                             <button type="submit" 
                                                     class="text-green-600 hover:text-green-900 font-medium">Restore</button>

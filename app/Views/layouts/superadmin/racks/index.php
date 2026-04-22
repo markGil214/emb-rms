@@ -40,7 +40,7 @@
 
             <div class="flex items-center space-x-3">
                 <!-- Add Shelf Button -->
-                <button type="button" onclick="openModal('addShelfModal')" 
+                <button type="button" onclick="openModal('addRackModal')" 
                         class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -51,27 +51,27 @@
         </div>
     </div>
 
-<!-- Add Shelf Modal -->
-<div id="addShelfModal" class="fixed inset-0 bg-gray-500 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50" x-data="{ open: false }">
-    <div class="relative top-20 mx-auto p-6 border border-gray-200 w-96 shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
+<!-- Add Rack Modal -->
+<div id="addRackModal" class="fixed inset-0 hidden items-center justify-center bg-gray-500 bg-opacity-50 p-4 z-50" x-data="{ open: false }">
+    <div class="relative w-full max-w-md border border-gray-200 p-6 shadow-lg rounded-lg bg-white">
+        <div>
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Add New Shelf</h3>
-            <form method="post" action="<?= route_to('racks.store') ?>">
+            <form method="post" action="<?= route_to('racks.store') ?>" data-confirm-message="Add this shelf to the selected rack?">
                 <?= csrf_field() ?>
-                <div class="mb-4">
+                <div class="mb-6">
                     <label for="rack" class="block text-sm font-medium text-gray-700 mb-2">Rack</label>
                     <select id="rack" name="rack" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900">
                         <option value="">Choose a rack</option>
-                        <?php foreach ($racks as $rack): ?>
-                            <option value="<?= esc($rack) ?>" <?= old('rack') === (string) $rack ? 'selected' : '' ?>>Rack <?= esc($rack) ?></option>
-                        <?php endforeach; ?>
+                        <?php for ($i = 1; $i <= 20; $i++): ?>
+                            <option value="<?= $i ?>" <?= old('rack') === (string) $i ? 'selected' : '' ?>>Rack <?= $i ?></option>
+                        <?php endfor; ?>
                     </select>
                     <?php if (! empty($errors['rack'])): ?>
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400"><?= esc($errors['rack']) ?></p>
                     <?php endif; ?>
                 </div>
-                
+
                 <div class="mb-6">
                     <label for="shelf" class="block text-sm font-medium text-gray-700 mb-2">Shelf</label>
                     <input id="shelf" type="text" name="shelf" value="<?= esc(old('shelf')) ?>" required maxlength="50" 
@@ -83,7 +83,7 @@
                 </div>
                 
                 <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="closeModal('addShelfModal')" 
+                    <button type="button" onclick="closeModal('addRackModal')" 
                             class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200">
                         Cancel
                     </button>
@@ -201,13 +201,20 @@
     }
 
     document.addEventListener('click', function (event) {
+        var modal = document.getElementById('addRackModal');
+        if (modal && event.target === modal) {
+            closeModal('addRackModal');
+        }
+    });
+
+    document.addEventListener('click', function (event) {
         if (event.target.classList && event.target.classList.contains('modal-close')) {
             closeModal(event.target.getAttribute('data-modal'));
         }
     });
 
-    <?php if (session()->getFlashdata('modal') === 'add-shelf'): ?>
-    openModal('addShelfModal');
+    <?php if (session()->getFlashdata('modal') === 'add-rack'): ?>
+    openModal('addRackModal');
     <?php endif; ?>
 </script>
 

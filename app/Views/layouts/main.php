@@ -113,7 +113,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
         .dark .bg-white {
             background-color: rgb(31 41 55) !important;
         }
-        
+
         .dark .bg-gray-50 {
             background-color: rgb(17 24 39) !important;
         }
@@ -494,6 +494,137 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
          
         </div>
     </main>
+
+    <div id="appConfirmModal" style="position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; padding:16px;" aria-hidden="true">
+        <div style="position:absolute; inset:0; background:rgba(15,23,42,0.18);"></div>
+        <div id="appConfirmModalCard" style="position:relative; z-index:1; width:100%; max-width:480px; overflow:hidden; border-radius:12px; background:#ffffff; box-shadow:0 10px 30px rgba(15,23,42,0.18); border:1px solid rgba(15,23,42,0.08); color:#111827; min-height:280px;">
+            <div style="padding:36px 36px 24px 36px;">
+                <h3 id="appConfirmModalTitle" style="margin:0; font-size:17px; line-height:24px; font-weight:600; color:#111827;">Confirmation</h3>
+                <p style="margin:12px 0 0 0; font-size:14px; line-height:22px; color:#4b5563;">Please review this action before continuing.</p>
+                <p id="appConfirmModalMessage" style="margin:20px 0 0 0; padding:16px 18px; font-size:14px; line-height:24px; color:#374151; background:#ffffff; border:1px solid #e5e7eb; border-radius:10px;">Are you sure?</p>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:12px; padding:20px 36px; background:#f8fafc; border-top:1px solid #e5e7eb;">
+                <button id="appConfirmCancel" type="button" style="appearance:none; border:0; background:transparent; padding:10px 14px; border-radius:8px; font-size:14px; font-weight:500; color:#6b7280; cursor:pointer;">Cancel</button>
+                <button id="appConfirmConfirm" type="button" style="appearance:none; border:0; background:#2563eb; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; color:#ffffff; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.08);">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const modal = document.getElementById('appConfirmModal');
+            if (!modal) {
+                return;
+            }
+
+            const titleEl = document.getElementById('appConfirmModalTitle');
+            const messageEl = document.getElementById('appConfirmModalMessage');
+            const cancelBtn = document.getElementById('appConfirmCancel');
+            const confirmBtn = document.getElementById('appConfirmConfirm');
+            const modalCard = document.getElementById('appConfirmModalCard');
+
+            let onConfirm = null;
+            let onCancel = null;
+
+            function closeModal() {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+                onConfirm = null;
+                onCancel = null;
+            }
+
+            function openModal(message, confirmCallback, cancelCallback, options) {
+                const opts = options || {};
+
+                titleEl.textContent = opts.title || 'Confirmation';
+                messageEl.textContent = message || 'Are you sure?';
+                confirmBtn.textContent = opts.confirmText || 'Confirm';
+                cancelBtn.textContent = opts.cancelText || 'Cancel';
+
+                onConfirm = typeof confirmCallback === 'function' ? confirmCallback : null;
+                onCancel = typeof cancelCallback === 'function' ? cancelCallback : null;
+
+                modal.style.display = 'flex';
+                modal.setAttribute('aria-hidden', 'false');
+            }
+
+            cancelBtn.addEventListener('click', function () {
+                const callback = onCancel;
+                closeModal();
+                if (callback) {
+                    callback();
+                }
+            });
+
+            confirmBtn.addEventListener('click', function () {
+                const callback = onConfirm;
+                closeModal();
+                if (callback) {
+                    callback();
+                }
+            });
+
+            modal.addEventListener('click', function (event) {
+                if (modalCard && !modalCard.contains(event.target)) {
+                    const callback = onCancel;
+                    closeModal();
+                    if (callback) {
+                        callback();
+                    }
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && modal.style.display !== 'none') {
+                    const callback = onCancel;
+                    closeModal();
+                    if (callback) {
+                        callback();
+                    }
+                }
+            });
+
+            window.showAppConfirm = function (message, confirmCallback, cancelCallback, options) {
+                openModal(message, confirmCallback, cancelCallback, options || {});
+            };
+
+            window.showAppAlert = function (message, options) {
+                openModal(message, null, null, Object.assign({
+                    title: 'Notice',
+                    confirmText: 'Confirm',
+                    cancelText: 'Cancel'
+                }, options || {}));
+            };
+
+            document.addEventListener('submit', function (event) {
+                const form = event.target;
+                if (!(form instanceof HTMLFormElement)) {
+                    return;
+                }
+
+                const message = form.getAttribute('data-confirm-message');
+                if (!message) {
+                    return;
+                }
+
+                if (form.dataset.modalConfirmed === 'true') {
+                    form.dataset.modalConfirmed = 'false';
+                    return;
+                }
+
+                event.preventDefault();
+
+                window.showAppConfirm(message, function () {
+                    form.dataset.modalConfirmed = 'true';
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
+                });
+            });
+        })();
+    </script>
     
     <!-- Loading Animation Script -->
     <script src="<?= base_url('js/loading-animation.js') ?>"></script>

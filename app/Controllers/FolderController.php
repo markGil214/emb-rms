@@ -27,14 +27,13 @@ class FolderController extends BaseController
     public function index()
     {
         $folders = $this->folderModel
-            // Support schemas where locations has rack/shelf (without cabinet).
             ->select('folders.*, categories.category_name AS folder_category, locations.rack AS cabinet, locations.shelf AS shelf, locations.rack AS rack, bt.borrowed_at AS borrowed_date, bt.expected_return_date AS due_date, bt.actual_return_date AS return_date, ar.archived_date AS archived_date')
             ->join('locations', 'locations.location_id = folders.location_id', 'left')
             ->join('categories', 'categories.category_id = folders.category_id', 'left')
             ->join('borrow_transactions bt', 'bt.transaction_id = folders.current_borrow_transaction_id', 'left')
             ->join('archive_records ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = folders.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false)
             ->where('folders.status !=', 'Archived')
-            ->orderBy('file_code', 'ASC')
+            ->orderBy('folders.folder_id', 'DESC')
             ->findAll();
 
         return view('layouts/superadmin/document-records/document-records', [
@@ -114,7 +113,7 @@ class FolderController extends BaseController
             'company_name' => $this->request->getPost('company_name'),
             'folder_type' => $this->request->getPost('folder_type'),
             'category_id' => $this->request->getPost('category_id'),
-            'status' => 'Available',
+            'status' => 'Pending',
             'location_id' => $locationId,
             'created_by' => auth_user()['user_id'] ?? null,
         ];
@@ -126,7 +125,7 @@ class FolderController extends BaseController
 
         $db->transComplete();
 
-        return redirect()->to('/document-records')->with('success', 'Folder created successfully');
+        return redirect()->to('/document-records')->with('success', 'Folder request submitted. Waiting for approval.');
     }
 
     /**
@@ -222,11 +221,158 @@ class FolderController extends BaseController
             $data['location_code'] = FileCodeGenerator::generateLocationCode($cabinet, $rack);
         }
 
-        if (!$this->folderModel->update($folderId, $data)) {
-            return redirect()->back()->withInput()->with('errors', $this->folderModel->errors());
+        $db = \Config\Database::connect();
+
+        $existingPending = $db->table('document_edit_requests')
+            ->where('folder_id', $folderId)
+            ->where('status', 'Pending')
+            ->countAllResults();
+
+        if ($existingPending > 0) {
+            return redirect()->back()->withInput()->with('error', 'A pending update request already exists for this folder.');
         }
 
-        return redirect()->to('/document-records')->with('success', 'Folder updated successfully');
+        $requestData = [
+            'folder_id' => $folderId,
+            'proposed_changes' => json_encode($data),
+            'current_values' => json_encode([
+                'company_name' => $folder['company_name'] ?? null,
+                'folder_type' => $folder['folder_type'] ?? null,
+                'category_id' => $folder['category_id'] ?? null,
+                'status' => $folder['status'] ?? null,
+                'borrowed_date' => $folder['borrowed_date'] ?? null,
+                'due_date' => $folder['due_date'] ?? null,
+                'location_code' => $folder['location_code'] ?? null,
+            ]),
+            'reason' => 'Metadata update request',
+            'status' => 'Pending',
+            'requested_by' => auth_user()['user_id'] ?? null,
+            'requested_at' => date('Y-m-d H:i:s'),
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+
+        $db->table('document_edit_requests')->insert($requestData);
+
+        $this->folderModel->update($folderId, [
+            'status' => 'Pending Update',
+            'updated_by' => auth_user()['user_id'] ?? null,
+        ]);
+
+        return redirect()->to('/document-records')->with('success', 'Folder update request submitted. Waiting for approval.');
+    }
+
+    public function approve(int $folderId)
+    {
+        if (!can('approve_folder_creation')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $folder = $this->findFolderOrFail($folderId);
+        $approverId = auth_user()['user_id'] ?? null;
+        $db = \Config\Database::connect();
+
+        if (($folder['status'] ?? '') === 'Pending') {
+            $this->folderModel->update($folderId, [
+                'status' => 'Available',
+                'updated_by' => $approverId,
+            ]);
+
+            return redirect()->to('/document-records')->with('success', 'Folder creation request approved.');
+        }
+
+        if (($folder['status'] ?? '') === 'Pending Update') {
+            $request = $db->table('document_edit_requests')
+                ->where('folder_id', $folderId)
+                ->where('status', 'Pending')
+                ->orderBy('requested_at', 'DESC')
+                ->get()
+                ->getRowArray();
+
+            if (! $request) {
+                return redirect()->to('/document-records')->with('error', 'No pending update request found.');
+            }
+
+            $changes = json_decode((string) ($request['proposed_changes'] ?? '{}'), true);
+            if (! is_array($changes)) {
+                $changes = [];
+            }
+
+            if (empty($changes['status']) || $changes['status'] === 'Pending Update') {
+                $changes['status'] = 'Available';
+            }
+
+            $changes['updated_by'] = $approverId;
+
+            if (! $this->folderModel->update($folderId, $changes)) {
+                return redirect()->to('/document-records')->with('error', 'Failed to apply approved update.');
+            }
+
+            $db->table('document_edit_requests')
+                ->where('edit_request_id', $request['edit_request_id'])
+                ->update([
+                    'status' => 'Approved',
+                    'approved_by' => $approverId,
+                    'approved_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+
+            return redirect()->to('/document-records')->with('success', 'Folder update request approved.');
+        }
+
+        return redirect()->to('/document-records')->with('error', 'This record is not awaiting approval.');
+    }
+
+    public function decline(int $folderId)
+    {
+        if (!can('approve_folder_creation')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $folder = $this->findFolderOrFail($folderId);
+        $approverId = auth_user()['user_id'] ?? null;
+        $db = \Config\Database::connect();
+
+        if (($folder['status'] ?? '') === 'Pending') {
+            $this->folderModel->update($folderId, [
+                'status' => 'Declined',
+                'updated_by' => $approverId,
+            ]);
+
+            return redirect()->to('/document-records')->with('success', 'Folder creation request declined.');
+        }
+
+        if (($folder['status'] ?? '') === 'Pending Update') {
+            $request = $db->table('document_edit_requests')
+                ->where('folder_id', $folderId)
+                ->where('status', 'Pending')
+                ->orderBy('requested_at', 'DESC')
+                ->get()
+                ->getRowArray();
+
+            if (! $request) {
+                return redirect()->to('/document-records')->with('error', 'No pending update request found.');
+            }
+
+            $db->table('document_edit_requests')
+                ->where('edit_request_id', $request['edit_request_id'])
+                ->update([
+                    'status' => 'Declined',
+                    'approved_by' => $approverId,
+                    'approved_at' => date('Y-m-d H:i:s'),
+                    'rejection_reason' => 'Declined by approver',
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+
+            $this->folderModel->update($folderId, [
+                'status' => 'Available',
+                'updated_by' => $approverId,
+            ]);
+
+            return redirect()->to('/document-records')->with('success', 'Folder update request declined.');
+        }
+
+        return redirect()->to('/document-records')->with('error', 'This record is not awaiting approval.');
     }
 
     /**
@@ -243,7 +389,7 @@ class FolderController extends BaseController
         if ($isCreate) {
             $rules['location_id'] = 'required|integer';
         } else {
-            $rules['status'] = 'required|in_list[Available,Borrowed,Archived,Disposed]';
+            $rules['status'] = 'required|in_list[Available,Borrowed,Archived,Disposed,Pending,Pending Update,Declined]';
             $rules['borrowed_date'] = 'permit_empty|valid_date[Y-m-d]';
             $rules['due_date'] = 'permit_empty|valid_date[Y-m-d]';
         }

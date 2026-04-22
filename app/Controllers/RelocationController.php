@@ -422,8 +422,8 @@ class RelocationController extends BaseController
                 [
                     'building' => $toLocation['building'] ?? null,
                     'room' => $toLocation['room'] ?? null,
-                    'cabinet' => $toLocation['cabinet'] ?? null,
-                    'shelf' => $toLocation['shelf'] ?? null,
+                    'cabinet' => $toLocation['cabinet'] ?? ($toLocation['rack'] ?? null),
+                    'shelf' => $toLocation['rack'] ?? null,
                     'box' => $toLocation['box'] ?? null,
                 ]
             );

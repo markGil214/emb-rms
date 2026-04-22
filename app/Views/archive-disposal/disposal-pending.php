@@ -74,7 +74,7 @@
                                     <a href="<?= route_to('disposal.show', $disposal['disposal_id']) ?>" 
                                        class="text-blue-600 hover:text-blue-900">View</a>
                                     <form method="POST" action="<?= route_to('disposal.approve', $disposal['disposal_id']) ?>" 
-                                          class="inline" onsubmit="return confirm('Approve this disposal request?');">
+                                        class="inline" data-confirm-message="Approve this disposal request?">
                                         <?= csrf_field() ?>
                                         <button type="submit" 
                                                 class="text-green-600 hover:text-green-900 font-medium">Approve</button>

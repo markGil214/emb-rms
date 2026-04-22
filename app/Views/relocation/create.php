@@ -39,7 +39,7 @@
 
     <!-- Relocation Form -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <form method="POST" action="<?= route_to('relocations.store') ?>" id="relocationForm" class="p-6 space-y-6">
+        <form method="POST" action="<?= route_to('relocations.store') ?>" id="relocationForm" class="p-6 space-y-6" data-confirm-message="Submit this relocation request?">
             <?= csrf_field() ?>
 
             <!-- Step 1: Select Folder -->
@@ -283,12 +283,12 @@
         const locationId = document.getElementById('to_location_id').value;
         if (!folderId) {
             e.preventDefault();
-            alert('Please select a folder to relocate');
+            window.showAppAlert('Please select a folder to relocate');
             return false;
         }
         if (!locationId) {
             e.preventDefault();
-            alert('Please select a new location');
+            window.showAppAlert('Please select a new location');
             return false;
         }
     });

@@ -12,7 +12,7 @@
 	<div class="mb-6 border-b border-gray-200">
 		<div class="flex space-x-8">
 			<button class="tab-button active px-4 py-3 border-b-2 border-blue-600 text-blue-600 font-medium" data-tab="document">
-				Document Management
+				Document Records
 			</button>
 			<button class="tab-button px-4 py-3 border-b-2 border-transparent text-gray-600 hover:text-gray-900" data-tab="borrow">
 				Borrow Management
@@ -57,30 +57,28 @@
 <script>
 		const permissionGroups = {
 			document: {
-				name: 'Document Management',
+				name: 'Document Records',
 				permissions: {
 					'search_documents': 'Search & Find Documents',
 					'view_shelf_map': 'View Shelf Map',
-					'create_document_record': 'Create Document Records',
-					'edit_document_metadata': 'Edit Document Metadata'
+					'manage_racks': 'Manage Racks',
+					'manage_categories': 'Manage Categories',
+					'approve_folder_creation': 'Approve Folder Creation',
+					'approve_folder_archival': 'Approve Folder Archival'
 				}
 			},
 			borrow: {
 				name: 'Borrow Management',
 				permissions: {
-					'request_borrow': 'Request to Borrow',
-					'view_own_borrow': 'View Own Borrow Requests',
-					'view_all_borrow': 'View All Borrow Requests',
-					'process_borrow_release': 'Process Borrow Release',
+					'view_all_borrow': 'Display Borrow Management',
 					'process_return': 'Process Return',
 					'approve_borrow_requests': 'Approve Requests',
-					'view_alerts_module': 'View Alerts'
 				}
 			},
 			relocation: {
 				name: 'Relocation Management',
 				permissions: {
-					'initiate_relocation': 'Initiate Relocation',
+					'initiate_relocation': 'Display Relocation',
 					'request_relocation': 'Request Relocation',
 					'approve_relocation': 'Approve Relocations'
 				}
@@ -236,7 +234,7 @@
 
 			console.log('Sending save request with data:', changes);
 
-			if (confirm('Save permission changes?')) {
+			showAppConfirm('Save permission changes?', function() {
 				$.ajax({
 					url: '/admin/permissions/save-role-perms',
 					type: 'POST',
@@ -246,22 +244,22 @@
 					statusCode: {
 						400: function(xhr) {
 							console.error('Bad request (400):', xhr.responseJSON);
-							alert('Error: ' + (xhr.responseJSON?.error || 'Invalid data'));
+							showAppAlert('Error: ' + (xhr.responseJSON?.error || 'Invalid data'));
 						},
 						403: function(xhr) {
 							console.error('Forbidden (403):', xhr.responseJSON);
-							alert('Error: You do not have permission to manage users');
+							showAppAlert('Error: You do not have permission to manage users');
 						},
 						500: function(xhr) {
 							console.error('Server error (500):', xhr.responseJSON);
-							alert('Error: ' + (xhr.responseJSON?.error || 'Server error'));
+							showAppAlert('Error: ' + (xhr.responseJSON?.error || 'Server error'));
 						}
 					},
 					success: function(response) {
 						console.log('Response received:', response);
 						
 						if (response.success) {
-							alert('Permissions saved successfully!');
+							showAppAlert('Permissions saved successfully!');
 							// Wait 500ms for database to fully commit before reloading
 							setTimeout(() => {
 								console.log('Refreshing role permissions...');
@@ -270,7 +268,7 @@
 								loadRolePermissions(); // This will render the matrix once all data is loaded
 							}, 500);
 						} else {
-							alert('Error: ' + (response.error || 'Failed to save permissions'));
+							showAppAlert('Error: ' + (response.error || 'Failed to save permissions'));
 						}
 					},
 					error: function(xhr, status, error) {
@@ -279,11 +277,11 @@
 						
 						// If statusCode handlers didn't catch it
 						if (!xhr.responseJSON || !xhr.responseJSON.error) {
-							alert('Error: ' + (error || 'Failed to save permissions'));
+							showAppAlert('Error: ' + (error || 'Failed to save permissions'));
 						}
 					}
 				});
-			}
+			});
 		});
 
 		// Reset

@@ -36,7 +36,7 @@
         </div>
     <?php endif; ?>
 
-    <form action="<?= route_to('admin.categories.store') ?>" method="POST">
+    <form action="<?= route_to('admin.categories.store') ?>" method="POST" data-confirm-message="Create this category?">
         <?= csrf_field() ?>
 
         <div class="mb-6">

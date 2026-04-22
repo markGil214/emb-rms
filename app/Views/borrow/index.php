@@ -83,12 +83,12 @@
                                                     <button type="submit" class="text-green-600 hover:text-green-900">Approve</button>
                                                 </form>
                                             <?php elseif (($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Overdue') && can('process_return')): ?>
-                                                <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/return" class="inline">
+                                                <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/return" class="inline" data-confirm-message="Return this folder now?">
                                                     <?= csrf_field() ?>
                                                     <button type="submit" class="text-red-600 hover:text-red-900">Return</button>
                                                 </form>
                                                 <?php if ($borrow['status'] === 'Overdue'): ?>
-                                                    <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/notify" class="inline" onsubmit="return confirm('Send overdue reminder email to borrower now?');">
+                                                    <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/notify" class="inline" data-confirm-message="Send overdue reminder email to borrower now?">
                                                         <?= csrf_field() ?>
                                                         <button type="submit" class="text-amber-600 hover:text-amber-900">Notify</button>
                                                     </form>
