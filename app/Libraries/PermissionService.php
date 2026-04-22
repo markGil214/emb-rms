@@ -10,6 +10,13 @@ use App\Config\Permissions;
 
 class PermissionService
 {
+    private const SYSTEM_DEFAULT_PERMISSIONS = [
+        'request_borrow',
+        'view_all_borrow',
+        'process_borrow_release',
+        'view_alerts_module',
+    ];
+
     protected $roleModel;
     protected $rolePermissionModel;
     protected $userRoleModel;
@@ -36,7 +43,11 @@ class PermissionService
         $rolePermissions = $this->getRolePermissions($userId);
         $customPermissions = $this->getCustomPermissions($userId);
 
-        return array_unique(array_merge($rolePermissions, $customPermissions));
+        return array_values(array_unique(array_merge(
+            self::SYSTEM_DEFAULT_PERMISSIONS,
+            $rolePermissions,
+            $customPermissions
+        )));
     }
 
     /**

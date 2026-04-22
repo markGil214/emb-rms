@@ -20,7 +20,7 @@ class CategoryController extends BaseController
     public function index()
     {
         // Check permission
-        if (!can('manage_users')) {
+        if (!can('manage_categories')) {
             return $this->response->setStatusCode(403, 'Forbidden');
         }
 
@@ -40,7 +40,7 @@ class CategoryController extends BaseController
     public function create()
     {
         // Check permission
-        if (!can('manage_users')) {
+        if (!can('manage_categories')) {
             return $this->response->setStatusCode(403, 'Forbidden');
         }
 
@@ -57,7 +57,7 @@ class CategoryController extends BaseController
     public function store()
     {
         // Check permission
-        if (!can('manage_users')) {
+        if (!can('manage_categories')) {
             return $this->response->setStatusCode(403, 'Forbidden');
         }
 
@@ -88,7 +88,7 @@ class CategoryController extends BaseController
     public function edit($categoryId)
     {
         // Check permission
-        if (!can('manage_users')) {
+        if (!can('manage_categories')) {
             return $this->response->setStatusCode(403, 'Forbidden');
         }
 
@@ -112,7 +112,7 @@ class CategoryController extends BaseController
     public function update($categoryId)
     {
         // Check permission
-        if (!can('manage_users')) {
+        if (!can('manage_categories')) {
             return $this->response->setStatusCode(403, 'Forbidden');
         }
 
@@ -149,7 +149,7 @@ class CategoryController extends BaseController
     public function delete($categoryId)
     {
         // Check permission
-        if (!can('manage_users')) {
+        if (!can('manage_categories')) {
             return $this->response->setStatusCode(403, 'Forbidden');
         }
 

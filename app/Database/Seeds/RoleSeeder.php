@@ -16,10 +16,6 @@ class RoleSeeder extends Seeder
 
         // Check if roles already exist
         $existingRoles = $this->db->table('roles')->countAllResults();
-        if ($existingRoles > 0) {
-            echo "ℹ️  Roles already seeded. Skipping RoleSeeder.\n";
-            return;
-        }
 
         $roles = [
             [
@@ -39,8 +35,10 @@ class RoleSeeder extends Seeder
             ],
         ];
 
-        // Insert roles
-        $this->db->table('roles')->insertBatch($roles);
+        // Insert roles only when missing
+        if ($existingRoles === 0) {
+            $this->db->table('roles')->insertBatch($roles);
+        }
 
         // Get inserted role IDs
         $rolesInDb = $this->db->table('roles')->get()->getResult('array');
@@ -52,11 +50,27 @@ class RoleSeeder extends Seeder
         // Get default permissions
         $defaults = Permissions::roleDefaults();
 
-        // Insert role permissions
+        // Build current role-permission map for idempotent sync
+        $existingRolePerms = $this->db->table('role_permissions')->get()->getResultArray();
+        $existingMap = [];
+        foreach ($existingRolePerms as $rp) {
+            $existingMap[$rp['role_id'] . '|' . $rp['permission_key']] = true;
+        }
+
+        // Insert missing role permissions
         $rolePermissions = [];
         foreach ($defaults as $roleName => $permissions) {
+            if (! isset($roleMap[$roleName])) {
+                continue;
+            }
+
             $roleId = $roleMap[$roleName];
             foreach ($permissions as $permission) {
+                $mapKey = $roleId . '|' . $permission;
+                if (isset($existingMap[$mapKey])) {
+                    continue;
+                }
+
                 $rolePermissions[] = [
                     'role_id' => $roleId,
                     'permission_key' => $permission,
@@ -66,6 +80,11 @@ class RoleSeeder extends Seeder
 
         if (!empty($rolePermissions)) {
             $this->db->table('role_permissions')->insertBatch($rolePermissions);
+        }
+
+        if ($existingRoles > 0) {
+            echo "✓ Role default permissions synced successfully\n";
+            return;
         }
 
         echo "✓ Roles and default permissions seeded successfully\n";

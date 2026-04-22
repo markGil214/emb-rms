@@ -65,4 +65,14 @@ class RackShelfModel extends Model
     {
         return $this->where('rack', $rack)->countAllResults() > 0;
     }
+
+    public function getAllowedRacks(): array
+    {
+        $allowed = [];
+        for ($rack = 1; $rack <= 20; $rack++) {
+            $allowed[] = (string) $rack;
+        }
+
+        return $allowed;
+    }
 }

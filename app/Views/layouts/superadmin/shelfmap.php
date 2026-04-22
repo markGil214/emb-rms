@@ -932,7 +932,7 @@ class ShelfMapApp {
 
             console.error('Error loading shelf data from API:', error);
 
-            alert(`Failed to load shelf data: ${error.message}. Check browser console and server logs.`);
+            window.showAppAlert(`Failed to load shelf data: ${error.message}. Check browser console and server logs.`);
 
         }
 

@@ -490,6 +490,6 @@ class ArchiveDisposalController extends BaseController
             log_message('error', 'Restore audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
 
-        return redirect()->to('/archive-disposal')->with('success', 'Folder restored to Available status');
+        return redirect()->to('/archive')->with('success', 'Folder restored to Available status');
     }
 }

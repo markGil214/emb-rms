@@ -27,7 +27,7 @@ $(document).ready(function() {
 				$('#noUserSelected').hide();
 			},
 			error: function() {
-				alert('Error loading user permissions');
+				window.showAppAlert('Error loading user permissions');
 				$('#loadingSpinner').hide();
 			}
 		});
@@ -69,7 +69,7 @@ $(document).ready(function() {
 			return $(this).val();
 		}).get();
 
-		if (confirm('Save permission changes?')) {
+		window.showAppConfirm('Save permission changes?', function() {
 			$.ajax({
 				url: `/admin/permissions/save/${selectedUserId}`,
 				type: 'POST',
@@ -79,14 +79,14 @@ $(document).ready(function() {
 				},
 				dataType: 'json',
 				success: function(response) {
-					alert('Permissions saved successfully!');
+					window.showAppAlert('Permissions saved successfully!');
 					loadUserPermissions(selectedUserId);
 				},
 				error: function() {
-					alert('Error saving permissions');
+					window.showAppAlert('Error saving permissions');
 				}
 			});
-		}
+		});
 	});
 
 	// Reset form
@@ -96,16 +96,16 @@ $(document).ready(function() {
 
 	// Assign all permissions
 	$('#assignAllBtn').click(function() {
-		if (confirm('Assign ALL permissions to this user?')) {
+		window.showAppConfirm('Assign ALL permissions to this user?', function() {
 			$('.permission-checkbox:not(:disabled)').prop('checked', true);
-		}
+		});
 	});
 
 	// Remove all permissions
 	$('#removeAllBtn').click(function() {
-		if (confirm('Remove ALL permissions from this user? This will lock them out!')) {
+		window.showAppConfirm('Remove ALL permissions from this user? This will lock them out!', function() {
 			$('.permission-checkbox:not(:disabled)').prop('checked', false);
-		}
+		});
 	});
 
 	// View history

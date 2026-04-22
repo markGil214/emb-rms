@@ -44,6 +44,7 @@
 
         </a>
 
+        <?php if (!in_array($folder['status'] ?? '', ['Pending', 'Pending Update'], true)): ?>
         <div class="flex items-center gap-2">
             <a href="<?= route_to('records.history', $folder['folder_id']) ?>"
                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium inline-flex items-center">
@@ -62,6 +63,7 @@
                 Upload Documents
             </button>
         </div>
+        <?php endif; ?>
 
     </div>
 
@@ -205,6 +207,8 @@
 
     </div>
 
+    <?php if (!in_array($folder['status'] ?? '', ['Pending', 'Pending Update'], true)): ?>
+
     <!-- Uploaded Files List -->
 
     <div class="bg-white shadow-lg rounded-lg overflow-hidden">
@@ -312,7 +316,7 @@
 
                                                 class="text-blue-600 hover:text-blue-800 font-medium text-sm">Download</a>
 
-                                            <form action="<?= route_to('file.delete', $file['file_id']) ?>" method="POST" style="display:inline;" onsubmit="return confirm('Delete this file?');">
+                                            <form action="<?= route_to('file.delete', $file['file_id']) ?>" method="POST" style="display:inline;" data-confirm-message="Delete this file?">
 
                                                 <?= csrf_field() ?>
 
@@ -341,6 +345,14 @@
         </div>
 
     </div>
+
+    <?php else: ?>
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="p-6 text-center text-gray-600">
+            Documents and history will be available after approval.
+        </div>
+    </div>
+    <?php endif; ?>
 
 
     <div x-show="uploadModalOpen"

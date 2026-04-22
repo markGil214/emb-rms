@@ -32,7 +32,7 @@
             </div>
         <?php endif; ?>
 
-        <form action="<?= route_to('records.store') ?>" method="POST" class="p-4 space-y-4" id="folderForm" onsubmit="validateForm(event)">
+        <form action="<?= route_to('records.store') ?>" method="POST" class="p-4 space-y-4" id="folderForm" onsubmit="validateForm(event)" data-confirm-message="Submit this document record request?">
 
             <?= csrf_field() ?>
 
@@ -252,16 +252,13 @@
                 cabinetSelect.addEventListener('change', function() {
 
                     const selectedCabinet = this.value;
-
                     shelfSelect.innerHTML = '<option value="">-- Select Shelf --</option>';
-
                     locationIdInput.value = '';
 
 
 
                     if (selectedCabinet) {
 
-                        // Filter shelves for this cabinet
                         const shelves = locationsData
 
                             .filter(loc => loc.cabinet === selectedCabinet)
@@ -276,7 +273,6 @@
 
 
 
-                        // Remove duplicates and sort
                         const uniqueShelves = [...new Map(shelves.map(s => [s.shelf, s])).values()].sort((a, b) => 
 
                             a.shelf.localeCompare(b.shelf)
@@ -311,7 +307,6 @@
 
 
 
-                // Handle Shelf selection
                 shelfSelect.addEventListener('change', function() {
 
                     locationIdInput.value = '';
@@ -335,7 +330,7 @@
                     const shelf = document.getElementById('shelf').value;
                     if (!cabinet || !shelf || !locationId) {
                         event.preventDefault();
-                        alert('❌ Please select both Rack and Shelf before creating the record.');
+                        window.showAppAlert('Please select both Rack and Shelf before creating the record.');
                         return false;
                     }
                     

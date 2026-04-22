@@ -61,7 +61,7 @@ class="bg-green-700 text-white min-h-screen fixed left-0 top-0 shadow-lg transit
         </li>
         
         <li>
-            <?php if (can('view_documents') || can('create_document_record') || can('edit_document_metadata') || can('search_documents')): ?>
+                <?php if (can('view_documents') || can('create_document_record') || can('edit_document_metadata') || can('search_documents') || can('manage_racks') || can('manage_categories') || can('approve_folder_creation') || can('approve_folder_archival')): ?>
             <a href="<?= route_to('records') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
                :class="window.location.pathname === '<?= route_to('records') ?>' ? 'bg-green-900' : ''">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

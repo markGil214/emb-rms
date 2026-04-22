@@ -29,20 +29,6 @@
     </div>
 </div>
 
-<!-- Flash Messages -->
-<?php $session = session(); ?>
-<?php if ($session->getFlashdata('success')): ?>
-    <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-6">
-        <?= esc($session->getFlashdata('success')) ?>
-    </div>
-<?php endif; ?>
-
-<?php if ($session->getFlashdata('error')): ?>
-    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-        <?= esc($session->getFlashdata('error')) ?>
-    </div>
-<?php endif; ?>
-
 <!-- Categories Table -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200">
@@ -108,7 +94,7 @@
                                         <span>Edit</span>
                                     </a>
                                     
-                                    <form action="<?= route_to('admin.categories.delete', $category['category_id']) ?>" method="POST" class="inline" onsubmit="return confirm('Delete this category?');">
+                                    <form action="<?= route_to('admin.categories.delete', $category['category_id']) ?>" method="POST" class="inline" data-confirm-message="Delete this category?">
                                         <?= csrf_field() ?>
                                         <button type="submit" 
                                                 class="text-red-600 hover:text-red-900 inline-flex items-center space-x-1"

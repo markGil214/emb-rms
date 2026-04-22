@@ -4,6 +4,16 @@
 
 <?= $this->section('content') ?>
 
+<script>
+    window.documentRecordsFolders = (function () {
+        const folders = <?= json_encode($folders ?? []) ?>;
+
+        return folders.sort(function (a, b) {
+            return (b.folder_id || 0) - (a.folder_id || 0);
+        });
+    })();
+</script>
+
 <div x-data="documentRecordsManager()">
 
     <!-- Page Header -->
@@ -67,6 +77,7 @@
             <!-- Action Buttons -->
             <div class="flex flex-wrap items-center gap-2">
                 <!-- Manage Racks Button -->
+                <?php if (can('manage_racks')): ?>
                 <a href="<?= route_to('racks.index') ?>" 
                    class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg inline-flex items-center space-x-1 transition-colors duration-200 text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,8 +86,10 @@
                     <span class="hidden sm:inline">Manage Racks</span>
                     <span class="sm:hidden">Racks</span>
                 </a>
+                <?php endif; ?>
 
                 <!-- Manage Categories Button -->
+                <?php if (can('manage_categories')): ?>
                 <a href="<?= route_to('admin.categories') ?>" 
                    class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg inline-flex items-center space-x-1 transition-colors duration-200 text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,8 +98,10 @@
                     <span class="hidden sm:inline">Categories</span>
                     <span class="sm:hidden">Cats</span>
                 </a>
+                <?php endif; ?>
 
                 <!-- Create Button -->
+                     <?php if (can('create_document_record')): ?>
                 <a href="<?= route_to('records.create') ?>" 
                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg inline-flex items-center space-x-1 transition-colors duration-200 text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,6 +110,7 @@
                     <span class="hidden sm:inline">Create Folder</span>
                     <span class="sm:hidden">Create</span>
                 </a>
+                <?php endif; ?>
             </div>
 
         </div>
@@ -131,7 +147,8 @@
 
                 </p>
 
-                <a x-show="!searchQuery && !statusFilter" href="<?= route_to('records.create') ?>" 
+                     <?php if (can('create_document_record')): ?>
+                     <a x-show="!searchQuery && !statusFilter" href="<?= route_to('records.create') ?>" 
 
                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-flex items-center space-x-2 transition-colors duration-200">
 
@@ -144,6 +161,7 @@
                     <span>Create Folder</span>
 
                 </a>
+                <?php endif; ?>
 
             </div>
 
@@ -347,6 +365,7 @@
                                         <a :href="`/document-records/${folder.folder_id}/edit`" 
 
                                            class="text-green-600 hover:text-green-900 inline-flex items-center space-x-1"
+                                                         x-show="folder.status !== 'Pending' && folder.status !== 'Pending Update'"
 
                                            title="Edit Permit">
 
@@ -361,8 +380,30 @@
                                         </a>
 
                                         <div class="flex items-center space-x-4">
+                                            <?php if (can('approve_folder_creation')): ?>
+                                            <form :action="`/document-records/${folder.folder_id}/approve`" method="POST" style="display:inline;" x-show="folder.status === 'Pending' || folder.status === 'Pending Update'" data-confirm-message="Approve this request?">
+                                                <?= csrf_field() ?>
+                                                <button type="submit" class="text-blue-600 hover:text-blue-900 inline-flex items-center space-x-2 bg-transparent border-0 p-0 cursor-pointer">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                    </svg>
+                                                    <span>Approve</span>
+                                                </button>
+                                            </form>
 
-                                            <form :action="`/document-records/${folder.folder_id}/archive`" method="POST" style="display:inline;" x-show="folder.status !== 'Archived' && folder.status !== 'Disposed'" onsubmit="return confirm('Archive this folder?');">
+                                            <form :action="`/document-records/${folder.folder_id}/decline`" method="POST" style="display:inline;" x-show="folder.status === 'Pending' || folder.status === 'Pending Update'" data-confirm-message="Decline this request?">
+                                                <?= csrf_field() ?>
+                                                <button type="submit" class="text-red-600 hover:text-red-900 inline-flex items-center space-x-2 bg-transparent border-0 p-0 cursor-pointer">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
+                                                    <span>Decline</span>
+                                                </button>
+                                            </form>
+                                            <?php endif; ?>
+                                            <?php if (can('approve_folder_archival')): ?>
+
+                                            <form :action="`/document-records/${folder.folder_id}/archive`" method="POST" style="display:inline;" x-show="folder.status !== 'Archived' && folder.status !== 'Disposed' && folder.status !== 'Pending' && folder.status !== 'Pending Update'" data-confirm-message="Archive this folder?">
                                                 <?= csrf_field() ?>
                                                 <button type="submit" class="text-green-600 hover:text-green-900 inline-flex items-center space-x-2 bg-transparent border-0 p-0 cursor-pointer">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -378,6 +419,8 @@
                                                 </svg>
                                                 <span>Archived</span>
                                             </span>
+
+											<?php endif; ?>
 
                                         </div>
 
@@ -513,9 +556,9 @@ function documentRecordsManager() {
 
         currentPage: 1,
 
-        allFolders: <?= json_encode($folders ?? []) ?>,
+        allFolders: window.documentRecordsFolders || [],
 
-        filteredFolders: <?= json_encode($folders ?? []) ?>,
+        filteredFolders: window.documentRecordsFolders || [],
 
         
 
@@ -581,8 +624,7 @@ function documentRecordsManager() {
 
                 return matchesSearch && matchesStatus && matchesFolderType;
 
-            }).sort((a, b) => a.file_code.localeCompare(b.file_code));
-
+            });
         },
 
         
@@ -638,6 +680,18 @@ function documentRecordsManager() {
                 case 'Archived':
 
                     return 'bg-gray-100 text-gray-800';
+
+                case 'Pending':
+
+                    return 'bg-blue-100 text-blue-800';
+
+                case 'Pending Update':
+
+                    return 'bg-indigo-100 text-indigo-800';
+
+                case 'Declined':
+
+                    return 'bg-red-100 text-red-800';
 
                 default:
 

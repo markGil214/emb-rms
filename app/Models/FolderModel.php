@@ -52,7 +52,7 @@ class FolderModel extends Model
         'company_name'   => 'required|max_length[100]',
         'folder_type'    => 'required|in_list[PERMITS,ECC / CNC FILES,IEE / EIS FILES]|max_length[50]',
         'category_id'    => 'required|integer|is_not_unique[categories.category_id]',
-        'status'         => 'in_list[Available,Borrowed,Archived,Disposed]',
+        'status'         => 'in_list[Available,Borrowed,Archived,Disposed,Pending,Pending Update,Declined]',
         'borrowed_date'  => 'permit_empty|valid_date',
         'due_date'       => 'permit_empty|valid_date',
     ];
