@@ -70,9 +70,29 @@ class FolderFileModel extends Model
      */
     public function getByFolder(int $folderId)
     {
-        return $this->where('folder_id', $folderId)
-                    ->orderBy('created_at', 'DESC')
-                    ->findAll();
+        if (! $this->db->tableExists('file_disposal_requests')) {
+            return $this->select('folder_files.*, NULL as disposal_status', false)
+                ->where('folder_id', $folderId)
+                ->orderBy('created_at', 'DESC')
+                ->findAll();
+        }
+
+                $sql = <<<'SQL'
+SELECT ff.*, fdr.status AS disposal_status
+FROM folder_files ff
+LEFT JOIN file_disposal_requests fdr
+    ON fdr.disposal_request_id = (
+        SELECT fr.disposal_request_id
+        FROM file_disposal_requests fr
+        WHERE fr.file_id = ff.file_id
+        ORDER BY fr.disposal_request_id DESC
+        LIMIT 1
+    )
+WHERE ff.folder_id = ?
+ORDER BY ff.created_at DESC
+SQL;
+
+                return $this->db->query($sql, [$folderId])->getResultArray();
     }
 
     /**

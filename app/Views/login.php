@@ -7,6 +7,14 @@
     <title>EMB Records System - Login</title>
     <link rel="stylesheet" href="assets/css/tailwind.css">
     <link rel="stylesheet" href="/css/loading-animation.css">
+
+    <style>
+        html,
+        body,
+        body * {
+            font-size: 12px !important;
+        }
+    </style>
 </head>
 
 <body class="font-sans bg-gradient-to-br from-green-50 to-white min-h-screen flex items-center justify-center p-5">

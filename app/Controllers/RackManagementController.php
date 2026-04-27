@@ -16,7 +16,7 @@ class RackManagementController extends BaseController
 
     public function index()
     {
-        return view('layouts/superadmin/racks/index', [
+        return view('racks/index', [
             'title' => 'Manage Racks',
             'locations' => $this->rackShelfModel->getAllOrdered(),
             'racks' => $this->rackShelfModel->getAllowedRacks(),
@@ -30,7 +30,7 @@ class RackManagementController extends BaseController
             return redirect()->to('/manage-racks')->with('error', 'Rack not found.');
         }
 
-        return view('layouts/superadmin/racks/index', [
+        return view('racks/index', [
             'title' => 'Manage Racks',
             'locations' => $this->rackShelfModel->getAllOrdered(),
             'racks' => $this->rackShelfModel->getAllowedRacks(),

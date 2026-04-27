@@ -4,8 +4,8 @@
 
 <!-- Action Bar -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-    <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-4">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex items-center space-x-4 min-w-0">
             <!-- Back Button -->
             <a href="<?= base_url('document-records') ?>" 
                class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg inline-flex items-center space-x-2 transition-colors duration-200">
@@ -16,9 +16,9 @@
             </a>
         </div>
 
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-3 self-start lg:self-auto">
             <!-- Add Category Button -->
-            <a href="<?= route_to('admin.categories.create') ?>" 
+            <a href="<?= route_to('categories.create') ?>" 
                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-flex items-center space-x-2 transition-colors duration-200">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -36,7 +36,7 @@
     </div>
     
     <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table class="min-w-[720px] w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -84,8 +84,8 @@
                                 <?= !empty($category['created_at']) ? date('M d, Y', strtotime($category['created_at'])) : '-' ?>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex items-center justify-end space-x-2">
-                                    <a href="<?= route_to('admin.categories.edit', $category['category_id']) ?>" 
+                                <div class="flex items-center justify-end gap-2 flex-wrap">
+                                    <a href="<?= route_to('categories.edit', $category['category_id']) ?>" 
                                        class="text-blue-600 hover:text-blue-900 inline-flex items-center space-x-1"
                                        title="Edit Category">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,7 +94,7 @@
                                         <span>Edit</span>
                                     </a>
                                     
-                                    <form action="<?= route_to('admin.categories.delete', $category['category_id']) ?>" method="POST" class="inline" data-confirm-message="Delete this category?">
+                                    <form action="<?= route_to('categories.delete', $category['category_id']) ?>" method="POST" class="inline" data-confirm-message="Delete this category?">
                                         <?= csrf_field() ?>
                                         <button type="submit" 
                                                 class="text-red-600 hover:text-red-900 inline-flex items-center space-x-1"

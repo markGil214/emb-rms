@@ -78,7 +78,7 @@ class DashboardController extends BaseController
             $data['documentStats'] = $documentStats;
         }
 
-        return view('layouts/superadmin/dashboard', $data);
+        return view('dashboard', $data);
     }
 
     /**
@@ -216,6 +216,6 @@ class DashboardController extends BaseController
             'user' => auth_user(),
         ];
 
-        return view('layouts/superadmin/shelfmap', $data);
+        return view('shelfmap', $data);
     }
 }

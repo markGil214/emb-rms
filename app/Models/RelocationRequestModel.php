@@ -87,6 +87,21 @@ class RelocationRequestModel extends Model
     }
 
     /**
+     * Get paginated relocation requests with joined folder and location data.
+     */
+    public function getPaginatedRelocations(int $perPage = 25, string $group = 'relocations')
+    {
+        return $this->select('relocation_requests.*, f.file_code, f.company_name, fl.rack, fl.shelf, tl.rack as to_rack, tl.shelf as to_shelf')
+            ->join('folders as f', 'f.folder_id = relocation_requests.folder_id', 'left')
+            ->join('locations as fl', 'fl.location_id = relocation_requests.from_location_id', 'left')
+            ->join('locations as tl', 'tl.location_id = relocation_requests.to_location_id', 'left')
+            // Newest requested/completed activity should appear first.
+            ->orderBy("GREATEST(IFNULL(relocation_requests.requested_at, '1000-01-01 00:00:00'), IFNULL(relocation_requests.approved_at, '1000-01-01 00:00:00'), IFNULL(relocation_requests.updated_at, '1000-01-01 00:00:00'), IFNULL(relocation_requests.created_at, '1000-01-01 00:00:00'))", 'DESC', false)
+            ->orderBy('relocation_requests.relocation_id', 'DESC')
+            ->paginate($perPage, $group);
+    }
+
+    /**
      * Approve a relocation request
      */
     public function approveRelocation($relocationId, $approvedBy)

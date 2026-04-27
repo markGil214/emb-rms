@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\FolderModel;
 use App\Models\FolderFileModel;
 use App\Models\CategoryModel;
+use App\Models\RelocationRequestModel;
+use App\Models\FolderMovementModel;
 use App\Libraries\FileCodeGenerator;
 use CodeIgniter\Controller;
 
@@ -13,12 +15,16 @@ class FolderController extends BaseController
     protected $folderModel;
     protected $folderFileModel;
     protected $categoryModel;
+    protected $relocationModel;
+    protected $movementModel;
 
     public function __construct()
     {
         $this->folderModel = new FolderModel();
         $this->folderFileModel = new FolderFileModel();
         $this->categoryModel = new CategoryModel();
+        $this->relocationModel = new RelocationRequestModel();
+        $this->movementModel = new FolderMovementModel();
     }
 
     /**
@@ -26,19 +32,28 @@ class FolderController extends BaseController
      */
     public function index()
     {
-        $folders = $this->folderModel
-            ->select('folders.*, categories.category_name AS folder_category, locations.rack AS cabinet, locations.shelf AS shelf, locations.rack AS rack, bt.borrowed_at AS borrowed_date, bt.expected_return_date AS due_date, bt.actual_return_date AS return_date, ar.archived_date AS archived_date')
-            ->join('locations', 'locations.location_id = folders.location_id', 'left')
-            ->join('categories', 'categories.category_id = folders.category_id', 'left')
-            ->join('borrow_transactions bt', 'bt.transaction_id = folders.current_borrow_transaction_id', 'left')
-            ->join('archive_records ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = folders.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false)
-            ->where('folders.status !=', 'Archived')
-            ->orderBy('folders.folder_id', 'DESC')
-            ->findAll();
+        $filters = [
+            'search' => trim((string) $this->request->getGet('search')),
+            'status' => trim((string) $this->request->getGet('status')),
+            'folder_type' => trim((string) $this->request->getGet('folder_type')),
+            'category' => trim((string) $this->request->getGet('category')),
+            'sort' => trim((string) $this->request->getGet('sort')),
+        ];
 
-        return view('layouts/superadmin/document-records/document-records', [
+        if ($filters['sort'] === '') {
+            $filters['sort'] = 'company_asc';
+        }
+
+        $folders = $this->folderModel->getDocumentRecords();
+        $categories = $this->categoryModel->orderBy('category_name', 'ASC')->findAll();
+
+        return view('document-records/index', [
             'title' => 'Folders',
-            'folders' => $folders
+            'folders' => $folders,
+            'categories' => $categories,
+            'filters' => $filters,
+            'pager' => null,
+            'perPage' => count($folders),
         ]);
     }
 
@@ -67,7 +82,7 @@ class FolderController extends BaseController
             ->orderBy('category_name', 'ASC')
             ->findAll();
         
-        return view('layouts/superadmin/document-records/create', [
+        return view('document-records/create', [
             'title' => 'Create New Folder',
             'locations' => $locations,
             'categories' => $categories,
@@ -80,20 +95,13 @@ class FolderController extends BaseController
      */
     public function store()
     {
-        $rules = $this->getFolderValidationRules(true);
-        if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
-        }
-
         $db = \Config\Database::connect();
         $db->transStart();
 
-        // Generate file code based on company name
         $companyName = $this->request->getPost('company_name');
         $nextCode = FileCodeGenerator::getNextFromCompany($companyName);
 
-        // Get location details to generate location code
-        $locationId = (int)$this->request->getPost('location_id');
+        $locationId = (int) $this->request->getPost('location_id');
         $location = $db->table('locations')->where('location_id', $locationId)->get()->getRow();
         
         if (!$location) {
@@ -145,7 +153,7 @@ class FolderController extends BaseController
         $folder['rack'] = $location['rack'] ?? ($location['shelf'] ?? null);
         $files = $this->folderFileModel->getByFolder($folderId);
 
-        return view('layouts/superadmin/document-records/show', [
+        return view('document-records/show', [
             'title' => 'Folder: ' . $folder['file_code'],
             'folder' => $folder,
             'files' => $files
@@ -167,10 +175,57 @@ class FolderController extends BaseController
             ->get()
             ->getResultArray();
 
-        return view('layouts/superadmin/document-records/history', [
-            'title' => 'Borrow History: ' . $folder['file_code'],
+        $requestHistory = $db->table('relocation_requests as r')
+            ->select('r.relocation_id, r.folder_id, r.from_location_id, r.to_location_id, r.reason, r.reason_type, r.status, r.requested_by, r.approved_by, r.requested_at, r.approved_at, r.rejection_reason, r.created_at, r.updated_at, fl.building as from_building, fl.room as from_room, fl.rack as from_rack, fl.shelf as from_shelf, tl.building as to_building, tl.room as to_room, tl.rack as to_rack, tl.shelf as to_shelf, ru.username as requested_by_username, au.username as approved_by_username')
+            ->join('folders as f', 'f.folder_id = r.folder_id', 'left')
+            ->join('locations as fl', 'fl.location_id = r.from_location_id', 'left')
+            ->join('locations as tl', 'tl.location_id = r.to_location_id', 'left')
+            ->join('users as ru', 'ru.user_id = r.requested_by', 'left')
+            ->join('users as au', 'au.user_id = r.approved_by', 'left')
+            ->groupStart()
+                ->where('r.folder_id', $folderId)
+                ->orWhere('f.file_code', $folder['file_code'])
+            ->groupEnd()
+            ->groupBy('r.relocation_id')
+            ->orderBy('r.requested_at', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        // Fallback: if joins fail to match in current runtime DB, fetch direct requests by folder_id.
+        if (empty($requestHistory)) {
+            $requestHistory = $db->table('relocation_requests as r')
+                ->select('r.relocation_id, r.folder_id, r.from_location_id, r.to_location_id, r.reason, r.reason_type, r.status, r.requested_by, r.approved_by, r.requested_at, r.approved_at, r.rejection_reason, r.created_at, r.updated_at, fl.rack as from_rack, fl.shelf as from_shelf, tl.rack as to_rack, tl.shelf as to_shelf, ru.username as requested_by_username, au.username as approved_by_username')
+                ->join('locations as fl', 'fl.location_id = r.from_location_id', 'left')
+                ->join('locations as tl', 'tl.location_id = r.to_location_id', 'left')
+                ->join('users as ru', 'ru.user_id = r.requested_by', 'left')
+                ->join('users as au', 'au.user_id = r.approved_by', 'left')
+                ->where('r.folder_id', $folderId)
+                ->orderBy('r.requested_at', 'DESC')
+                ->get()
+                ->getResultArray();
+        }
+        $relocationHistory = array_map(static function (array $row): array {
+            $row['history_kind'] = 'request';
+            $row['history_date'] = $row['requested_at'] ?? $row['created_at'] ?? null;
+            return $row;
+        }, $requestHistory);
+
+        usort($relocationHistory, static function (array $left, array $right): int {
+            $leftTime = ! empty($left['history_date']) ? strtotime((string) $left['history_date']) : 0;
+            $rightTime = ! empty($right['history_date']) ? strtotime((string) $right['history_date']) : 0;
+
+            if ($leftTime === $rightTime) {
+                return 0;
+            }
+
+            return ($leftTime < $rightTime) ? 1 : -1;
+        });
+
+        return view('document-records/history', [
+            'title' => 'Borrow and Relocation History: ' . $folder['file_code'],
             'folder' => $folder,
             'history' => $history,
+            'relocationHistory' => $relocationHistory,
         ]);
     }
 
@@ -184,7 +239,7 @@ class FolderController extends BaseController
             ->orderBy('category_name', 'ASC')
             ->findAll();
 
-        return view('layouts/superadmin/document-records/edit', [
+        return view('document-records/edit', [
             'title' => 'Edit Folder',
             'folder' => $folder,
             'categories' => $categories,

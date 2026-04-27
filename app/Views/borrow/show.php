@@ -70,7 +70,8 @@
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                         <?= $borrow['status'] === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
                                            ($borrow['status'] === 'Borrowed' ? 'bg-blue-100 text-blue-800' : 
-                                           ($borrow['status'] === 'Overdue' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800')) ?>">
+                                           ($borrow['status'] === 'Overdue' ? 'bg-red-100 text-red-800' :
+                                           ($borrow['status'] === 'Declined' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'))) ?>">
                                         <?= $borrow['status'] ?>
                                     </span>
                                 </td>
@@ -110,6 +111,13 @@
                             Approve Request
                         </button>
                     </form>
+                    <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/decline" class="inline" data-confirm-message="Decline this borrow request?">
+                        <?= csrf_field() ?>
+                        <button type="submit" 
+                                class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Decline Request
+                        </button>
+                    </form>
                 <?php elseif (($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Overdue') && can('process_return')): ?>
                     <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/return" class="inline">
                         <?= csrf_field() ?>
@@ -121,6 +129,10 @@
                 <?php elseif ($borrow['status'] === 'Returned'): ?>
                     <div class="inline-flex items-center px-4 py-2 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 bg-green-50">
                         ✓ Item Returned
+                    </div>
+                <?php elseif ($borrow['status'] === 'Declined'): ?>
+                    <div class="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-red-50">
+                        ✕ Request Declined
                     </div>
                 <?php endif; ?>
             </div>

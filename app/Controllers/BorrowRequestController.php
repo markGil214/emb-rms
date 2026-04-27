@@ -32,7 +32,7 @@ class BorrowRequestController extends BaseController
         if (!can('view_all_borrow')) {
             $borrows = $this->borrowModel->getUserBorrows($userId);
         } else {
-            $borrows = $this->borrowModel->findAll();
+            $borrows = $this->borrowModel->getAllByLatestActivity();
         }
 
         // Calculate dynamic status for each borrow
@@ -254,6 +254,44 @@ class BorrowRequestController extends BaseController
     }
 
     /**
+     * ✅ DECLINE BORROW REQUEST
+     * 
+     * Updates status from Pending to Declined
+     */
+    public function decline(int $transactionId)
+    {
+        if (!can('approve_borrow_requests')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $borrow = $this->borrowModel->find($transactionId);
+        
+        if (!$borrow) {
+            return redirect()->back()->with('error', 'Borrow request not found');
+        }
+
+        if ($borrow['status'] !== 'Pending') {
+            return redirect()->back()->with('error', 'Only pending requests can be declined');
+        }
+
+        try {
+            // Update status to Declined
+            $this->borrowModel->update($transactionId, [
+                'status' => 'Declined',
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            log_message('info', "User " . auth_user()['user_id'] . " declined borrow request {$transactionId}");
+
+            return redirect()->to('/borrows')->with('success', 'Borrow request declined');
+
+        } catch (\Throwable $e) {
+            log_message('error', "Failed to decline borrow request {$transactionId}: " . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred while declining the request');
+        }
+    }
+
+    /**
      * List pending requests for approval
      */
     public function pending()
@@ -265,6 +303,8 @@ class BorrowRequestController extends BaseController
         // Get all pending borrows that haven't been returned yet
         $pending = $this->borrowModel->where('actual_return_date IS NULL')
                                       ->where('status', 'Pending')
+                                      ->orderBy('created_at', 'DESC')
+                                      ->orderBy('transaction_id', 'DESC')
                                       ->findAll();
 
         // Add borrower names
@@ -313,7 +353,8 @@ class BorrowRequestController extends BaseController
         // Get all currently borrowed items (status = Borrowed, not yet returned)
         $borrowed = $this->borrowModel->where('actual_return_date IS NULL')
                                       ->where('status', 'Borrowed')
-                                      ->orderBy('expected_return_date', 'ASC')
+                                      ->orderBy('borrowed_at', 'DESC')
+                                      ->orderBy('transaction_id', 'DESC')
                                       ->findAll();
 
         return view('borrow/borrowed', [
