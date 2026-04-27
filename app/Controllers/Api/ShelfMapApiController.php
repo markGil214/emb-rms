@@ -49,7 +49,11 @@ class ShelfMapApiController extends BaseController
                 }
                 $locationOccupancy[$locId]['occupied']++;
                 if (!empty($folder['file_code'])) {
-                    $locationOccupancy[$locId]['documents'][] = $folder['file_code'];
+                    $locationOccupancy[$locId]['documents'][] = [
+                        'folder_id' => (int) ($folder['folder_id'] ?? 0),
+                        'file_code' => (string) $folder['file_code'],
+                        'company_name' => (string) ($folder['company_name'] ?? ''),
+                    ];
                 }
             }
 

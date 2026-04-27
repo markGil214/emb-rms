@@ -3,8 +3,8 @@
 <?= $this->section('content') ?>
 
 <!-- Popup Modal -->
-<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-8 z-50">
-    <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-12 max-w-2xl w-full">
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 z-50 overflow-y-auto">
+    <div class="bg-white rounded-lg shadow-xl border border-gray-200 p-6 sm:p-8 lg:p-12 max-w-2xl w-full mx-auto">
         <!-- Alert Header -->
         <div class="text-center mb-6">
             <div class="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
@@ -36,7 +36,7 @@
         </div>
     <?php endif; ?>
 
-    <form action="<?= route_to('admin.categories.store') ?>" method="POST" data-confirm-message="Create this category?">
+    <form action="<?= route_to('categories.store') ?>" method="POST" data-confirm-message="Create this category?">
         <?= csrf_field() ?>
 
         <div class="mb-6">
@@ -52,13 +52,13 @@
                    required>
         </div>
 
-        <div class="flex items-center justify-between space-x-3">
-            <a href="<?= route_to('admin.categories') ?>" 
-               class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 text-center">
+        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between sm:space-x-3">
+            <a href="<?= route_to('categories.index') ?>" 
+               class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 text-center w-full sm:w-auto">
                 Cancel
             </a>
             <button type="submit" 
-                    class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200">
+                    class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 w-full sm:w-auto">
                 Create Category
             </button>
         </div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($title ?? 'Borrow History') ?></title>
+    <title><?= esc($title ?? 'Borrow & Relocation History') ?></title>
     <style>
         :root {
             --bg: #f4f6f8;
@@ -22,10 +22,12 @@
             --bad-text: #991b1b;
             --neutral-bg: #f3f4f6;
             --neutral-text: #374151;
+            font-size: 12px !important;
         }
 
         * {
             box-sizing: border-box;
+            font-size: 12px !important;
         }
 
         body {
@@ -166,6 +168,40 @@
             color: var(--neutral-text);
         }
 
+        .history-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--line);
+            margin-bottom: 16px;
+            overflow-x: auto;
+        }
+
+        .history-tab-button {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .history-tab-button.active {
+            color: var(--brand);
+            border-bottom-color: var(--brand);
+        }
+
+        .history-panel {
+            display: none;
+        }
+
+        .history-panel.active {
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .top-bar {
                 flex-direction: column;
@@ -179,6 +215,86 @@
     </style>
 </head>
 <body>
+    <?php
+        $relocationHistory = $relocationHistory ?? [];
+
+        $formatLocationLabel = static function (array $row, string $prefix): string {
+            if (($row['history_kind'] ?? '') === 'movement') {
+                if ($prefix === 'from_' && ! empty($row['from_location_label'])) {
+                    return (string) $row['from_location_label'];
+                }
+
+                if ($prefix === 'to_' && ! empty($row['to_location_label'])) {
+                    return (string) $row['to_location_label'];
+                }
+            }
+
+            $rackKey = $prefix . 'rack';
+            $shelfKey = $prefix . 'shelf';
+            $rack = trim((string) ($row[$rackKey] ?? ''));
+            $shelf = trim((string) ($row[$shelfKey] ?? ''));
+
+            if ($rack !== '' && $shelf !== '') {
+                return 'RACK ' . $rack . ' - SHELF ' . $shelf;
+            }
+
+            if ($rack !== '') {
+                return 'RACK ' . $rack;
+            }
+
+            if ($shelf !== '') {
+                return 'SHELF ' . $shelf;
+            }
+
+            $parts = [];
+
+            foreach (['building', 'room', 'rack', 'shelf'] as $field) {
+                $key = $prefix . $field;
+                if (! empty($row[$key])) {
+                    $label = ucfirst($field);
+                    $parts[] = $label . ': ' . $row[$key];
+                }
+            }
+
+            if (! empty($parts)) {
+                return implode(', ', $parts);
+            }
+
+            return 'N/A';
+        };
+
+        $formatRelocationStatus = static function (string $status = null, string $historyKind = 'request'): array {
+            $normalized = strtolower(trim((string) $status));
+
+            if ($historyKind === 'movement') {
+                if ($normalized === 'completed') {
+                    return ['Completed', 'status-returned'];
+                }
+
+                if ($normalized === 'in progress') {
+                    return ['In Progress', 'status-borrowed'];
+                }
+            }
+
+            if ($normalized === 'pending') {
+                return ['Pending', 'status-borrowed'];
+            }
+
+            if ($normalized === 'approved' || $normalized === 'completed') {
+                return [ucfirst($normalized), 'status-returned'];
+            }
+
+            if ($normalized === 'declined' || $normalized === 'rejected') {
+                return ['Declined', 'status-overdue'];
+            }
+
+            if ($normalized === 'in progress') {
+                return ['In Progress', 'status-other'];
+            }
+
+            return [$status ?: 'N/A', 'status-other'];
+        };
+    ?>
     <div class="container">
         <div class="top-bar">
             <a class="back-link" href="<?= route_to('records.show', $folder['folder_id']) ?>">Back to Document Details</a>
@@ -189,7 +305,12 @@
             </div>
         </div>
 
-        <section class="card">
+        <div class="history-tabs" role="tablist" aria-label="Folder history tabs">
+            <button type="button" class="history-tab-button active" data-target="borrowHistoryPanel">Borrow History</button>
+            <button type="button" class="history-tab-button" data-target="relocationHistoryPanel">Relocation History</button>
+        </div>
+
+        <section id="borrowHistoryPanel" class="card history-panel active" role="tabpanel">
             <div class="card-header">
                 <h1>Borrow History</h1>
                 <span>Total: <?= count($history) ?></span>
@@ -255,6 +376,99 @@
                 <?php endif; ?>
             </div>
         </section>
+
+        <section id="relocationHistoryPanel" class="card history-panel" role="tabpanel">
+            <div class="card-header">
+                <h1>Relocation History</h1>
+                <span>Total: <?= count($relocationHistory) ?></span>
+            </div>
+
+            <div class="card-body">
+                <?php if (empty($relocationHistory)): ?>
+                    <div class="empty">
+                        <h3>No relocation history found</h3>
+                        <p>This folder has no relocation requests or movement records yet.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Requested At</th>
+                                    <th>From Location</th>
+                                    <th>To Location</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                    <th>Approved At</th>
+                                    <th>Requested By</th>
+                                    <th>Approved By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($relocationHistory as $row): ?>
+                                    <?php
+                                        $historyKind = $row['history_kind'] ?? 'request';
+                                        $statusSource = $historyKind === 'movement'
+                                            ? ($row['folder_status_at_completion'] ?? $row['relocation_status'] ?? $row['status'] ?? null)
+                                            : ($row['status'] ?? null);
+                                        [$statusLabel, $statusClass] = $formatRelocationStatus($statusSource, (string) $historyKind);
+                                        $dateValue = $row['history_date'] ?? ($row['requested_at'] ?? $row['completed_at'] ?? $row['approved_at'] ?? $row['moved_at'] ?? null);
+                                        $approvedByValue = $historyKind === 'movement'
+                                            ? ($row['completed_by_username'] ?? $row['approved_by_username'] ?? $row['requested_by_username'] ?? 'N/A')
+                                            : ($row['approved_by_username'] ?? 'N/A');
+                                        $requestedByValue = $row['requested_by_username'] ?? 'N/A';
+                                    ?>
+                                    <tr>
+                                        <td><?= !empty($dateValue) ? esc(date('M d, Y H:i', strtotime($dateValue))) : 'N/A' ?></td>
+                                        <td><?= esc($formatLocationLabel($row, 'from_')) ?></td>
+                                        <td><?= esc($formatLocationLabel($row, 'to_')) ?></td>
+                                        <td><?= esc($row['reason'] ?? ($row['request_reason'] ?? 'N/A')) ?></td>
+                                        <td><span class="status-pill <?= esc($statusClass) ?>"><?= esc($statusLabel) ?></span></td>
+                                        <td>
+                                            <?php if ($historyKind === 'movement' && ! empty($row['completed_at'])): ?>
+                                                <?= esc(date('M d, Y H:i', strtotime($row['completed_at']))) ?>
+                                            <?php elseif (!empty($row['approved_at'])): ?>
+                                                <?= esc(date('M d, Y H:i', strtotime($row['approved_at']))) ?>
+                                            <?php elseif (!empty($row['rejection_reason']) && in_array(strtolower((string) ($row['status'] ?? '')), ['declined', 'rejected'], true)): ?>
+                                                Rejected
+                                            <?php else: ?>
+                                                N/A
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?= esc($requestedByValue) ?></td>
+                                        <td><?= esc($approvedByValue) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
     </div>
+    <script>
+        (function () {
+            var buttons = document.querySelectorAll('.history-tab-button');
+            var panels = document.querySelectorAll('.history-panel');
+
+            function activatePanel(targetId) {
+                Array.prototype.forEach.call(buttons, function (button) {
+                    button.classList.toggle('active', button.getAttribute('data-target') === targetId);
+                });
+
+                Array.prototype.forEach.call(panels, function (panel) {
+                    panel.classList.toggle('active', panel.id === targetId);
+                });
+            }
+
+            Array.prototype.forEach.call(buttons, function (button) {
+                button.addEventListener('click', function () {
+                    activatePanel(button.getAttribute('data-target'));
+                });
+            });
+
+            activatePanel('borrowHistoryPanel');
+        })();
+    </script>
 </body>
 </html>

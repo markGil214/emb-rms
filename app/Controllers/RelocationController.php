@@ -30,22 +30,12 @@ class RelocationController extends BaseController
         $permissionService = service('permissionService');
         $userId = auth_user()['user_id'];
 
-        $db = \Config\Database::connect();
-        
-        // Get relocations with joined data
-        $relocations = $db->table('relocation_requests as r')
-            ->select('r.*, f.file_code, f.company_name, fl.rack, tl.rack as to_rack')
-            ->join('folders as f', 'f.folder_id = r.folder_id', 'left')
-            ->join('locations as fl', 'fl.location_id = r.from_location_id', 'left')
-            ->join('locations as tl', 'tl.location_id = r.to_location_id', 'left')
-            ->orderBy('r.requested_at', 'DESC')
-            ->get()
-            ->getResultArray();
+        $relocations = $this->relocationModel->getPaginatedRelocations(25, 'relocations');
 
         // Build formatted location strings for display
         $relocations = array_map(function($rel) {
-            $rel['current_location_display'] = $this->formatLocation($rel['rack'] ?? null);
-            $rel['new_location_display'] = $this->formatLocation($rel['to_rack'] ?? null);
+            $rel['current_location_display'] = $this->formatLocation($rel['rack'] ?? null, $rel['shelf'] ?? null);
+            $rel['new_location_display'] = $this->formatLocation($rel['to_rack'] ?? null, $rel['to_shelf'] ?? null);
             return $rel;
         }, $relocations);
 
@@ -53,20 +43,30 @@ class RelocationController extends BaseController
             'title' => 'Folder Relocation',
             'subtitle' => 'Move folders between cabinets and shelves',
             'relocations' => $relocations,
-            'needsApproval' => count($this->relocationModel->where('status', 'Pending')->findAll()),
-            'completed' => count($this->relocationModel->whereIn('status', ['Approved', 'Completed'])->findAll()),
+            'pager' => $this->relocationModel->pager,
+            'needsApproval' => (new RelocationRequestModel())->where('status', 'Pending')->countAllResults(),
+            'completed' => (new RelocationRequestModel())->whereIn('status', ['Approved', 'Completed'])->countAllResults(),
         ]);
     }
 
     /**
      * Helper: Format location display string
      */
-    private function formatLocation($cabinet)
+    private function formatLocation($rack, $shelf = null)
     {
-        if (!$cabinet) {
+        if (!$rack && !$shelf) {
             return 'Unknown Location';
         }
-        return "Rack {$cabinet}";
+
+        if ($rack && $shelf) {
+            return "Rack {$rack} - Shelf {$shelf}";
+        }
+
+        if ($rack) {
+            return "Rack {$rack}";
+        }
+
+        return "Shelf {$shelf}";
     }
 
     /**
@@ -465,7 +465,7 @@ class RelocationController extends BaseController
         
         // Get only pending relocations with joined data
         $relocations = $db->table('relocation_requests as r')
-            ->select('r.*, f.file_code, f.company_name, fl.rack, tl.rack as to_rack')
+            ->select('r.*, f.file_code, f.company_name, fl.rack, fl.shelf, tl.rack as to_rack, tl.shelf as to_shelf')
             ->join('folders as f', 'f.folder_id = r.folder_id', 'left')
             ->join('locations as fl', 'fl.location_id = r.from_location_id', 'left')
             ->join('locations as tl', 'tl.location_id = r.to_location_id', 'left')
@@ -476,8 +476,8 @@ class RelocationController extends BaseController
 
         // Build formatted location strings for display
         $relocations = array_map(function($rel) {
-            $rel['current_location_display'] = $this->formatLocation($rel['rack'] ?? null);
-            $rel['new_location_display'] = $this->formatLocation($rel['to_rack'] ?? null);
+            $rel['current_location_display'] = $this->formatLocation($rel['rack'] ?? null, $rel['shelf'] ?? null);
+            $rel['new_location_display'] = $this->formatLocation($rel['to_rack'] ?? null, $rel['to_shelf'] ?? null);
             return $rel;
         }, $relocations);
 

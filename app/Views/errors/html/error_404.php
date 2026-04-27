@@ -5,6 +5,12 @@
 	<title>404 Page Not Found</title>
 
 	<style>
+	html,
+	body,
+	body * {
+		font-size: 12px !important;
+	}
+
 	div.logo {
 		height: 200px;
 		width: 155px;

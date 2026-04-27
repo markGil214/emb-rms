@@ -15,7 +15,7 @@ class PermissionController extends BaseController
 	{
 		// Check permission
 		if (!can('manage_users')) {
-			throw new \CodeIgniter\Exceptions\HttpException(403, 'Forbidden');
+			return $this->response->setStatusCode(403, 'Forbidden');
 		}
 
 		$db = \Config\Database::connect();
@@ -43,7 +43,7 @@ class PermissionController extends BaseController
 			'permissions' => $allPermissions,
 		];
 
-		return view('admin/permissions/manage', $data);
+		return view('permissions/manage', $data);
 	}
 
 	/**
@@ -59,7 +59,7 @@ class PermissionController extends BaseController
 		$permissionService = service('permissionService');
 
 		// Get user
-		$user = $db->table('users')->where('user_id', $userId)->first();
+		$user = $db->table('users')->where('user_id', $userId)->get()->getRowArray();
 		if (!$user) {
 			return $this->response->setJSON(['error' => 'User not found'], 404);
 		}
@@ -70,7 +70,7 @@ class PermissionController extends BaseController
 		if ($userRole) {
 			$role = $db->table('roles')
 				->where('role_name', $userRole)
-				->first();
+				->get()->getRowArray();
 			$roleId = $role['role_id'] ?? null;
 		}
 
@@ -109,7 +109,7 @@ class PermissionController extends BaseController
 		if ($currentUserRole) {
 			$role = $db->table('roles')
 				->where('role_name', $currentUserRole)
-				->first();
+				->get()->getRowArray();
 			$currentRoleId = $role['role_id'] ?? null;
 		}
 

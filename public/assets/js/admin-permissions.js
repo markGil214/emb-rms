@@ -17,7 +17,7 @@ $(document).ready(function() {
 		$('#permissionsContent').hide();
 
 		$.ajax({
-			url: `/admin/permissions/load/${userId}`,
+			url: `/permissions/load/${userId}`,
 			type: 'POST',
 			dataType: 'json',
 			success: function(data) {
@@ -71,7 +71,7 @@ $(document).ready(function() {
 
 		window.showAppConfirm('Save permission changes?', function() {
 			$.ajax({
-				url: `/admin/permissions/save/${selectedUserId}`,
+				url: `/permissions/save/${selectedUserId}`,
 				type: 'POST',
 				data: {
 					role_id: roleId,
@@ -117,7 +117,7 @@ $(document).ready(function() {
 	// Load permission history
 	function loadHistory(userId) {
 		$.ajax({
-			url: `/admin/permissions/history/${userId}`,
+			url: `/permissions/history/${userId}`,
 			type: 'GET',
 			dataType: 'json',
 			success: function(data) {
@@ -149,7 +149,7 @@ $(document).ready(function() {
 		}
 
 		$.ajax({
-			url: '/admin/permissions/search',
+			url: '/permissions/search',
 			type: 'GET',
 			data: { q: query },
 			dataType: 'json',

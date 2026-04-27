@@ -20,6 +20,7 @@ class BorrowTransactionModel extends Model
      * - "Pending": Initial state, awaiting admin approval
      * - "Borrowed": Approved and released, currently with borrower
      * - "Returned": Transaction complete, item returned
+     * - "Declined": Request rejected by admin
      * 
      * ⚠️ "Overdue" is NOT STORED
      * It's computed on-the-fly:
@@ -54,14 +55,15 @@ class BorrowTransactionModel extends Model
      * ✅ ALLOWED STATUS TRANSITIONS (Data Integrity)
      * 
      * Prevents invalid state changes:
-     * - Pending can only go to Borrowed
+     * - Pending can go to Borrowed or Declined
      * - Borrowed can only go to Returned
-     * - Can never go backwards
+     * - Returned and Declined are terminal states
      */
     protected const ALLOWED_TRANSITIONS = [
-        'Pending'  => ['Borrowed'],
+        'Pending'  => ['Borrowed', 'Declined'],
         'Borrowed' => ['Returned'],
         'Returned' => [],  // Terminal state
+        'Declined' => [],  // Terminal state
     ];
 
     /**
@@ -81,10 +83,10 @@ class BorrowTransactionModel extends Model
     /**
      * ✅ VALIDATION RULES FOR UPDATES (Admin operations)
      * 
-     * When admin changes status via approve/return, status must be valid
+     * When admin changes status via approve/return/decline, status must be valid
      */
     protected $validationRulesUpdate = [
-        'status'                => 'in_list[Pending,Borrowed,Returned]',
+        'status'                => 'in_list[Pending,Borrowed,Returned,Declined]',
     ];
 
     protected $validationMessages = [
@@ -222,17 +224,17 @@ class BorrowTransactionModel extends Model
     /**
      * Calculate actual status based on dates
      * 
-     * ⚠️ IMPORTANT: This is COMPUTED, not STORED
+     * ⚠️ IMPORTANT: This is COMPUTED, not STORED (except for Declined, Returned, Pending)
      * 
-     * Only these statuses are stored in DB:
+     * Stored statuses:
      * - Pending: Awaiting admin approval
-     * - Approved: Admin approved, awaiting release
      * - Borrowed: Currently in borrower's possession  
      * - Returned: Item returned, transaction complete
+     * - Declined: Request rejected by admin
      * 
-     * Overdue is COMPUTED on-the-fly:
-     * IF status = 'Borrowed' AND due_date < now()
-     *   → display as 'Overdue' (BUT NOT STORED)
+     * Computed statuses:
+     * - Overdue: IF status = 'Borrowed' AND due_date < now()
+     *   (NOT STORED, computed on-the-fly)
      * 
      * ✅ Benefits:
      * - Always accurate (no stale data)
@@ -241,9 +243,9 @@ class BorrowTransactionModel extends Model
      */
     public function calculateStatus($borrow)
     {
-        // Pending stays pending
-        if ($borrow['status'] === 'Pending') {
-            return 'Pending';
+        // Terminal states: show as-is
+        if ($borrow['status'] === 'Declined' || $borrow['status'] === 'Pending') {
+            return $borrow['status'];
         }
 
         // If returned, show as returned
@@ -287,7 +289,18 @@ class BorrowTransactionModel extends Model
     public function getUserBorrows($userId)
     {
         return $this->where('created_by', $userId)
-                    ->orderBy('created_at', 'DESC')
+                    ->orderBy('COALESCE(borrowed_at, created_at)', 'DESC', false)
+                    ->orderBy('transaction_id', 'DESC')
+                    ->findAll();
+    }
+
+    /**
+     * Get all borrow records with newest borrow/request activity first.
+     */
+    public function getAllByLatestActivity()
+    {
+        return $this->orderBy('COALESCE(borrowed_at, created_at)', 'DESC', false)
+                    ->orderBy('transaction_id', 'DESC')
                     ->findAll();
     }
 

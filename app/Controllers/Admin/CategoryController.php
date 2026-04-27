@@ -31,7 +31,7 @@ class CategoryController extends BaseController
             'categories' => $categories,
         ];
 
-        return view('admin/categories/index', $data);
+        return view('categories/index', $data);
     }
 
     /**
@@ -48,7 +48,7 @@ class CategoryController extends BaseController
             'title' => 'Create Category',
         ];
 
-        return view('admin/categories/create', $data);
+        return view('categories/create', $data);
     }
 
     /**
@@ -73,7 +73,7 @@ class CategoryController extends BaseController
         }
 
         if ($this->categoryModel->insert($categoryData)) {
-            return redirect()->to(base_url('admin/categories'))
+            return redirect()->to(base_url('categories'))
                 ->with('success', 'Category created successfully.');
         }
 
@@ -103,7 +103,7 @@ class CategoryController extends BaseController
             'category' => $category,
         ];
 
-        return view('admin/categories/edit', $data);
+        return view('categories/edit', $data);
     }
 
     /**
@@ -118,7 +118,7 @@ class CategoryController extends BaseController
 
         $category = $this->categoryModel->find($categoryId);
         if (!$category) {
-            return redirect()->to(base_url('admin/categories'))->with('error', 'Category not found.');
+            return redirect()->to(base_url('categories'))->with('error', 'Category not found.');
         }
 
         $categoryData = [
@@ -134,7 +134,7 @@ class CategoryController extends BaseController
         }
 
         if ($this->categoryModel->update($categoryId, $categoryData)) {
-            return redirect()->to(base_url('admin/categories'))
+            return redirect()->to(base_url('categories'))
                 ->with('success', 'Category updated successfully.');
         }
 
@@ -155,13 +155,13 @@ class CategoryController extends BaseController
 
         $category = $this->categoryModel->find($categoryId);
         if (!$category) {
-            return redirect()->to(base_url('admin/categories'))->with('error', 'Category not found.');
+            return redirect()->to(base_url('categories'))->with('error', 'Category not found.');
         }
 
         if ($this->categoryModel->delete($categoryId)) {
-            return redirect()->to(base_url('admin/categories'))->with('success', 'Category deleted successfully.');
+            return redirect()->to(base_url('categories'))->with('success', 'Category deleted successfully.');
         }
 
-        return redirect()->to(base_url('admin/categories'))->with('error', 'Failed to delete category.');
+        return redirect()->to(base_url('categories'))->with('error', 'Failed to delete category.');
     }
 }

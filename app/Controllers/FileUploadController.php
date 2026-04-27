@@ -4,18 +4,21 @@ namespace App\Controllers;
 
 use App\Models\FolderModel;
 use App\Models\FolderFileModel;
+use App\Models\FileDisposalRequestModel;
 use CodeIgniter\Controller;
 
 class FileUploadController extends BaseController
 {
     protected $folderModel;
     protected $folderFileModel;
+    protected $fileDisposalRequestModel;
     protected $uploadPath;
 
     public function __construct()
     {
         $this->folderModel = new FolderModel();
         $this->folderFileModel = new FolderFileModel();
+        $this->fileDisposalRequestModel = new FileDisposalRequestModel();
         $this->uploadPath = WRITEPATH . 'uploads/folders/';
         
         // Create directory if it doesn't exist
@@ -43,14 +46,14 @@ class FileUploadController extends BaseController
             ]);
         }
 
-        // Validate file upload
-        if (!$this->validate([
-            'pdf_file' => [
-                'rules' => 'uploaded[pdf_file]|max_size[pdf_file,10240]|mime_in[pdf_file,application/pdf]',
+        $retentionType = (string) $this->request->getPost('retention_type');
+
+        $validationRules = [
+            'file' => [
+                'rules' => 'uploaded[file]|max_size[file,30720]',
                 'errors' => [
                     'uploaded'  => 'You must select a file to upload.',
-                    'max_size'  => 'File size must not exceed 10MB.',
-                    'mime_in'   => 'File must be a valid PDF.',
+                    'max_size'  => 'File size must not exceed 30MB.',
                 ]
             ],
             'retention_type' => [
@@ -60,11 +63,25 @@ class FileUploadController extends BaseController
                     'in_list'  => 'Invalid retention option selected.',
                 ],
             ],
-        ])) {
+        ];
+
+        if ($retentionType === 'expiration') {
+            $validationRules['expiration_years'] = [
+                'rules' => 'required|is_natural_no_zero|less_than_equal_to[30]',
+                'errors' => [
+                    'required' => 'Please enter how many years the file should expire in.',
+                    'is_natural_no_zero' => 'Expiration years must be a whole number greater than zero.',
+                    'less_than_equal_to' => 'Expiration years must not be greater than 30.',
+                ],
+            ];
+        }
+
+        // Validate file upload
+        if (!$this->validate($validationRules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $file = $this->request->getFile('pdf_file');
+        $file = $this->request->getFile('file');
         
         // Generate unique filename with folder_id prefix
         $newName = $folderId . '_' . time() . '_' . $file->getRandomName();
@@ -78,7 +95,7 @@ class FileUploadController extends BaseController
         } catch (\Exception $e) {
             log_message('error', "File move failed: " . $e->getMessage());
             return redirect()->back()->withInput()->with('errors', [
-                'pdf_file' => 'File upload failed. Please try again.',
+                'file' => 'File upload failed. Please try again.',
             ]);
         }
 
@@ -87,14 +104,19 @@ class FileUploadController extends BaseController
         if (!file_exists($uploadedPath)) {
             log_message('error', "Uploaded file not found at: " . $uploadedPath);
             return redirect()->back()->withInput()->with('errors', [
-                'pdf_file' => 'File upload verification failed',
+                'file' => 'File upload verification failed',
             ]);
         }
 
         // Save file info to database
         $filePath = 'uploads/folders/' . $newName;
-        $retentionType = (string) $this->request->getPost('retention_type');
-        $expirationDate = $retentionType === 'expiration' ? date('Y-m-d', strtotime('+5 years')) : null;
+        $expirationYears = (int) $this->request->getPost('expiration_years');
+
+        $expirationDate = null;
+        if ($retentionType === 'expiration') {
+            $today = new \DateTimeImmutable('today');
+            $expirationDate = $today->modify('+' . $expirationYears . ' years')->format('Y-m-d');
+        }
         $data = [
             'folder_id' => $folderId,
             'file_name' => $file->getClientName(),
@@ -123,7 +145,7 @@ class FileUploadController extends BaseController
                 'errors',
                 is_array($modelErrors) && !empty($modelErrors)
                     ? $modelErrors
-                    : ['pdf_file' => 'Failed to save file information. Please try again.']
+                    : ['file' => 'Failed to save file information. Please try again.']
             );
         }
     }
@@ -159,7 +181,7 @@ class FileUploadController extends BaseController
 
         // Get file info
         $fileSize = filesize($fullPath);
-        $mimeType = 'application/pdf';
+        $mimeType = mime_content_type($fullPath) ?: 'application/octet-stream';
         
         log_message('debug', "File size: " . $fileSize . " bytes");
         log_message('debug', "Download as: " . $file['file_name']);
@@ -176,13 +198,65 @@ class FileUploadController extends BaseController
     }
 
     /**
-     * Delete file
+     * Request file disposal (non-destructive).
+     */
+    public function requestDisposal(int $fileId)
+    {
+        $db = \Config\Database::connect();
+        if (! $db->tableExists('file_disposal_requests')) {
+            return redirect()->back()->with('error', 'File disposal workflow table is not ready yet. Please run database migrations first.');
+        }
+
+        $file = $this->folderFileModel->find($fileId);
+        if (!$file) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        if (! $this->isEligibleForDisposal($file)) {
+            return redirect()->back()->with('error', 'File is not yet expired and is not eligible for disposal request.');
+        }
+
+        $existingRequest = $this->fileDisposalRequestModel->latestByFile($fileId);
+        if ($existingRequest && in_array((string) ($existingRequest['status'] ?? ''), ['Pending', 'Approved', 'Disposed'], true)) {
+            return redirect()->to(route_to('records.show', (int) $file['folder_id']))
+                ->with('error', 'A disposal workflow already exists for this file.');
+        }
+
+        $requestData = [
+            'file_id' => $fileId,
+            'status' => 'Pending',
+            'requested_by' => auth_user()['user_id'] ?? null,
+            'requested_at' => date('Y-m-d H:i:s'),
+            'approved_by' => null,
+            'approved_at' => null,
+            'disposed_at' => null,
+            'notes' => null,
+        ];
+
+        if (! $this->fileDisposalRequestModel->save($requestData)) {
+            return redirect()->to(route_to('records.show', (int) $file['folder_id']))
+                ->with('error', 'Failed to create disposal request.');
+        }
+
+        $auditLog = service('auditLog');
+        $auditLog->log(auth_user()['user_id'] ?? null, 'request_file_disposal', "file_id:{$fileId}");
+
+        return redirect()->to(route_to('records.show', (int) $file['folder_id']))
+            ->with('success', 'Disposal request submitted and is now pending approval.');
+    }
+
+    /**
+     * Dispose file
      */
     public function delete(int $fileId)
     {
         $file = $this->folderFileModel->find($fileId);
         if (!$file) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        if (! $this->isEligibleForDisposal($file)) {
+            return redirect()->back()->with('error', 'File is not yet expired and is not ready for disposal.');
         }
 
         $folderId = $file['folder_id'];
@@ -196,6 +270,29 @@ class FileUploadController extends BaseController
         // Delete database record
         $this->folderFileModel->delete($fileId);
 
-        return redirect()->to(route_to('records.show', $folderId))->with('success', 'File deleted successfully');
+        return redirect()->to(route_to('records.show', $folderId))->with('success', 'File disposed successfully');
+    }
+
+    private function isEligibleForDisposal(array $file): bool
+    {
+        $retentionType = (string) ($file['retention_type'] ?? 'permanent');
+        $expirationRaw = trim((string) ($file['expiration_date'] ?? ''));
+        $today = new \DateTimeImmutable('today');
+
+        if (
+            $retentionType !== 'expiration' ||
+            $expirationRaw === '' ||
+            $expirationRaw === '0000-00-00' ||
+            $expirationRaw === '0000-00-00 00:00:00'
+        ) {
+            return false;
+        }
+
+        try {
+            $expirationDate = new \DateTimeImmutable($expirationRaw);
+            return $expirationDate <= $today;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }

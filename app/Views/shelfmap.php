@@ -12,17 +12,17 @@
 
 
 
-<div class="absolute inset-0 z-0" id="shelfMapApp">
+<div class="absolute inset-0 z-0 overflow-x-hidden" id="shelfMapApp">
 
-    <div class="ml-20 transition-all duration-300" id="mainContent">
+    <div class="ml-20 min-w-0 transition-all duration-300" id="mainContent">
 
         <!-- Header -->
 
-        <div class="p-4 bg-white border-b border-gray-200">
+        <div class="p-4 sm:p-5 bg-white border-b border-gray-200">
 
-            <div class="flex items-center">
+            <div class="flex items-center gap-3 flex-wrap">
 
-                <img src="<?= base_url('images/EMB-Logo.png') ?>" alt="EMB Logo" class="w-10 h-10 mr-3">
+                <img src="<?= base_url('images/EMB-Logo.png') ?>" alt="EMB Logo" class="w-10 h-10">
 
                 <div>
 
@@ -42,9 +42,9 @@
 
         <!-- RMS Layout Image -->
 
-        <div class="p-4 bg-gray-100">
+        <div class="p-4 sm:p-5 bg-gray-100">
 
-            <div class="bg-white rounded-lg shadow p-4">
+            <div class="bg-white rounded-lg shadow p-4 sm:p-5">
 
                 <div class="mb-3 text-center">
 
@@ -58,7 +58,7 @@
 
                 <!-- Interactive Layout Image -->
 
-                <div class="relative bg-gray-50 rounded p-4">
+                <div class="relative bg-gray-50 rounded p-3 sm:p-4">
 
                     <div class="flex justify-center relative" style="max-width: 100%; margin: 0 auto;">
 
@@ -1863,9 +1863,14 @@ class ShelfMapApp {
         ];
 
         if (shelves.length === 0) {
+            this.selectedRack = null;
+            this.renderRackSelectionPlaceholder('No shelves added yet.');
             container.innerHTML = '<div class="text-center text-gray-500 py-8">No shelves added yet.</div>';
             return;
         }
+
+        this.selectedRack = null;
+        this.renderRackSelectionPlaceholder('Select a shelf to view folders.');
 
         container.innerHTML = shelves.map((shelfData, index) => {
             const color = colors[index % colors.length];
@@ -1883,6 +1888,22 @@ class ShelfMapApp {
                 </div>
             `;
         }).join('');
+    }
+
+    renderRackSelectionPlaceholder(message) {
+        const foldersGrid = document.getElementById('rackFoldersGrid');
+        if (!foldersGrid) {
+            return;
+        }
+
+        foldersGrid.innerHTML = `
+            <div class="text-center text-gray-500 py-8">
+                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                <p class="text-sm">${message}</p>
+            </div>
+        `;
     }
 
     
@@ -1963,7 +1984,11 @@ class ShelfMapApp {
 
         } else {
 
-            folders.forEach((folderCode, index) => {
+            folders.forEach((folderEntry, index) => {
+                const folderId = typeof folderEntry === 'object' && folderEntry !== null ? folderEntry.folder_id : null;
+                const folderCode = typeof folderEntry === 'object' && folderEntry !== null ? (folderEntry.file_code || 'Untitled') : String(folderEntry);
+                const folderCompany = typeof folderEntry === 'object' && folderEntry !== null ? (folderEntry.company_name || '') : '';
+                const viewUrl = folderId ? `<?= base_url('document-records') ?>/${folderId}` : '#';
 
                 const folderElement = document.createElement('div');
 
@@ -1985,13 +2010,15 @@ class ShelfMapApp {
 
                                 <div class="font-semibold text-sm text-gray-900">${folderCode}</div>
 
+                                ${folderCompany ? `<div class="text-xs text-gray-500">${folderCompany}</div>` : ''}
+
                                 <div class="text-xs text-gray-500">Rack ${rackLetter}</div>
 
                             </div>
 
                         </div>
 
-                        <button class="text-xs text-blue-600 hover:text-blue-800 font-medium">View</button>
+                        <a href="${viewUrl}" class="text-xs text-blue-600 hover:text-blue-800 font-medium">View</a>
 
                     </div>
 

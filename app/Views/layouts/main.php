@@ -100,6 +100,12 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
     <link rel="stylesheet" href="<?= base_url('assets/css/tailwind.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/loading-animation.css') ?>">
     <style>
+        html,
+        body,
+        body * {
+            font-size: 12px !important;
+        }
+
         /* Dark mode styles */
         .dark {
             color-scheme: dark;
@@ -260,6 +266,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
 </head>
 <body class="font-sans bg-gray-50" x-data="{ 
     darkMode: localStorage.getItem('darkMode') === 'true',
+    sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false',
     notificationsOpen: false,
     userDropdownOpen: false,
     notifications: <?= esc($headerNotificationsJson ?: '[]', 'attr') ?>,
@@ -272,6 +279,16 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
         if (this.darkMode) {
             document.documentElement.classList.add('dark');
         }
+
+        // Keep sidebar state persisted and synced across tabs/views.
+        this.$watch('sidebarOpen', (value) => {
+            localStorage.setItem('sidebarOpen', value);
+        });
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'sidebarOpen') {
+                this.sidebarOpen = e.newValue !== 'false';
+            }
+        });
         
         // Auto-dismiss alerts after 5 seconds
         this.$watch('alerts', () => {
@@ -308,17 +325,151 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
         } else {
             document.documentElement.classList.remove('dark');
         }
+    },
+    toggleSidebar() {
+        this.sidebarOpen = !this.sidebarOpen;
     }
 }">
     
-    <!-- Include Vertical Navigation -->
-    <?= view('layouts/AdminNavigationBar') ?>
+    <div style="display:flex; min-height:100vh; width:100%;">
+    <!-- Vertical Navigation Bar for Admin Dashboard -->
+    <nav
+    class="bg-green-700 text-white shadow-lg transition-all duration-300 z-30"
+    :style="sidebarOpen
+        ? 'width:16rem; height:100vh; position:fixed; top:0; left:0; overflow-y:auto; overflow-x:hidden;'
+        : 'width:5.5rem; height:100vh; position:fixed; top:0; left:0; overflow-y:auto; overflow-x:hidden;'">
+
+        <!-- Navigation Menu -->
+        <ul class="p-4 space-y-2">
+            <!-- Header Item -->
+            <li class="bg-green-700 text-white mb-4">
+                <div class="flex items-center relative" :class="sidebarOpen ? 'ml-3' : 'justify-center'">
+                    <img x-show="sidebarOpen" x-transition src="/images/EMB-Logo.png" alt="EMB Records Logo" class="w-10 h-10" :class="sidebarOpen ? 'ml-2' : ''">
+                    <h2 x-show="sidebarOpen" x-transition class="text-xl font-bold ml-2">RMS</h2>
+                    <button type="button"
+                            @click="toggleSidebar()"
+                            :title="sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'"
+                            aria-label="Toggle sidebar"
+                            :style="sidebarOpen
+                                ? 'position:absolute; top:-6px; right:-4px; z-index:80; width:34px; height:34px; border-radius:10px; border:1px solid rgba(255,255,255,0.22); background:linear-gradient(180deg,#166534 0%,#14532d 100%); box-shadow:0 8px 20px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease, background .2s ease;'
+                                : 'position:absolute; top:-6px; left:50%; transform:translateX(-50%); z-index:80; width:34px; height:34px; border-radius:10px; border:1px solid rgba(255,255,255,0.22); background:linear-gradient(180deg,#166534 0%,#14532d 100%); box-shadow:0 8px 20px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease, background .2s ease;'"
+                            @mouseenter="if (sidebarOpen) { $el.style.transform='translateY(-1px) scale(1.02)'; } else { $el.style.transform='translateX(-50%) translateY(-1px) scale(1.02)'; } $el.style.boxShadow='0 10px 22px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.2)'"
+                            @mouseleave="if (sidebarOpen) { $el.style.transform='translateY(0) scale(1)'; } else { $el.style.transform='translateX(-50%) translateY(0) scale(1)'; } $el.style.boxShadow='0 8px 20px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.16)'"
+                            @mousedown="if (sidebarOpen) { $el.style.transform='translateY(0) scale(.97)'; } else { $el.style.transform='translateX(-50%) translateY(0) scale(.97)'; }"
+                            @mouseup="if (sidebarOpen) { $el.style.transform='translateY(-1px) scale(1.02)'; } else { $el.style.transform='translateX(-50%) translateY(-1px) scale(1.02)'; }">
+                        <span style="position:relative; width:16px; height:12px; display:block;">
+                            <span
+                                :style="sidebarOpen
+                                    ? 'position:absolute; left:0; top:0; width:16px; height:2px; border-radius:2px; background:#e8fff1; transform:translateY(5px) rotate(45deg); transition:transform .22s ease, opacity .22s ease;'
+                                    : 'position:absolute; left:0; top:0; width:16px; height:2px; border-radius:2px; background:#e8fff1; transform:translateY(0) rotate(0deg); transition:transform .22s ease, opacity .22s ease;'">
+                            </span>
+                            <span
+                                :style="sidebarOpen
+                                    ? 'position:absolute; left:0; top:5px; width:16px; height:2px; border-radius:2px; background:#e8fff1; opacity:0; transform:scaleX(.5); transition:transform .22s ease, opacity .22s ease;'
+                                    : 'position:absolute; left:0; top:5px; width:16px; height:2px; border-radius:2px; background:#e8fff1; opacity:1; transform:scaleX(1); transition:transform .22s ease, opacity .22s ease;'">
+                            </span>
+                            <span
+                                :style="sidebarOpen
+                                    ? 'position:absolute; left:0; top:10px; width:16px; height:2px; border-radius:2px; background:#e8fff1; transform:translateY(-5px) rotate(-45deg); transition:transform .22s ease, opacity .22s ease;'
+                                    : 'position:absolute; left:0; top:10px; width:16px; height:2px; border-radius:2px; background:#e8fff1; transform:translateY(0) rotate(0deg); transition:transform .22s ease, opacity .22s ease;'">
+                            </span>
+                        </span>
+                    </button>
+                </div>
+                <hr class ="mt-4">
+            </li>
+            <li>
+                <a href="<?= route_to('dashboard') ?>" 
+                class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
+                :class="window.location.pathname === '<?= route_to('dashboard') ?>' ? 'bg-green-900' : ''">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <?php if (can('view_shelf_map')): ?>
+                <a href="<?= route_to('shelfmap') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
+                :class="window.location.pathname === '<?= route_to('shelfmap') ?>' ? 'bg-green-900' : ''">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">Shelf Map And Search</span>
+                </a>
+                <?php endif; ?>
+            </li>
+
+            <li>
+                    <?php if (can('view_documents') || can('create_document_record') || can('edit_document_metadata') || can('search_documents') || can('manage_racks') || can('manage_categories') || can('approve_folder_creation') || can('approve_folder_archival')): ?>
+                <a href="<?= route_to('records') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
+                :class="window.location.pathname === '<?= route_to('records') ?>' ? 'bg-green-900' : ''">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">Document Records</span>
+                </a>
+                <?php endif; ?>
+            </li>
+
+            <li>
+                <?php if (can('request_borrow') || can('approve_borrow_requests') || can('process_borrow_release') || can('process_return')): ?>
+                <a href="<?= route_to('borrows.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
+                :class="window.location.pathname === '<?= route_to('borrows.index') ?>' ? 'bg-green-900' : ''">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">Borrow Management</span>
+                </a>
+                <?php endif; ?>
+            </li>
+
+            <li>
+                <?php if (can('request_relocation') || can('approve_relocation')): ?>
+                <a href="<?= route_to('relocations.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
+                :class="window.location.pathname === '<?= route_to('relocations.index') ?>' ? 'bg-green-900' : ''">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">Relocation</span>
+                </a>
+                <?php endif; ?>
+            </li>
+
+            <li>
+                <?php if (can('archive_document') || can('view_archive_module') || can('manage_archive_policies') || can('view_disposal_workflow') || can('approve_disposal')): ?>
+                <a href="<?= route_to('archive.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
+                :class="window.location.pathname === '<?= route_to('archive.index') ?>' ? 'bg-green-900' : ''">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">Archive and Disposal</span>
+                </a>
+                <?php endif; ?>
+            </li>
+
+            <li>
+                <?php if (can('manage_users')): ?>
+                <a href="<?= route_to('permissions.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">User Permission</span>
+                </a>
+                <?php endif; ?>
+            </li>
+        </ul>
+    </nav>
     
     <!-- Main Content Area -->
-    <main class="transition-all duration-300" x-data="{ sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false' }" x-init="$watch('sidebarOpen', (value) => localStorage.setItem('sidebarOpen', value)); window.addEventListener('storage', (e) => { if (e.key === 'sidebarOpen') this.sidebarOpen = e.newValue !== 'false'; });" :class="sidebarOpen ? 'ml-72' : 'ml-20'">
+    <main
+        class="transition-all duration-300 min-h-screen flex flex-col"
+        :style="sidebarOpen
+            ? 'flex:1; min-width:0; margin-left:16rem;'
+            : 'flex:1; min-width:0; margin-left:5.5rem;'">
         <!-- Top Navigation Bar -->
-        <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20 max-w-100%">
-            <div class="px-8 py-4 flex items-center justify-between">
+        <header class="bg-white shadow-sm border border-gray-200 z-20 mx-4 sm:mx-6 lg:mx-8 rounded-lg mt-4">
+            <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <img src="<?= base_url('images/EMB-Logo.png') ?>" alt="EMB Logo" class="w-10 h-10 mr-2">
                     <h1 class="text-2xl font-bold text-gray-900"><?= isset($title) ? esc($title) : 'Dashboard' ?></h1>
@@ -397,9 +548,11 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
                     <div class="relative user-dropdown">
                         <button @click="userDropdownOpen = !userDropdownOpen" 
                                 class="flex items-center space-x-3 hover:bg-gray-100 rounded-lg p-2 transition-colors">
-                            <span class="text-sm text-gray-700">Welcome, <strong><?= auth_user()['username'] ?? 'Admin' ?></strong></span>
+                            <span class="text-sm text-gray-700"><strong><?= auth_user()['username'] ?? 'Admin' ?></strong></span>
                             <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
-                                <span class="text-sm font-medium text-white"><?= substr(auth_user()['username'] ?? 'A', 0, 1) ?></span>
+                                <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
                             </div>
                             <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -433,7 +586,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
         </header>
         
         <!-- Alert Messages -->
-        <div class="fixed top-20 right-8 z-50 space-y-2">
+        <div style="position:fixed; top:80px; right:32px; z-index:50;">
             <template x-for="alert in alerts" :key="alert.id"
                      x-transition:enter="transition ease-out duration-300"
                      x-transition:enter-start="transform translate-x-full opacity-0"
@@ -476,7 +629,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
         </div>
         
         <!-- Page Content -->
-        <div class="p-8">
+        <div class="p-8 flex-1" style="margin-top:0;">
             <!-- Flash Messages (PHP Session) -->
             <?php if(session()->getFlashdata('error')): ?>
                 <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
@@ -494,6 +647,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
          
         </div>
     </main>
+    </div>
 
     <div id="appConfirmModal" style="position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; padding:16px;" aria-hidden="true">
         <div style="position:absolute; inset:0; background:rgba(15,23,42,0.18);"></div>

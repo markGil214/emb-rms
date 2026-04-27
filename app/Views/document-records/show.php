@@ -4,7 +4,7 @@
 
 <?= $this->section('content') ?>
 
-<div class="max-w-8xl mx-auto" x-data="{ uploadModalOpen: <?= (!empty($uploadErrors['file']) || !empty($uploadErrors['retention_type'])) ? 'true' : 'false' ?> }">
+<div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8" x-data="{ uploadModalOpen: <?= (!empty($uploadErrors['file']) || !empty($uploadErrors['retention_type'])) ? 'true' : 'false' ?> }">
 
     <?php $uploadErrors = session('errors') ?? []; ?>
 
@@ -26,185 +26,204 @@
         </div>
     <?php endif; ?>
 
-    <!-- Document Details -->
+    <?php
+        $statusValue = (string) ($folder['status'] ?? 'Unknown');
 
-    <div class="mb-4" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        if ($statusValue === 'Available') {
+            $statusColor = 'bg-green-200 text-green-800';
+        } elseif ($statusValue === 'Archived') {
+            $statusColor = 'bg-gray-200 text-gray-800';
+        } else {
+            $statusColor = 'bg-yellow-200 text-yellow-800';
+        }
 
-          <a href="<?= route_to('records') ?>" 
+        $locationParts = [];
+        if (!empty($folder['cabinet'])) {
+            $locationParts[] = 'Cabinet ' . $folder['cabinet'];
+        }
+        if (!empty($folder['rack'])) {
+            $locationParts[] = 'Rack ' . $folder['rack'];
+        }
+        if (!empty($folder['shelf'])) {
+            $locationParts[] = 'Shelf ' . $folder['shelf'];
+        }
+        $locationSummary = !empty($locationParts) ? implode(' • ', $locationParts) : '--';
 
-              class="px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-300 font-medium inline-flex items-center" style="white-space:nowrap;">
+        if (in_array($statusValue, ['Borrowed', 'Overdue', 'Returned'], true)) {
+            $borrowStatusValue = $statusValue;
+        } elseif (in_array($statusValue, ['Pending', 'Pending Update'], true)) {
+            $borrowStatusValue = 'Pending';
+        } elseif ($statusValue === 'Archived') {
+            $borrowStatusValue = 'Unavailable';
+        } else {
+            $borrowStatusValue = 'Available';
+        }
 
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        if ($borrowStatusValue === 'Overdue') {
+            $borrowStatusColor = 'bg-red-200 text-red-800';
+        } elseif ($borrowStatusValue === 'Borrowed') {
+            $borrowStatusColor = 'bg-yellow-200 text-yellow-800';
+        } elseif ($borrowStatusValue === 'Returned' || $borrowStatusValue === 'Available') {
+            $borrowStatusColor = 'bg-green-200 text-green-800';
+        } else {
+            $borrowStatusColor = 'bg-gray-200 text-gray-800';
+        }
 
+        $borrowedDateValue = !empty($folder['borrowed_date']) ? date('M d, Y', strtotime($folder['borrowed_date'])) : '--';
+        $dueDateValue = !empty($folder['due_date']) ? date('M d, Y', strtotime($folder['due_date'])) : '--';
+    ?>
+
+    <div class="mb-6">
+        <a href="<?= route_to('records') ?>" class="mb-3 inline-flex items-center rounded-lg px-3 py-2 font-medium text-gray-700 hover:bg-gray-200">
+            <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-
             </svg>
-
             Back to Records
-
         </a>
 
-        <?php if (!in_array($folder['status'] ?? '', ['Pending', 'Pending Update', 'Archived'], true)): ?>
-        <div class="flex items-center gap-2" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:auto; justify-content:flex-end;">
-            <a href="<?= route_to('records.history', $folder['folder_id']) ?>"
-               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium inline-flex items-center" style="white-space:nowrap;">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                History
-            </a>
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900"><?= esc($folder['file_code']) ?> - <?= esc($folder['company_name']) ?></h1>
+                <div class="mt-2 flex flex-wrap items-center gap-3">
+                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold <?= $statusColor ?>">Status: <?= esc($statusValue) ?></span>
 
-            <button type="button"
-                    @click="uploadModalOpen = true"
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium inline-flex items-center" style="white-space:nowrap;">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Upload Documents
-            </button>
-        </div>
-        <?php endif; ?>
+            <?php // JS: compute expiration date preview for retention_type === 'expiration' ?>
+            <script>
+                (function(){
+                    function initExpirationFields() {
+                        const retentionSelect = document.getElementById('retention_type_modal');
+                        const yearsWrapper = document.getElementById('expirationYearsWrapper_modal');
+                        const yearsInput = document.getElementById('expiration_years_modal');
+                        const preview = document.getElementById('expirationPreview_modal');
+                        const hidden = document.getElementById('expiration_date_modal');
 
-    </div>
+                        function formatDateYmd(date){
+                            const y = date.getFullYear();
+                            const m = String(date.getMonth()+1).padStart(2,'0');
+                            const d = String(date.getDate()).padStart(2,'0');
+                            return `${y}-${m}-${d}`;
+                        }
 
+                        function updateExpirationPreview(){
+                            if (!retentionSelect || !yearsWrapper || !yearsInput || !preview || !hidden) return;
+                            if (retentionSelect.value === 'expiration'){
+                                yearsWrapper.style.display = 'block';
+                                yearsInput.disabled = false;
+                                yearsInput.required = true;
+                                const years = parseInt(yearsInput.value, 10);
+                                if (!Number.isInteger(years) || years < 1) {
+                                    hidden.value = '';
+                                    preview.textContent = 'Enter a valid number of years to preview expiration date.';
+                                    preview.style.display = 'block';
+                                    return;
+                                }
 
+                                const now = new Date();
+                                const expires = new Date(now.getFullYear() + years, now.getMonth(), now.getDate());
+                                hidden.value = formatDateYmd(expires);
+                                preview.textContent = `Expires on: ${expires.toLocaleDateString()} (${years} year${years === 1 ? '' : 's'})`;
+                                preview.style.display = 'block';
+                            } else {
+                                yearsWrapper.style.display = 'none';
+                                yearsInput.required = false;
+                                yearsInput.disabled = true;
+                                hidden.value = '';
+                                preview.textContent = '';
+                                preview.style.display = 'none';
+                            }
+                        }
 
-    <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-6">
+                        if (!retentionSelect || !yearsInput) {
+                            return;
+                        }
 
-        <div class="bg-gray-200 px-4 py-3 flex items-center justify-between">
-
-            <h2 class="text-lg font-semibold text-gray-600">Document Details</h2>
-
-        </div>
-
-        
-
-        <div class="p-4">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                <!-- File Code -->
-
-                <div class="bg-gray-50 rounded-lg p-3">
-
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">File Code</label>
-
-                    <p class="text-base font-bold text-gray-900"><?= esc($folder['file_code']) ?></p>
-
-                </div>
-
-
-
-                <!-- Company Name -->
-
-                <div class="bg-gray-50 rounded-lg p-3">
-
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Company Name</label>
-
-                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['company_name']) ?></p>
-
-                </div>
-
-
-
-                <!-- Location Code -->
-
-                <div class="bg-gray-50 rounded-lg p-3">
-
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Location Code</label>
-
-                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['location_code']) ?></p>
-
-                </div>
-
-
-
-                <!-- Borrowed Date -->
-
-                <div class="bg-gray-50 rounded-lg p-3">
-
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Borrowed Date</label>
-
-                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['borrowed_date'] ?? 'N/A') ?></p>
-
-                </div>
-
-
-
-                <!-- Due Date -->
-
-                <div class="bg-gray-50 rounded-lg p-3">
-
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Due Date</label>
-
-                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['due_date'] ?? 'N/A') ?></p>
-
-                </div>
-
-
-
-                <!-- Status -->
-
-                <div class="bg-gray-50 rounded-lg p-3">
-
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Status</label>
-
-                    <?php
-
-                    if ($folder['status'] === 'Available') {
-
-                        $statusColor = 'bg-green-200 text-green-800';
-
-                    } elseif ($folder['status'] === 'Archived') {
-
-                        $statusColor = 'bg-gray-200 text-gray-800';
-
-                    } else {
-
-                        $statusColor = 'bg-yellow-200 text-yellow-800';
-
+                        retentionSelect.addEventListener('change', updateExpirationPreview);
+                        yearsInput.addEventListener('input', updateExpirationPreview);
+                        updateExpirationPreview();
                     }
 
-                    ?>
-
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold <?= $statusColor ?>">
-
-                        <?= esc($folder['status']) ?>
-
-                    </span>
-
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', initExpirationFields);
+                    } else {
+                        initExpirationFields();
+                    }
+                })();
+            </script>
+                    <span class="text-sm text-gray-600">Location: <?= esc($locationSummary) ?></span>
                 </div>
-
-
-
-                <!-- Cabinet -->
-
-                <div class="bg-gray-50 rounded-lg p-3">
-
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Cabinet</label>
-
-                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['cabinet'] ?? 'N/A') ?></p>
-
-                </div>
-
-
-
-                <!-- Rack -->
-
-                <div class="bg-gray-50 rounded-lg p-3">
-
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Rack</label>
-
-                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['rack'] ?? 'N/A') ?></p>
-
-                </div>
-
             </div>
 
+            <?php if (!in_array($folder['status'] ?? '', ['Pending', 'Pending Update', 'Archived'], true)): ?>
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button"
+                        @click="uploadModalOpen = true"
+                        class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700">
+                    <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Upload Document
+                </button>
 
-
+                <a href="<?= route_to('records.history', $folder['folder_id']) ?>"
+                   class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 font-medium text-blue-700 hover:bg-blue-100">
+                    <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    View History
+                </a>
             </div>
+            <?php endif; ?>
+        </div>
+    </div>
 
+    <div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="overflow-hidden rounded-lg bg-white shadow-lg">
+            <div class="bg-gray-200 px-4 py-3">
+                <h2 class="text-lg font-semibold text-gray-700">Document Information</h2>
+            </div>
+            <div class="space-y-4 p-4">
+                <div class="rounded-lg bg-gray-50 p-3">
+                    <label class="mb-1 block text-xs font-semibold text-gray-600">File Code</label>
+                    <p class="text-base font-bold text-gray-900"><?= esc($folder['file_code']) ?></p>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-3">
+                    <label class="mb-1 block text-xs font-semibold text-gray-600">Company Name</label>
+                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['company_name']) ?></p>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-3">
+                    <label class="mb-1 block text-xs font-semibold text-gray-600">Location Code</label>
+                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['location_code'] ?? '--') ?></p>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-3">
+                    <label class="mb-1 block text-xs font-semibold text-gray-600">Location</label>
+                    <p class="text-base font-semibold text-gray-900"><?= esc($locationSummary) ?></p>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-3">
+                    <label class="mb-1 block text-xs font-semibold text-gray-600">Status</label>
+                    <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold <?= $statusColor ?>"><?= esc($statusValue) ?></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="overflow-hidden rounded-lg bg-white shadow-lg">
+            <div class="bg-gray-200 px-4 py-3">
+                <h2 class="text-lg font-semibold text-gray-700">Borrow Information</h2>
+            </div>
+            <div class="space-y-4 p-4">
+                <div class="rounded-lg bg-gray-50 p-3">
+                    <label class="mb-1 block text-xs font-semibold text-gray-600">Borrow Status</label>
+                    <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold <?= $borrowStatusColor ?>"><?= esc($borrowStatusValue) ?></span>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-3">
+                    <label class="mb-1 block text-xs font-semibold text-gray-600">Borrowed Date</label>
+                    <p class="text-base font-semibold text-gray-900"><?= esc($borrowedDateValue) ?></p>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-3">
+                    <label class="mb-1 block text-xs font-semibold text-gray-600">Due Date</label>
+                    <p class="text-base font-semibold text-gray-900"><?= esc($dueDateValue) ?></p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <?php if (!in_array($folder['status'] ?? '', ['Pending', 'Pending Update'], true)): ?>
@@ -235,7 +254,7 @@
 
                     <h3 class="text-lg font-medium text-gray-900 mb-2">No documents uploaded yet</h3>
 
-                    <p class="text-gray-600">Upload your first document using the form above.</p>
+                    <p class="text-gray-600">Upload a file to attach it to this record.</p>
 
                 </div>
 
@@ -429,69 +448,6 @@
                                 File <span class="text-red-500">*</span>
                             </label>
                             <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400">
-
-                    <?php // JS: compute expiration date preview for retention_type === 'expiration' ?>
-                    <script>
-                        (function(){
-                            function initExpirationFields() {
-                                const retentionSelect = document.getElementById('retention_type_modal');
-                                const yearsWrapper = document.getElementById('expirationYearsWrapper_modal');
-                                const yearsInput = document.getElementById('expiration_years_modal');
-                                const preview = document.getElementById('expirationPreview_modal');
-                                const hidden = document.getElementById('expiration_date_modal');
-
-                                function formatDateYmd(date){
-                                    const y = date.getFullYear();
-                                    const m = String(date.getMonth()+1).padStart(2,'0');
-                                    const d = String(date.getDate()).padStart(2,'0');
-                                    return `${y}-${m}-${d}`;
-                                }
-
-                                function updateExpirationPreview(){
-                                    if (!retentionSelect || !yearsWrapper || !yearsInput || !preview || !hidden) return;
-                                    if (retentionSelect.value === 'expiration'){
-                                        yearsWrapper.style.display = 'block';
-                                        yearsInput.disabled = false;
-                                        yearsInput.required = true;
-                                        const years = parseInt(yearsInput.value, 10);
-                                        if (!Number.isInteger(years) || years < 1) {
-                                            hidden.value = '';
-                                            preview.textContent = 'Enter a valid number of years to preview expiration date.';
-                                            preview.style.display = 'block';
-                                            return;
-                                        }
-
-                                        const now = new Date();
-                                        const expires = new Date(now.getFullYear() + years, now.getMonth(), now.getDate());
-                                        hidden.value = formatDateYmd(expires);
-                                        preview.textContent = `Expires on: ${expires.toLocaleDateString()} (${years} year${years === 1 ? '' : 's'})`;
-                                        preview.style.display = 'block';
-                                    } else {
-                                        yearsWrapper.style.display = 'none';
-                                        yearsInput.required = false;
-                                        yearsInput.disabled = true;
-                                        hidden.value = '';
-                                        preview.textContent = '';
-                                        preview.style.display = 'none';
-                                    }
-                                }
-
-                                if (!retentionSelect || !yearsInput) {
-                                    return;
-                                }
-
-                                retentionSelect.addEventListener('change', updateExpirationPreview);
-                                yearsInput.addEventListener('input', updateExpirationPreview);
-                                updateExpirationPreview();
-                            }
-
-                            if (document.readyState === 'loading') {
-                                document.addEventListener('DOMContentLoaded', initExpirationFields);
-                            } else {
-                                initExpirationFields();
-                            }
-                        })();
-                    </script>
                                 <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m0 0l3 3v12"></path>
                                 </svg>
@@ -499,7 +455,6 @@
                                 <input type="file"
                                        id="file_modal"
                                        name="file"
-                                       accept="*/*"
                                        class="mb-3 block w-full cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
                                        required>
 
@@ -557,10 +512,10 @@
                                     class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium">
                                 Cancel
                             </button>
-                                <button type="submit"
+                            <button type="submit"
                                     class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 font-medium">
                                 Upload File
-                                </button>
+                            </button>
                         </div>
                     </form>
                 </div>

@@ -135,47 +135,49 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     $routes->get('/files/(:num)/download',  'FileUploadController::download/$1', ['as' => 'file.download', 'filter' => 'permission:search_documents']);
 
+    $routes->post('/files/(:num)/request-disposal', 'FileUploadController::requestDisposal/$1', ['as' => 'file.request-disposal', 'filter' => 'permission:request_disposal']);
+
     $routes->delete('/files/(:num)',        'FileUploadController::delete/$1', ['as' => 'file.delete', 'filter' => 'permission:create_document_record']);
 
 });
 
 
 
-// Admin routes - Permission Management (Super Admin only)
+// Permission Management (Super Admin only)
 
 $routes->group('', ['filter' => 'auth'], function($routes) {
 
-    $routes->get('/admin/permissions',                  'Admin\PermissionController::index',       ['as' => 'admin.permissions', 'filter' => 'permission:manage_users']);
+    $routes->get('/permissions',                        'Admin\PermissionController::index',       ['as' => 'permissions.index', 'filter' => 'permission:manage_users']);
 
-    $routes->post('/admin/permissions/load/(:num)',     'Admin\PermissionController::loadUser/$1', ['as' => 'admin.permissions.load', 'filter' => 'permission:manage_users']);
+    $routes->post('/permissions/load/(:num)',           'Admin\PermissionController::loadUser/$1', ['as' => 'permissions.load', 'filter' => 'permission:manage_users']);
 
-    $routes->post('/admin/permissions/save/(:num)',     'Admin\PermissionController::savePermissions/$1', ['as' => 'admin.permissions.save', 'filter' => 'permission:manage_users']);
+    $routes->post('/permissions/save/(:num)',           'Admin\PermissionController::savePermissions/$1', ['as' => 'permissions.save', 'filter' => 'permission:manage_users']);
 
-    $routes->get('/admin/permissions/search',           'Admin\PermissionController::searchUsers', ['as' => 'admin.permissions.search', 'filter' => 'permission:manage_users']);
+    $routes->get('/permissions/search',                 'Admin\PermissionController::searchUsers', ['as' => 'permissions.search', 'filter' => 'permission:manage_users']);
 
-    $routes->get('/admin/permissions/history/(:num)',   'Admin\PermissionController::getHistory/$1', ['as' => 'admin.permissions.history', 'filter' => 'permission:manage_users']);
+    $routes->get('/permissions/history/(:num)',         'Admin\PermissionController::getHistory/$1', ['as' => 'permissions.history', 'filter' => 'permission:manage_users']);
 
-    $routes->get('/admin/permissions/load-role/(:num)', 'Admin\PermissionController::loadRole/$1', ['as' => 'admin.permissions.load-role', 'filter' => 'permission:manage_users']);
+    $routes->get('/permissions/load-role/(:num)',       'Admin\PermissionController::loadRole/$1', ['as' => 'permissions.load-role', 'filter' => 'permission:manage_users']);
 
-    $routes->post('/admin/permissions/save-role-perms', 'Admin\PermissionController::saveRolePerms', ['as' => 'admin.permissions.save-role-perms', 'filter' => 'permission:manage_users']);
+    $routes->post('/permissions/save-role-perms',       'Admin\PermissionController::saveRolePerms', ['as' => 'permissions.save-role-perms', 'filter' => 'permission:manage_users']);
 
 });
 
-// Admin routes - Category Management
+// Category Management
 
 $routes->group('', ['filter' => 'auth'], function($routes) {
 
-    $routes->get('/admin/categories',                   'Admin\CategoryController::index',         ['as' => 'admin.categories', 'filter' => 'permission:manage_categories']);
+    $routes->get('/categories',                         'Admin\CategoryController::index',         ['as' => 'categories.index', 'filter' => 'permission:manage_categories']);
 
-    $routes->get('/admin/categories/create',            'Admin\CategoryController::create',        ['as' => 'admin.categories.create', 'filter' => 'permission:manage_categories']);
+    $routes->get('/categories/create',                  'Admin\CategoryController::create',        ['as' => 'categories.create', 'filter' => 'permission:manage_categories']);
 
-    $routes->post('/admin/categories/store',            'Admin\CategoryController::store',         ['as' => 'admin.categories.store', 'filter' => 'permission:manage_categories']);
+    $routes->post('/categories/store',                  'Admin\CategoryController::store',         ['as' => 'categories.store', 'filter' => 'permission:manage_categories']);
 
-    $routes->get('/admin/categories/(:num)/edit',       'Admin\CategoryController::edit/$1',       ['as' => 'admin.categories.edit', 'filter' => 'permission:manage_categories']);
+    $routes->get('/categories/(:num)/edit',             'Admin\CategoryController::edit/$1',       ['as' => 'categories.edit', 'filter' => 'permission:manage_categories']);
 
-    $routes->post('/admin/categories/(:num)/update',    'Admin\CategoryController::update/$1',     ['as' => 'admin.categories.update', 'filter' => 'permission:manage_categories']);
+    $routes->post('/categories/(:num)/update',          'Admin\CategoryController::update/$1',     ['as' => 'categories.update', 'filter' => 'permission:manage_categories']);
 
-    $routes->post('/admin/categories/(:num)',           'Admin\CategoryController::delete/$1',     ['as' => 'admin.categories.delete', 'filter' => 'permission:manage_categories']);
+    $routes->post('/categories/(:num)',                 'Admin\CategoryController::delete/$1',     ['as' => 'categories.delete', 'filter' => 'permission:manage_categories']);
 
 });
 
@@ -198,6 +200,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->post('/borrows/(:num)/return',   'BorrowRequestController::return/$1', ['as' => 'borrows.return', 'filter' => 'permission:process_return']);
 
     $routes->post('/borrows/(:num)/notify',   'BorrowRequestController::notify/$1', ['as' => 'borrows.notify', 'filter' => 'permission:process_return']);
+
+    $routes->post('/borrows/(:num)/decline',  'BorrowRequestController::decline/$1',['as' => 'borrows.decline', 'filter' => 'permission:approve_borrow_requests']);
 
     $routes->get('/borrows/pending',          'BorrowRequestController::pending',   ['as' => 'borrows.pending', 'filter' => 'permission:approve_borrow_requests']);
 

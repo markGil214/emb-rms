@@ -4,7 +4,7 @@
 
 <?= $this->section('content') ?>
 
-<div class="max-w-10xl mx-auto">
+<div class="mx-auto w-full max-w-10xl px-4 py-6 sm:px-6 lg:px-8">
 
     <!-- Header -->
 
@@ -30,7 +30,7 @@
 
         
 
-        <form action="<?= route_to('records.update', $folder['folder_id']) ?>" method="POST" class="p-6" id="editFolderForm">
+        <form action="<?= route_to('records.update', $folder['folder_id']) ?>" method="POST" class="p-4 sm:p-6" id="editFolderForm">
 
             <?= csrf_field() ?>
 
@@ -343,11 +343,11 @@
 
             <!-- Action Buttons -->
 
-            <div class="flex gap-3 justify-end mt-8 pt-6 border-t">
+            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end mt-8 pt-6 border-t">
 
-                <a href="/document-records" 
+                     <a href="/document-records" 
 
-                   class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
+                         class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium w-full sm:w-auto text-center">
 
                     Cancel
 
@@ -355,7 +355,7 @@
 
                 <button type="submit" 
 
-                        class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-600 text-white rounded-lg hover:from-green-700 hover:to-green-700 font-medium">
+                    class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-600 text-white rounded-lg hover:from-green-700 hover:to-green-700 font-medium w-full sm:w-auto">
 
                     Update Record
 

@@ -70,7 +70,8 @@
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                             <?= $borrow['status'] === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
                                                ($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Active' ? 'bg-green-100 text-green-800' :
-                                               ($borrow['status'] === 'Returned' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800')) ?>">
+                                               ($borrow['status'] === 'Returned' ? 'bg-blue-100 text-blue-800' : 
+                                               ($borrow['status'] === 'Declined' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'))) ?>\">
                                             <?= $borrow['status'] ?>
                                         </span>
                                     </td>
@@ -81,6 +82,10 @@
                                                 <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/approve" class="inline">
                                                     <?= csrf_field() ?>
                                                     <button type="submit" class="text-green-600 hover:text-green-900">Approve</button>
+                                                </form>
+                                                <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/decline" class="inline" data-confirm-message="Decline this borrow request?">
+                                                    <?= csrf_field() ?>
+                                                    <button type="submit" class="text-red-600 hover:text-red-900">Decline</button>
                                                 </form>
                                             <?php elseif (($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Overdue') && can('process_return')): ?>
                                                 <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/return" class="inline" data-confirm-message="Return this folder now?">

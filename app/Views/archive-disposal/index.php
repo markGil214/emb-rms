@@ -39,7 +39,7 @@
                 </svg>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Disposal Pending</p>
+                <p class="text-sm font-medium text-gray-600">Files Pending Disposal</p>
                 <p class="text-2xl font-bold text-gray-900"><?= $totalDisposalPending ?></p>
             </div>
         </div>
@@ -53,7 +53,7 @@
                 </svg>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Disposal Approved</p>
+                <p class="text-sm font-medium text-gray-600">Files Disposed</p>
                 <p class="text-2xl font-bold text-gray-900"><?= $totalDisposalApproved ?></p>
             </div>
         </div>
