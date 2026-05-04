@@ -28,9 +28,17 @@ class PermissionFilter implements FilterInterface
             return;
         }
 
-        $permissionKey = $arguments[0] ?? null;
+        $permissionKeys = [];
+        foreach ($arguments ?? [] as $argument) {
+            foreach (explode(',', (string) $argument) as $permissionKey) {
+                $permissionKey = trim($permissionKey);
+                if ($permissionKey !== '') {
+                    $permissionKeys[] = $permissionKey;
+                }
+            }
+        }
 
-        if (!$permissionKey) {
+        if (empty($permissionKeys)) {
             return;
         }
 
@@ -46,13 +54,17 @@ class PermissionFilter implements FilterInterface
         // Check if user has permission
         $permissionService = service('permissionService');
 
-        if (!$permissionService->hasPermission($userId, $permissionKey)) {
-            // User lacks permission - return 403 Forbidden response
-            $response = service('response');
-            $response->setStatusCode(403, 'Forbidden');
-            $response->setBody('Access denied. You do not have the required permission: ' . $permissionKey);
-            return $response;
+        foreach ($permissionKeys as $permissionKey) {
+            if ($permissionService->hasPermission($userId, $permissionKey)) {
+                return;
+            }
         }
+
+        // User lacks permission - return 403 Forbidden response
+        $response = service('response');
+        $response->setStatusCode(403, 'Forbidden');
+        $response->setBody('Access denied. You do not have one of the required permissions: ' . implode(', ', $permissionKeys));
+        return $response;
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)

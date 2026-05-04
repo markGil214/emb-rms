@@ -43,10 +43,11 @@ class Permissions
             'ARCHIVE_DISPOSAL' => [
                 'view_archive' => 'View archived documents and disposal requests',
                 'create_archive' => 'Create archive records for documents',
-                'update_archive' => 'Edit archive records and retention policies',
-                'delete_archive' => 'Permanently remove archived records',
+                'update_archive' => 'Edit archive records',
+                'request_disposal' => 'Request file disposal after expiration',
                 'approve_disposal' => 'Approve document disposal requests',
-                'manage_retention' => 'Configure retention policies and schedules',
+                'request_restore' => 'Request restoration of archived folders',
+                'approve_restore' => 'Approve restoration requests for archived folders',
             ],
             'SYSTEM_ADMIN' => [
                 'view_users' => 'View user accounts and role assignments',
@@ -107,6 +108,8 @@ class Permissions
                 // Archive - can view and create
                 'view_archive',
                 'create_archive',
+                'request_restore',
+                'request_disposal',
             ],
             'admin' => [
                 // Document records - full access
@@ -134,8 +137,10 @@ class Permissions
                 'view_archive',
                 'create_archive',
                 'update_archive',
-                'manage_retention',
+                'request_disposal',
                 'approve_disposal',
+                'request_restore',
+                'approve_restore',
             ],
             'super_admin' => [
                 // Document records - all
@@ -165,9 +170,10 @@ class Permissions
                 'view_archive',
                 'create_archive',
                 'update_archive',
-                'delete_archive',
+                'request_disposal',
                 'approve_disposal',
-                'manage_retention',
+                'request_restore',
+                'approve_restore',
                 
                 // System - all
                 'view_users',

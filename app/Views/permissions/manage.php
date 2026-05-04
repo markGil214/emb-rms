@@ -1,6 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('content') ?>
+<?php $roles = $roles ?? []; ?>
 <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8 min-w-0">
 	<!-- Header with Manage Roles -->
 	<div class="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -227,19 +228,23 @@
 				},
 				'update_archive': {
 					label: 'Update',
-					description: 'Edit archive records and retention policies'
+					description: 'Edit archive records'
 				},
-				'delete_archive': {
-					label: 'Delete',
-					description: 'Permanently remove archived records'
+				'request_disposal': {
+					label: 'Request Disposal',
+					description: 'Request disposal for files that reached expiration'
 				},
 				'approve_disposal': {
 					label: 'Approve Dispose',
 					description: 'Approve document disposal requests'
 				},
-				'manage_retention': {
-					label: 'Manage Policies',
-					description: 'Configure retention policies and schedules'
+				'request_restore': {
+					label: 'Request Restore',
+					description: 'Request restoration of archived folders'
+				},
+				'approve_restore': {
+					label: 'Approve Restore',
+					description: 'Approve restoration requests for archived folders'
 				}
 			}
 		},

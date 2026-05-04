@@ -38,7 +38,7 @@ class BorrowTransactionModel extends Model
     protected $allowedFields    = [
         'folder_id', 'borrower_name', 'borrower_email', 'purpose',
         'borrowed_at', 'expected_return_date', 'actual_return_date',
-        'status', 'released_by', 'received_by', 'return_notes',
+        'status', 'released_by', 'received_by', 'notes', 'return_notes',
         'approved_at', 'approved_by', 'created_by',
         'notification_status', 'last_notification_sent_at', 'escalated_to_manager'
     ];
@@ -77,6 +77,7 @@ class BorrowTransactionModel extends Model
         'expected_return_date'  => 'required|valid_date[Y-m-d]',
         'borrower_name'         => 'required|string|min_length[2]|max_length[255]',
         'borrower_email'        => 'required|valid_email',
+        'notes'                 => 'permit_empty|max_length[1000]',
         // Status is NOT in creation validation—auto-set to 'Pending'
     ];
 

@@ -4,19 +4,25 @@ namespace App\Controllers;
 
 use App\Models\ArchiveRecordModel;
 use App\Models\DisposalRecordModel;
+use App\Models\FileDisposalRequestModel;
 use App\Models\FolderModel;
+use App\Models\RestorationRequestModel;
 
 class ArchiveDisposalController extends BaseController
 {
     protected $archiveModel;
     protected $disposalModel;
+    protected $fileDisposalRequestModel;
     protected $folderModel;
+    protected $restorationRequestModel;
 
     public function __construct()
     {
         $this->archiveModel = new ArchiveRecordModel();
         $this->disposalModel = new DisposalRecordModel();
+        $this->fileDisposalRequestModel = new FileDisposalRequestModel();
         $this->folderModel = new FolderModel();
+        $this->restorationRequestModel = new RestorationRequestModel();
     }
 
     /**
@@ -24,18 +30,68 @@ class ArchiveDisposalController extends BaseController
      */
     public function index()
     {
-        $archived = $this->archiveModel->getAllArchived();
-        $disposalPending = $this->disposalModel->getPending();
-        $disposalApproved = $this->disposalModel->getApproved();
+        $archiveDisposalRecords = $this->archiveModel->getArchiveDisposalRecords();
+        $pendingRestorationsByFolder = $this->getPendingRestorationsByFolder();
+        $workflowRequests = $this->getArchiveWorkflowRequests();
+        $statusFilter = trim((string) ($this->request->getGet('status') ?? ''));
+        $validStatusFilters = ['Archived', 'Pending Archive', 'Disposed'];
+
+        foreach ($archiveDisposalRecords as &$record) {
+            $record['current_status'] = $this->inferArchiveDisposalStatus($record);
+        }
+        unset($record);
+
+        foreach ($workflowRequests as &$request) {
+            $requestStatus = (string) ($request['status'] ?? '');
+            if ($requestStatus === 'Restoration Requested') {
+                continue;
+            }
+
+        }
+        unset($request);
+
+        if ($statusFilter !== '') {
+            if ($statusFilter === 'Archived' || $statusFilter === 'Disposed') {
+                $archiveDisposalRecords = array_values(array_filter(
+                    $archiveDisposalRecords,
+                    static function (array $record) use ($statusFilter): bool {
+                        return ($record['current_status'] ?? '') === $statusFilter;
+                    }
+                ));
+                $workflowRequests = [];
+            } elseif ($statusFilter === 'Pending Archive') {
+                $workflowRequests = array_values(array_filter(
+                    $workflowRequests,
+                    static function (array $request) use ($statusFilter): bool {
+                        return ($request['status'] ?? '') === $statusFilter;
+                    }
+                ));
+                $archiveDisposalRecords = [];
+            } else {
+                $statusFilter = '';
+            }
+        }
+
+        $statusCounts = $this->getArchiveDisposalStatusCounts($archiveDisposalRecords);
+        foreach ($workflowRequests as $request) {
+            $requestStatus = (string) ($request['status'] ?? '');
+            if (isset($statusCounts[$requestStatus])) {
+                $statusCounts[$requestStatus]++;
+            }
+        }
 
         return view('archive-disposal/index', [
             'title' => 'Archive & Disposal Management',
-            'archived' => $archived,
-            'disposalPending' => $disposalPending,
-            'disposalApproved' => $disposalApproved,
-            'totalArchived' => count($archived),
-            'totalDisposalPending' => count($disposalPending),
-            'totalDisposalApproved' => count($disposalApproved),
+            'archiveDisposalRecords' => $archiveDisposalRecords,
+            'archived' => $archiveDisposalRecords,
+            'pendingRestorationsByFolder' => $pendingRestorationsByFolder,
+            'workflowRequests' => $workflowRequests,
+            'statusCounts' => $statusCounts,
+            'statusFilter' => $statusFilter,
+            'totalArchived' => $statusCounts['Archived'],
+            'totalDisposalPending' => $statusCounts['Pending Disposal'],
+            'totalDisposalApproved' => $statusCounts['Approved for Disposal'],
+            'totalDisposed' => $statusCounts['Disposed'],
         ]);
     }
 
@@ -51,7 +107,9 @@ class ArchiveDisposalController extends BaseController
         }
 
         $folders = $this->folderModel->where('status !=', 'Archived')
-                                     ->where('status !=', 'Disposed')
+                         ->where('status !=', 'Archival')
+                         ->where('status !=', 'Disposed')
+                         ->where('status !=', 'Borrowed')
                                      ->findAll();
         $db = \Config\Database::connect();
         $locations = $db->table('locations')->get()->getResultArray();
@@ -89,6 +147,13 @@ class ArchiveDisposalController extends BaseController
             ]);
         }
 
+        // Prevent archival of borrowed records
+        if (in_array(($folder['status'] ?? ''), ['Borrowed', 'Archival'], true)) {
+            return redirect()->back()->withInput()->with('errors', [
+                'folder_id' => 'Cannot archive this record. Please change its status before archiving.',
+            ]);
+        }
+
         $archiveLocationId = (int) $this->request->getPost('archive_location_id');
         $db = \Config\Database::connect();
         $archiveLocation = $db->table('locations')->where('location_id', $archiveLocationId)->get()->getRowArray();
@@ -123,7 +188,7 @@ class ArchiveDisposalController extends BaseController
 
         $db->transComplete();
 
-        return redirect()->to('/archive-disposal')->with('success', 'Document archived successfully');
+        return redirect()->to(route_to('archive.index'))->with('success', 'Document archived successfully');
     }
 
     /**
@@ -191,6 +256,7 @@ class ArchiveDisposalController extends BaseController
             'title' => 'Request Disposal',
             'archived' => $archived,
             'disposalMethods' => ['Destruction', 'Recycling', 'Transfer', 'Donation', 'Return'],
+            'selectedArchiveId' => (int) ($this->request->getGet('archive_id') ?? 0),
         ]);
     }
 
@@ -248,6 +314,10 @@ class ArchiveDisposalController extends BaseController
             'approved_by' => null,
         ];
 
+        if ($this->tableHasColumn('disposal_records', 'requested_by')) {
+            $data['requested_by'] = auth_user()['user_id'] ?? null;
+        }
+
         if (!$this->disposalModel->save($data)) {
             return redirect()->back()->withInput()->with('errors',
                 $this->disposalModel->errors() ?: ['general' => 'Failed to create disposal record']
@@ -258,7 +328,7 @@ class ArchiveDisposalController extends BaseController
         $auditLog = service('auditLog');
         $auditLog->log(auth_user()['user_id'], 'request_disposal', "archive_id:{$data['archive_id']}");
 
-        return redirect()->to('/archive-disposal')->with('success', 'Disposal request created');
+        return redirect()->to(route_to('archive.index'))->with('success', 'Disposal request created');
     }
 
     /**
@@ -266,7 +336,7 @@ class ArchiveDisposalController extends BaseController
      */
     public function showDisposal(int $disposalId)
     {
-        $disposal = $this->disposalModel->find($disposalId);
+        $disposal = $this->getDisposalDetails($disposalId);
 
         if (!$disposal) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
@@ -291,7 +361,7 @@ class ArchiveDisposalController extends BaseController
     }
 
     /**
-     * Approve and execute disposal
+     * Approve a disposal request without executing disposal.
      */
     public function approveDisposal(int $disposalId)
     {
@@ -306,9 +376,9 @@ class ArchiveDisposalController extends BaseController
             ]);
         }
 
-        if ($this->disposalModel->inferStatus($disposal) !== 'Pending') {
+        if ($this->disposalModel->inferStatus($disposal) !== 'Pending Disposal') {
             return redirect()->back()->withInput()->with('errors', [
-                'status' => 'Only Pending disposal requests can be approved.',
+                'status' => 'Only pending disposal requests can be approved.',
             ]);
         }
 
@@ -320,8 +390,8 @@ class ArchiveDisposalController extends BaseController
         }
 
         $approvalData = [
-            'status' => 'Approved',
-            'disposal_date' => date('Y-m-d'),
+            'status' => 'Approved for Disposal',
+            'disposal_date' => null,
             'approved_by' => auth_user()['user_id'] ?? null,
         ];
 
@@ -330,7 +400,6 @@ class ArchiveDisposalController extends BaseController
         }
 
         if (!$this->disposalModel->update($disposalId, [
-            'disposal_date' => $approvalData['disposal_date'],
             'approved_by' => $approvalData['approved_by'],
         ])) {
             return redirect()->back()->withInput()->with('errors',
@@ -345,7 +414,106 @@ class ArchiveDisposalController extends BaseController
     }
 
     /**
-     * List pending disposal requests
+     * Complete an approved disposal and mark the folder disposed.
+     */
+    public function completeDisposal(int $disposalId)
+    {
+        if (!can('approve_disposal')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $disposal = $this->disposalModel->find($disposalId);
+        if (!$disposal) {
+            return redirect()->back()->with('error', 'Disposal request not found.');
+        }
+
+        if ($this->disposalModel->inferStatus($disposal) !== 'Approved for Disposal') {
+            return redirect()->back()->with('error', 'Only approved disposal requests can be marked disposed.');
+        }
+
+        $archive = $this->archiveModel->find((int) $disposal['archive_id']);
+        if (!$archive) {
+            return redirect()->back()->with('error', 'Related archive record not found.');
+        }
+
+        $completionData = [
+            'status' => 'Disposed',
+            'disposal_date' => date('Y-m-d'),
+            'approved_by' => $disposal['approved_by'] ?? null,
+        ];
+
+        if (!$this->disposalModel->validateLifecycleState($completionData)) {
+            return redirect()->back()->withInput()->with('errors', $this->disposalModel->getLifecycleErrors());
+        }
+
+        $db = \Config\Database::connect();
+        $db->transBegin();
+
+        $disposalUpdated = $this->disposalModel->update($disposalId, [
+            'disposal_date' => $completionData['disposal_date'],
+        ]);
+
+        $folderUpdated = $this->folderModel->update((int) $archive['folder_id'], [
+            'status' => 'Disposed',
+            'updated_by' => auth_user()['user_id'] ?? null,
+        ]);
+
+        if (!$disposalUpdated || !$folderUpdated) {
+            $db->transRollback();
+            return redirect()->back()->with('error', 'Failed to complete disposal.');
+        }
+
+        $db->transCommit();
+
+        try {
+            $auditLog = service('auditLog');
+            $auditLog->log(auth_user()['user_id'] ?? null, 'complete_disposal', "disposal_id:{$disposalId}");
+        } catch (\Throwable $e) {
+            log_message('error', 'Disposal completion audit logging failed: {message}', ['message' => $e->getMessage()]);
+        }
+
+        return redirect()->back()->with('success', 'Disposal marked as disposed');
+    }
+
+    /**
+     * Reject a pending disposal request.
+     */
+    public function rejectDisposal(int $disposalId)
+    {
+        if (!can('approve_disposal')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $disposal = $this->disposalModel->find($disposalId);
+        if (!$disposal) {
+            return redirect()->back()->with('error', 'Disposal request not found.');
+        }
+
+        if ($this->disposalModel->inferStatus($disposal) !== 'Pending Disposal') {
+            return redirect()->back()->with('error', 'Only pending disposal requests can be rejected.');
+        }
+
+        // Mark the disposal request as Rejected instead of deleting
+        $updated = $this->disposalModel->update($disposalId, [
+            'status' => 'Rejected',
+        ]);
+
+        if (!$updated) {
+            return redirect()->back()->with('error', 'Failed to reject disposal request.');
+        }
+
+        try {
+            $auditLog = service('auditLog');
+            $auditLog->log(auth_user()['user_id'] ?? null, 'reject_disposal', "disposal_id:{$disposalId}");
+        } catch (\Throwable $e) {
+            log_message('error', 'Disposal rejection audit logging failed: {message}', ['message' => $e->getMessage()]);
+        }
+
+        return redirect()->back()->with('success', 'Disposal request rejected');
+    }
+
+    /**
+     * List pending disposal and restoration requests.
      */
     public function pendingDisposal()
     {
@@ -353,17 +521,93 @@ class ArchiveDisposalController extends BaseController
             return redirect()->back()->with('error', 'Permission denied');
         }
 
-        // Get disposal records where disposal_date is NULL (not yet executed)
         $db = \Config\Database::connect();
-        $pending = $db->table('disposal_records')
-                     ->where('disposal_date IS NULL')
-                     ->get()
-                     ->getResultArray();
+        $pending = $db->table('file_disposal_requests fdr')
+            ->select('fdr.disposal_request_id, fdr.file_id, fdr.status, fdr.requested_at, fdr.approved_at, fdr.disposed_at, fdr.requested_by, fdr.approved_by, ff.file_name, ff.folder_id, f.file_code, f.company_name, requester.username as requested_by_name, approver.username as approved_by_name', false)
+            ->join('folder_files ff', 'ff.file_id = fdr.file_id', 'left')
+            ->join('folders f', 'f.folder_id = ff.folder_id', 'left')
+            ->join('users requester', 'requester.user_id = fdr.requested_by', 'left')
+            ->join('users approver', 'approver.user_id = fdr.approved_by', 'left')
+            ->whereIn('fdr.status', ['Pending', 'Approved'])
+            ->orderBy('fdr.requested_at', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        $rows = [];
+        foreach ($pending as $request) {
+            $fileLabel = $request['file_name'] ?: 'File #' . $request['file_id'];
+            $folderLabel = trim(($request['file_code'] ?? '') . ' ' . ($request['company_name'] ?? ''));
+            $status = ($request['status'] ?? '') === 'Approved' ? 'Approved for Disposal' : 'Pending Disposal';
+
+            $rows[] = [
+                'request_type' => 'File Disposal',
+                'request_id' => $request['disposal_request_id'],
+                'subject' => $folderLabel ? $fileLabel . ' (' . $folderLabel . ')' : $fileLabel,
+                'method' => 'File disposal',
+                'status' => $status,
+                'requested_at' => $request['requested_at'] ?? null,
+                'requested_by' => $request['requested_by_name'] ?? $request['requested_by'] ?? '-',
+                'approved_by' => $request['approved_by_name'] ?? '-',
+                'view_route' => !empty($request['folder_id']) ? 'records.show' : null,
+                'view_id' => $request['folder_id'] ?? null,
+                'approve_route' => ($request['status'] ?? '') === 'Pending' ? 'file-disposal.approve' : null,
+                'route_id' => $request['disposal_request_id'],
+                'action_label' => ($request['status'] ?? '') === 'Pending' ? 'Approve' : null,
+                'confirm_message' => 'Approve this disposal request?',
+                'fallback_action_label' => ($request['status'] ?? '') === 'Approved' ? 'Pending final disposal' : null,
+            ];
+        }
 
         return view('archive-disposal/disposal-pending', [
-            'title' => 'Pending Disposal Requests',
-            'pending' => $pending,
+            'title' => 'File Disposal Approvals',
+            'pending' => $rows,
         ]);
+    }
+
+    /**
+     * Approve a pending file disposal request.
+     */
+    public function approveFileDisposal(int $requestId)
+    {
+        if (!can('approve_disposal')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $db = \Config\Database::connect();
+        if (!$db->tableExists('file_disposal_requests')) {
+            return redirect()->back()->with('error', 'File disposal workflow table is not ready yet. Please run database migrations first.');
+        }
+
+        $request = $this->fileDisposalRequestModel->find($requestId);
+        if (!$request) {
+            return redirect()->back()->with('error', 'File disposal request not found.');
+        }
+
+        if (($request['status'] ?? '') !== 'Pending') {
+            return redirect()->back()->with('error', 'Only pending file disposal requests can be approved.');
+        }
+
+        $updated = $db->table('file_disposal_requests')
+            ->where('disposal_request_id', $requestId)
+            ->where('status', 'Pending')
+            ->update([
+                'status' => 'Approved',
+                'approved_by' => auth_user()['user_id'] ?? null,
+                'approved_at' => date('Y-m-d H:i:s'),
+            ]);
+
+        if (!$updated) {
+            return redirect()->back()->with('error', 'Failed to approve file disposal request.');
+        }
+
+        try {
+            $auditLog = service('auditLog');
+            $auditLog->log(auth_user()['user_id'] ?? null, 'approve_file_disposal', "disposal_request_id:{$requestId}");
+        } catch (\Throwable $e) {
+            log_message('error', 'File disposal approval audit logging failed: {message}', ['message' => $e->getMessage()]);
+        }
+
+        return redirect()->back()->with('success', 'File disposal request approved');
     }
 
     /**
@@ -372,23 +616,71 @@ class ArchiveDisposalController extends BaseController
     public function completedDisposal()
     {
         $db = \Config\Database::connect();
-        $completed = $db->table('disposal_records')
-                       ->where('disposal_date IS NOT NULL')
-                       ->get()
-                       ->getResultArray();
+        $completed = [];
+
+        $archiveCompleted = $db->table('disposal_records')
+            ->where('disposal_date IS NOT NULL')
+            ->get()
+            ->getResultArray();
+
+        foreach ($archiveCompleted as $disposal) {
+            $completed[] = [
+                'request_type' => 'Archive',
+                'request_id' => $disposal['disposal_id'],
+                'subject' => 'Archive #' . ($disposal['archive_id'] ?? '-'),
+                'method' => $disposal['disposal_method'] ?? '-',
+                'status' => 'Disposed',
+                'requested_at' => $disposal['created_at'] ?? null,
+                'completed_at' => $disposal['disposal_date'] ?? null,
+                'view_route' => 'disposal.show',
+                'route_id' => $disposal['disposal_id'],
+            ];
+        }
+
+        if ($db->tableExists('file_disposal_requests')) {
+            $fileCompleted = $db->table('file_disposal_requests fdr')
+                    ->select('fdr.disposal_request_id, fdr.file_id, fdr.status, fdr.requested_at, fdr.created_at, fdr.approved_at, fdr.disposed_at, ff.file_name, ff.folder_id, f.file_code, f.company_name')
+                    ->join('folder_files ff', 'ff.file_id = fdr.file_id', 'left')
+                    ->join('folders f', 'f.folder_id = ff.folder_id', 'left')
+                    ->where('fdr.status', 'Disposed')
+                    ->orderBy('COALESCE(fdr.disposed_at, fdr.approved_at, fdr.updated_at)', 'DESC', false)
+                    ->get()
+                ->getResultArray();
+
+            foreach ($fileCompleted as $disposal) {
+                $fileLabel = $disposal['file_name'] ?: 'File #' . $disposal['file_id'];
+                $folderLabel = trim(($disposal['file_code'] ?? '') . ' ' . ($disposal['company_name'] ?? ''));
+
+                $completed[] = [
+                    'request_type' => 'File',
+                    'request_id' => $disposal['disposal_request_id'],
+                    'subject' => $folderLabel ? $fileLabel . ' (' . $folderLabel . ')' : $fileLabel,
+                    'method' => 'File disposal',
+                    'status' => $disposal['status'] ?? 'Disposed',
+                    'requested_at' => $disposal['requested_at'] ?? $disposal['created_at'] ?? null,
+                    'completed_at' => $disposal['disposed_at'] ?? $disposal['approved_at'] ?? null,
+                    'view_route' => !empty($disposal['folder_id']) ? 'records.show' : null,
+                    'route_id' => $disposal['folder_id'] ?? null,
+                ];
+            }
+        }
+
+        usort($completed, static function (array $left, array $right): int {
+            return strtotime((string) ($right['completed_at'] ?? '')) <=> strtotime((string) ($left['completed_at'] ?? ''));
+        });
 
         return view('archive-disposal/disposal-completed', [
-            'title' => 'Completed Disposals',
+            'title' => 'Disposed Records',
             'completed' => $completed,
         ]);
     }
 
     /**
-     * Archive a folder directly from Document Records list.
+     * Submit a folder archive request from Document Records.
      */
     public function archiveFolderFromRecords(int $folderId)
     {
-        if (!can('request_archive') && !can('archive_document')) {
+        if (!can('create_archive') && !can('request_archive') && !can('archive_document')) {
             return redirect()->back()->with('error', 'Permission denied');
         }
 
@@ -405,6 +697,45 @@ class ArchiveDisposalController extends BaseController
             return redirect()->back()->with('error', 'Disposed folders cannot be archived');
         }
 
+        if (in_array($folder['status'] ?? '', ['Pending', 'Pending Update', 'Pending Archive'], true)) {
+            return redirect()->back()->with('error', 'This folder already has a pending request');
+        }
+
+        if (!$this->folderModel->update($folderId, [
+            'status' => 'Pending Archive',
+            'updated_by' => auth_user()['user_id'] ?? null,
+        ])) {
+            return redirect()->back()->with('error', 'Failed to submit archive request');
+        }
+
+        try {
+            $auditLog = service('auditLog');
+            $auditLog->log(auth_user()['user_id'] ?? null, 'request_archive', "folder_id:{$folderId}");
+        } catch (\Throwable $e) {
+            log_message('error', 'Archive request audit logging failed: {message}', ['message' => $e->getMessage()]);
+        }
+
+        return redirect()->to('/document-records')->with('success', 'Archive request submitted for approval');
+    }
+
+    /**
+     * Approve a pending folder archive request.
+     */
+    public function approveArchiveRequest(int $folderId)
+    {
+        if (!can('approve_archive')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $folder = $this->folderModel->find($folderId);
+        if (!$folder) {
+            return redirect()->back()->with('error', 'Folder not found');
+        }
+
+        if (($folder['status'] ?? '') !== 'Pending Archive') {
+            return redirect()->back()->with('error', 'Only pending archive requests can be approved');
+        }
+
         $archiveLocationId = (int) ($folder['location_id'] ?? 0);
         $db = \Config\Database::connect();
         $archiveLocation = $db->table('locations')->where('location_id', $archiveLocationId)->get()->getRowArray();
@@ -412,7 +743,7 @@ class ArchiveDisposalController extends BaseController
             return redirect()->back()->with('error', 'Folder location is invalid for archive record');
         }
 
-        $db->transStart();
+        $db->transBegin();
 
         $saved = $this->archiveModel->insert([
             'folder_id' => $folderId,
@@ -421,44 +752,151 @@ class ArchiveDisposalController extends BaseController
             'archived_by' => auth_user()['user_id'] ?? null,
         ]);
 
-        if (!$saved) {
+        $updated = $this->folderModel->update($folderId, [
+            'status' => 'Archived',
+            'updated_by' => auth_user()['user_id'] ?? null,
+        ]);
+
+        if (!$saved || !$updated) {
             $db->transRollback();
-            return redirect()->back()->with('error', 'Failed to create archive record');
+            return redirect()->back()->with('error', 'Failed to approve archive request');
         }
 
-        $updated = $db->table('folders')
-            ->where('folder_id', $folderId)
-            ->update([
-                'status' => 'Archived',
-                'updated_by' => auth_user()['user_id'] ?? null,
-            ]);
-
-        if (!$updated) {
-            $db->transRollback();
-            return redirect()->back()->with('error', 'Failed to update folder status to Archived');
-        }
-
-        $db->transComplete();
+        $db->transCommit();
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'], 'create_archive', "folder_id:{$folderId}");
+            $auditLog->log(auth_user()['user_id'] ?? null, 'approve_archive', "folder_id:{$folderId}");
         } catch (\Throwable $e) {
-            log_message('error', 'Archive audit logging failed: {message}', ['message' => $e->getMessage()]);
+            log_message('error', 'Archive approval audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
 
-        return redirect()->to('/document-records')->with('success', 'Folder archived successfully');
+        return redirect()->back()->with('success', 'Archive request approved');
     }
 
     /**
-     * Restore archived folder back to Available status
+     * Decline a pending folder archive request.
      */
-    public function restoreFolder(int $folderId)
+    public function declineArchiveRequest(int $folderId)
     {
-        if (!can('request_archive') && !can('archive_document')) {
+        if (!can('approve_archive')) {
             return redirect()->back()->with('error', 'Permission denied');
         }
 
+        $folder = $this->folderModel->find($folderId);
+        if (!$folder) {
+            return redirect()->back()->with('error', 'Folder not found');
+        }
+
+        if (($folder['status'] ?? '') !== 'Pending Archive') {
+            return redirect()->back()->with('error', 'Only pending archive requests can be declined');
+        }
+
+        $restoredStatus = !empty($folder['current_borrow_transaction_id']) ? 'Borrowed' : 'Available';
+        if (!$this->folderModel->update($folderId, [
+            'status' => $restoredStatus,
+            'updated_by' => auth_user()['user_id'] ?? null,
+        ])) {
+            return redirect()->back()->with('error', 'Failed to decline archive request');
+        }
+
+        try {
+            $auditLog = service('auditLog');
+            $auditLog->log(auth_user()['user_id'] ?? null, 'decline_archive', "folder_id:{$folderId}");
+        } catch (\Throwable $e) {
+            log_message('error', 'Archive decline audit logging failed: {message}', ['message' => $e->getMessage()]);
+        }
+
+        return redirect()->back()->with('success', 'Archive request declined');
+    }
+
+    /**
+     * Request restoration for an archived folder.
+     */
+    public function requestRestoration(int $folderId)
+    {
+        if (!can('request_restore')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $db = \Config\Database::connect();
+        if (!$db->tableExists('restoration_requests')) {
+            return redirect()->back()->with('error', 'Restoration workflow table is not ready yet. Please run database migrations first.');
+        }
+
+        $folder = $this->folderModel->find($folderId);
+        if (!$folder) {
+            return redirect()->back()->with('error', 'Folder not found');
+        }
+
+        if ($folder['status'] !== 'Archived') {
+            return redirect()->back()->with('error', 'Only archived folders can be requested for restoration');
+        }
+
+        if ($this->restorationRequestModel->pendingForFolder($folderId)) {
+            return redirect()->back()->with('error', 'A restoration request is already pending for this folder');
+        }
+
+        $archive = $db->table('archive_records')
+            ->where('folder_id', $folderId)
+            ->orderBy('archive_id', 'DESC')
+            ->get()
+            ->getRowArray();
+
+        $saved = $this->restorationRequestModel->insert([
+            'folder_id' => $folderId,
+            'archive_id' => $archive['archive_id'] ?? null,
+            'status' => 'Pending',
+            'requested_by' => auth_user()['user_id'] ?? null,
+            'requested_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        if (!$saved) {
+            return redirect()->back()->with('error', 'Failed to create restoration request');
+        }
+
+        try {
+            $auditLog = service('auditLog');
+            $auditLog->log(auth_user()['user_id'], 'request_restore', "folder_id:{$folderId}");
+        } catch (\Throwable $e) {
+            log_message('error', 'Restoration request audit logging failed: {message}', ['message' => $e->getMessage()]);
+        }
+
+        return redirect()->to(route_to('archive.index'))->with('success', 'Restoration request submitted for approval');
+    }
+
+    /**
+     * Backward-compatible route target for older restore links.
+     */
+    public function restoreFolder(int $folderId)
+    {
+        return $this->requestRestoration($folderId);
+    }
+
+    /**
+     * Approve a pending restoration request and restore the folder.
+     */
+    public function approveRestoration(int $requestId)
+    {
+        if (!can('approve_restore')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $db = \Config\Database::connect();
+        if (!$db->tableExists('restoration_requests')) {
+            return redirect()->back()->with('error', 'Restoration workflow table is not ready yet. Please run database migrations first.');
+        }
+
+        $request = $this->restorationRequestModel->find($requestId);
+        if (!$request) {
+            return redirect()->back()->with('error', 'Restoration request not found');
+        }
+
+        if (($request['status'] ?? '') !== 'Pending') {
+            return redirect()->back()->with('error', 'Only pending restoration requests can be approved');
+        }
+
+        $folderId = (int) $request['folder_id'];
         $folder = $this->folderModel->find($folderId);
         if (!$folder) {
             return redirect()->back()->with('error', 'Folder not found');
@@ -468,28 +906,237 @@ class ArchiveDisposalController extends BaseController
             return redirect()->back()->with('error', 'Only archived folders can be restored');
         }
 
-        $db = \Config\Database::connect();
+        $db->transBegin();
 
-        // Use direct table update to avoid full model validation for required create fields.
-        $updated = $db->table('folders')
+        $folderUpdated = $db->table('folders')
             ->where('folder_id', $folderId)
             ->update([
                 'status' => 'Available',
                 'updated_by' => auth_user()['user_id'] ?? null,
             ]);
 
-        if (!$updated) {
-            return redirect()->back()->with('error', 'Failed to restore folder status');
+        $requestUpdated = $db->table('restoration_requests')
+            ->where('restoration_request_id', $requestId)
+            ->where('status', 'Pending')
+            ->update([
+                'status' => 'Approved',
+                'approved_by' => auth_user()['user_id'] ?? null,
+                'approved_at' => date('Y-m-d H:i:s'),
+            ]);
+
+        if (!$folderUpdated || !$requestUpdated) {
+            $db->transRollback();
+            return redirect()->back()->with('error', 'Failed to approve restoration request');
         }
 
-        // Do not block restore if audit table/service is unavailable.
+        $db->transCommit();
+
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'], 'restore_folder', "folder_id:{$folderId}");
+            $auditLog->log(auth_user()['user_id'], 'approve_restore', "restoration_request_id:{$requestId}");
         } catch (\Throwable $e) {
-            log_message('error', 'Restore audit logging failed: {message}', ['message' => $e->getMessage()]);
+            log_message('error', 'Restoration approval audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
 
-        return redirect()->to('/archive')->with('success', 'Folder restored to Available status');
+        return redirect()->back()->with('success', 'Restoration request approved');
+    }
+
+    private function getArchiveDisposalStatusCounts(array $records): array
+    {
+        $counts = [
+            'Archived' => 0,
+            'Pending Archive' => 0,
+            'Pending Disposal' => 0,
+            'Approved for Disposal' => 0,
+            'Disposed' => 0,
+        ];
+
+        foreach ($records as $record) {
+            $status = $record['current_status'] ?? $this->inferArchiveDisposalStatus($record);
+            if (!array_key_exists($status, $counts)) {
+                continue;
+            }
+
+            $counts[$status]++;
+        }
+
+        return $counts;
+    }
+
+    private function inferArchiveDisposalStatus(array $record): string
+    {
+        if (($record['folder_status'] ?? '') === 'Pending Archive') {
+            return 'Pending Archive';
+        }
+
+        if (($record['folder_status'] ?? '') === 'Disposed') {
+            return 'Disposed';
+        }
+
+        return 'Archived';
+    }
+
+    private function tableHasColumn(string $table, string $column): bool
+    {
+        $db = \Config\Database::connect();
+        if (!$db->tableExists($table)) {
+            return false;
+        }
+
+        return in_array($column, $db->getFieldNames($table), true);
+    }
+
+    private function getDisposalDetails(int $disposalId): ?array
+    {
+        $db = \Config\Database::connect();
+        $hasDisposalRequester = $this->tableHasColumn('disposal_records', 'requested_by');
+
+        $builder = $db->table('disposal_records dr')
+            ->select('dr.*, approver.username as approved_by_name', false)
+            ->join('users approver', 'approver.user_id = dr.approved_by', 'left')
+            ->where('dr.disposal_id', $disposalId);
+
+        if ($hasDisposalRequester) {
+            $builder
+                ->select('requester.username as requested_by_name', false)
+                ->join('users requester', 'requester.user_id = dr.requested_by', 'left');
+        } else {
+            $builder->select('NULL as requested_by, NULL as requested_by_name', false);
+        }
+
+        $record = $builder->get()->getRowArray();
+        if (!$record) {
+            return null;
+        }
+
+        $record['status'] = $this->disposalModel->inferStatus($record);
+
+        return $record;
+    }
+
+    private function getPendingRestorationsByFolder(): array
+    {
+        $db = \Config\Database::connect();
+        if (!$db->tableExists('restoration_requests')) {
+            return [];
+        }
+
+        $requests = $db->table('restoration_requests')
+            ->select('restoration_request_id, folder_id')
+            ->where('status', 'Pending')
+            ->orderBy('restoration_request_id', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        $byFolder = [];
+        foreach ($requests as $request) {
+            $folderId = (int) $request['folder_id'];
+            if (!isset($byFolder[$folderId])) {
+                $byFolder[$folderId] = $request;
+            }
+        }
+
+        return $byFolder;
+    }
+
+    private function getArchiveWorkflowRequests(): array
+    {
+        $db = \Config\Database::connect();
+        $requests = [];
+        $canReviewArchive = can('approve_archive') || is_super_admin();
+        $canReviewRestore = can('approve_restore') || is_super_admin();
+
+        // Restoration requests are shown on the archive row itself via getPendingRestorationsByFolder().
+        // Keep them out of the standalone workflow list to avoid duplicate pending entries.
+
+        if ($canReviewArchive) {
+            $pendingArchiveFolders = $db->table('folders f')
+                ->select('f.folder_id, f.file_code, f.company_name, f.status, f.updated_by, f.updated_at, u.username')
+                ->join('users u', 'u.user_id = f.updated_by', 'left')
+                ->where('f.status', 'Pending Archive')
+                ->orderBy('f.updated_at', 'DESC')
+                ->get()
+                ->getResultArray();
+
+            foreach ($pendingArchiveFolders as $folder) {
+                $folderLabel = trim(($folder['file_code'] ?? '') . ' ' . ($folder['company_name'] ?? ''));
+
+                $requests[] = [
+                    'request_type' => 'Archive',
+                    'request_id' => $folder['folder_id'],
+                    'subject' => $folderLabel ?: 'Folder #' . $folder['folder_id'],
+                    'method' => 'Archive folder',
+                    'status' => 'Pending Archive',
+                    'requested_at' => $folder['updated_at'] ?? null,
+                    'requested_by' => $folder['username'] ?? $folder['updated_by'] ?? '-',
+                    'view_route' => 'records.show',
+                    'view_id' => $folder['folder_id'],
+                    'approve_route' => 'archive-request.approve',
+                    'decline_route' => 'archive-request.decline',
+                    'route_id' => $folder['folder_id'],
+                    'action_label' => 'Approve Archive',
+                    'decline_label' => 'Reject Archive',
+                    'confirm_message' => 'Approve this archive request?',
+                    'decline_confirm_message' => 'Reject this archive request?',
+                    'workflow_stage' => 'pending-archive',
+                    'archive_status' => 'Pending Archive',
+                    'approved_by' => '-',
+                ];
+            }
+        }
+
+        if ($canReviewRestore && $db->tableExists('restoration_requests')) {
+            $restorationPending = $db->table('restoration_requests rr')
+                ->select('rr.restoration_request_id, rr.folder_id, rr.requested_at, rr.created_at, rr.requested_by, f.file_code, f.company_name, u.username')
+                ->join('folders f', 'f.folder_id = rr.folder_id', 'left')
+                ->join('users u', 'u.user_id = rr.requested_by', 'left')
+                ->where('rr.status', 'Pending')
+                ->orderBy('rr.requested_at', 'DESC')
+                ->get()
+                ->getResultArray();
+
+            foreach ($restorationPending as $restoration) {
+                $folderLabel = trim(($restoration['file_code'] ?? '') . ' ' . ($restoration['company_name'] ?? ''));
+
+                $requests[] = [
+                    'request_type' => 'Restoration',
+                    'request_id' => $restoration['restoration_request_id'],
+                    'subject' => $folderLabel ?: 'Folder #' . $restoration['folder_id'],
+                    'method' => 'Restore folder',
+                    'status' => 'Restoration Requested',
+                    'requested_at' => $restoration['requested_at'] ?? $restoration['created_at'] ?? null,
+                    'requested_by' => $restoration['username'] ?? $restoration['requested_by'] ?? '-',
+                    'view_route' => !empty($restoration['folder_id']) ? 'records.show' : null,
+                    'view_id' => $restoration['folder_id'] ?? null,
+                    'approve_route' => 'restoration.approve',
+                    'route_id' => $restoration['restoration_request_id'],
+                    'action_label' => 'Approve',
+                    'confirm_message' => 'Approve this restoration request?',
+                ];
+            }
+        }
+
+        usort($requests, static function (array $left, array $right): int {
+            return strtotime((string) ($right['requested_at'] ?? '')) <=> strtotime((string) ($left['requested_at'] ?? ''));
+        });
+
+        return $requests;
+    }
+
+    private function getFileDisposalCount($statuses): int
+    {
+        $db = \Config\Database::connect();
+        if (!$db->tableExists('file_disposal_requests')) {
+            return 0;
+        }
+
+        $builder = $db->table('file_disposal_requests');
+        if (is_array($statuses)) {
+            $builder->whereIn('status', $statuses);
+        } else {
+            $builder->where('status', $statuses);
+        }
+
+        return $builder->countAllResults();
     }
 }

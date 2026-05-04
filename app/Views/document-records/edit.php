@@ -6,6 +6,60 @@
 
 <div class="mx-auto w-full max-w-10xl px-4 py-6 sm:px-6 lg:px-8">
 
+    <div id="editValidationAlert" class="hidden" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 50;
+        width: 340px;
+        padding: 18px;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        background: rgba(15, 23, 42, 0.94);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+        border-top: 3px solid #3b82f6;
+    ">
+        <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <div style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(59, 130, 246, 0.14); color: #93c5fd;">
+                <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div style="min-width: 0;">
+                <div style="font-size: 14px; font-weight: 700; color: #f8fafc; line-height: 1.2;">Location required</div>
+                <div id="editValidationAlertMessage" style="margin-top: 4px; font-size: 12px; color: rgba(226, 232, 240, 0.78); line-height: 1.45;">Please select both Rack and Shelf.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="recordUpdateAlert" class="hidden" style="
+        width: 340px;
+        padding: 18px;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        background: rgba(15, 23, 42, 0.94);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+        border-top: 3px solid #10b981;
+    ">
+        <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <div style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(16, 185, 129, 0.14); color: #6ee7b7;">
+                <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div style="min-width: 0;">
+                <div style="font-size: 14px; font-weight: 700; color: #f8fafc; line-height: 1.2;">Record updated</div>
+                <div class="recordUpdateAlertMessage" style="margin-top: 4px; font-size: 12px; color: rgba(226, 232, 240, 0.78); line-height: 1.45;">Saving your changes...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="alertsContainer" style="position: fixed; top: 20px; right: 20px; z-index: 50;"></div>
+
     <!-- Header -->
 
     <div class="text-left mb-6">
@@ -146,23 +200,21 @@
 
 
 
-                    <!-- Cabinet -->
+                    <!-- Rack -->
 
                     <div>
 
                         <label for="cabinet" class="block text-sm font-semibold text-gray-700 mb-1">
 
-                            Cabinet
+                            Rack
 
                         </label>
 
-                        <input type="text" id="cabinet" name="cabinet" 
-
-                            value="<?= old('cabinet') ?>"
-
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-
-                            placeholder="Enter cabinet number">
+                        <select id="cabinet" name="cabinet"
+                            class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg cursor-not-allowed"
+                            disabled>
+                            <option value="">-- Select Rack --</option>
+                        </select>
 
                     </div>
 
@@ -240,98 +292,29 @@
 
                     </div>
 
-                    <!-- Status -->
+                    <!-- Shelf -->
 
                     <div>
 
-                        <label for="status" class="block text-sm font-semibold text-gray-700 mb-1">
+                        <label for="shelf" class="block text-sm font-semibold text-gray-700 mb-1">
 
-                            Status
+                            Shelf
 
                         </label>
 
-                        <select id="status" name="status" 
-
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-
-                            <option value="Available" <?= $folder['status'] === 'Available' ? 'selected' : '' ?>>Available</option>
-
-                            <option value="Borrowed" <?= $folder['status'] === 'Borrowed' ? 'selected' : '' ?>>Borrowed</option>
-
-                            <option value="Archived" <?= $folder['status'] === 'Archived' ? 'selected' : '' ?>>Archived</option>
-
-                            <option value="Disposed" <?= $folder['status'] === 'Disposed' ? 'selected' : '' ?>>Disposed</option>
-
+                        <select id="shelf" name="shelf"
+                            class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg cursor-not-allowed"
+                            disabled>
+                            <option value="">-- Select Shelf --</option>
                         </select>
 
-                    </div>
+                        <input type="hidden" id="location_id" name="location_id" value="<?= esc(old('location_id', $folder['location_id'] ?? '')) ?>">
 
+                        <?php if (isset($errors['location_id'])): ?>
 
-
-                    <!-- Due Date -->
-
-                    <div>
-
-                        <label for="due_date" class="block text-sm font-semibold text-gray-700 mb-1">
-
-                            Due Date
-
-                        </label>
-
-                        <input type="date" id="due_date" name="due_date" 
-
-                            value="<?= old('due_date', $folder['due_date'] ?? '') ?>"
-
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-
-                        <?php if (isset($errors['due_date'])): ?>
-
-                            <p class="mt-1 text-sm text-red-600"><?= $errors['due_date'] ?></p>
+                            <p class="mt-1 text-sm text-red-600"><?= esc($errors['location_id']) ?></p>
 
                         <?php endif; ?>
-
-                    </div>
-
-
-
-                    <!-- Rack -->
-
-                    <div>
-
-                        <label for="rack" class="block text-sm font-semibold text-gray-700 mb-1">
-
-                            Rack
-
-                        </label>
-
-                        <input type="text" id="rack" name="rack" 
-
-                            value="<?= old('rack') ?>"
-
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-
-                            placeholder="Enter rack number">
-
-                    </div>
-
-
-
-                    <!-- Notes/Additional Info (Optional) -->
-
-                    <div>
-
-
-                        <label for="notes" class="block text-sm font-semibold text-gray-700 mb-1">
-
-                            Notes
-
-                        </label>
-
-                        <textarea id="notes" rows="3"
-
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-
-                            placeholder="Add any additional notes..."></textarea>
 
                     </div>
 
@@ -374,8 +357,215 @@
     (function () {
         const folderTypeSelect = document.getElementById('folder_type');
         const categorySelect = document.getElementById('category_id');
-        if (!folderTypeSelect || !categorySelect) {
-            return;
+        const locationsData = <?= json_encode($locations ?? []) ?>;
+        const selectedRack = <?= json_encode(old('cabinet', $folder['cabinet'] ?? '')) ?>;
+        const selectedShelf = <?= json_encode(old('shelf', $folder['rack'] ?? '')) ?>;
+        const selectedLocationId = <?= json_encode((string) old('location_id', $folder['location_id'] ?? '')) ?>;
+        const rackSelect = document.getElementById('cabinet');
+        const shelfSelect = document.getElementById('shelf');
+        const locationIdInput = document.getElementById('location_id');
+        const validationAlert = document.getElementById('editValidationAlert');
+        const validationAlertMessage = document.getElementById('editValidationAlertMessage');
+        let validationAlertTimer = null;
+
+        function showEditValidationAlert(message) {
+            if (!validationAlert) {
+                return;
+            }
+
+            if (validationAlertMessage) {
+                validationAlertMessage.textContent = message;
+            }
+
+            validationAlert.classList.remove('hidden');
+            window.clearTimeout(validationAlertTimer);
+            validationAlertTimer = window.setTimeout(function () {
+                validationAlert.classList.add('hidden');
+            }, 3500);
+        }
+
+        function labelWithPrefix(prefix, value) {
+            value = String(value || '').trim();
+            if (value === '') {
+                return '';
+            }
+
+            return value.toLowerCase().indexOf(prefix.toLowerCase() + ' ') === 0 ? value : prefix + ' ' + value;
+        }
+
+        function populateShelves(rackValue, shelfValue) {
+            if (!shelfSelect || !locationIdInput) {
+                return;
+            }
+
+            shelfSelect.innerHTML = '<option value="">-- Select Shelf --</option>';
+            locationIdInput.value = '';
+
+            if (!rackValue) {
+                shelfSelect.disabled = true;
+                return;
+            }
+
+            const shelves = locationsData
+                .filter(function (location) {
+                    return location.cabinet === rackValue;
+                })
+                .map(function (location) {
+                    return {
+                        shelf: location.shelf || location.cabinet,
+                        locationId: location.location_id
+                    };
+                });
+
+            const uniqueShelves = Array.from(new Map(shelves.map(function (item) {
+                return [item.shelf, item];
+            })).values()).sort(function (left, right) {
+                return String(left.shelf).localeCompare(String(right.shelf));
+            });
+
+            uniqueShelves.forEach(function (item) {
+                const option = document.createElement('option');
+                option.value = JSON.stringify({ shelf: item.shelf, locationId: item.locationId });
+                option.textContent = labelWithPrefix('Shelf', item.shelf);
+                if (String(item.shelf) === String(shelfValue) || String(item.locationId) === String(selectedLocationId)) {
+                    option.selected = true;
+                    locationIdInput.value = item.locationId;
+                }
+                shelfSelect.appendChild(option);
+            });
+
+            shelfSelect.disabled = false;
+        }
+
+        // Rack and Shelf are now read-only and locked down
+        // Display current values in the disabled fields
+        if (rackSelect) {
+            const currentRack = <?= json_encode($folder['cabinet'] ?? '') ?>;
+            if (currentRack) {
+                const option = document.createElement('option');
+                option.value = currentRack;
+                option.textContent = 'Rack ' + currentRack;
+                option.selected = true;
+                rackSelect.appendChild(option);
+            }
+        }
+        
+        if (shelfSelect) {
+            const currentShelf = <?= json_encode($folder['rack'] ?? '') ?>;
+            if (currentShelf) {
+                const option = document.createElement('option');
+                option.value = currentShelf;
+                option.textContent = 'Shelf ' + currentShelf;
+                option.selected = true;
+                shelfSelect.appendChild(option);
+            }
+        }
+        
+        // The following code is disabled to prevent user interaction
+        /*
+        if (rackSelect && shelfSelect && locationIdInput) {
+            const racks = Array.from(new Set(locationsData.map(function (location) {
+                return location.cabinet;
+            }).filter(Boolean))).sort();
+
+            racks.forEach(function (rack) {
+                const option = document.createElement('option');
+                option.value = rack;
+                option.textContent = labelWithPrefix('Rack', rack);
+                if (String(rack) === String(selectedRack)) {
+                    option.selected = true;
+                }
+                rackSelect.appendChild(option);
+            });
+
+            rackSelect.addEventListener('change', function () {
+                populateShelves(this.value, '');
+            });
+
+            shelfSelect.addEventListener('change', function () {
+                locationIdInput.value = '';
+                if (this.value) {
+                    const selected = JSON.parse(this.value);
+                    locationIdInput.value = selected.locationId;
+                }
+            });
+
+            if (selectedRack) {
+                populateShelves(selectedRack, selectedShelf);
+            }
+        }
+        */
+
+        const editForm = document.getElementById('editFolderForm');
+        const recordUpdateAlertTemplate = document.getElementById('recordUpdateAlert');
+        const alertsContainer = document.getElementById('alertsContainer');
+        let updateClickCount = 0;
+        let activeAlerts = [];
+        let isSubmitting = false;
+
+        function showRecordUpdateAlert() {
+            if (!recordUpdateAlertTemplate || !alertsContainer) {
+                return;
+            }
+
+            updateClickCount++;
+            const alertId = 'recordUpdateAlert_' + updateClickCount;
+            
+            // Clone the template alert
+            const newAlert = recordUpdateAlertTemplate.cloneNode(true);
+            newAlert.id = alertId;
+            newAlert.classList.remove('hidden');
+            newAlert.style.marginBottom = '10px';
+            newAlert.style.width = '340px';
+            newAlert.style.display = 'block';
+            
+            // Update the message with the click count
+            const messageElement = newAlert.querySelector('.recordUpdateAlertMessage');
+            if (messageElement) {
+                messageElement.textContent = 'Update #' + updateClickCount + ' - Saving your changes...';
+            }
+            
+            // Add to container
+            alertsContainer.appendChild(newAlert);
+            activeAlerts.push({
+                id: alertId,
+                element: newAlert,
+                timer: null
+            });
+            
+            // Auto-hide after 3.5 seconds
+            const alertObj = activeAlerts[activeAlerts.length - 1];
+            alertObj.timer = window.setTimeout(function () {
+                newAlert.style.opacity = '0';
+                newAlert.style.transition = 'opacity 0.3s ease-out';
+                window.setTimeout(function () {
+                    if (newAlert.parentNode) {
+                        newAlert.parentNode.removeChild(newAlert);
+                    }
+                    activeAlerts = activeAlerts.filter(function (alert) {
+                        return alert.id !== alertId;
+                    });
+                }, 300);
+            }, 3500);
+        }
+
+        if (editForm && locationIdInput) {
+            editForm.addEventListener('submit', function (event) {
+                // Rack and Shelf are now locked, only check that location_id exists
+                if (!locationIdInput.value) {
+                    event.preventDefault();
+                    showEditValidationAlert('Location information is missing.');
+                } else if (!isSubmitting) {
+                    event.preventDefault();
+                    isSubmitting = true;
+                    showRecordUpdateAlert();
+                    
+                    // Submit the form after 3 seconds
+                    window.setTimeout(function () {
+                        editForm.submit();
+                    }, 1000);
+                }
+            });
         }
 
         // Category options come directly from the database and are shown as plain names.

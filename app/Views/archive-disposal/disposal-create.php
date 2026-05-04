@@ -37,7 +37,8 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 <option value="">-- Choose Archive Record --</option>
                 <?php foreach ($archived as $archive): ?>
-                    <option value="<?= $archive['archive_id'] ?>">
+                    <?php $isSelected = (int) old('archive_id', $selectedArchiveId ?? 0) === (int) $archive['archive_id']; ?>
+                    <option value="<?= $archive['archive_id'] ?>" <?= $isSelected ? 'selected' : '' ?>>
                         #<?= esc($archive['archive_id']) ?> - <?= esc($archive['file_code'] ?? ('Folder ' . $archive['folder_id'])) ?> - <?= esc($archive['company_name'] ?? '') ?>
                     </option>
                 <?php endforeach; ?>
@@ -59,7 +60,7 @@
 
         <div class="mb-6">
             <label for="compliance_reference" class="block text-sm font-medium text-gray-700 mb-2">
-                Authorization Reference (Optional)
+                Disposal Certificate / Authorization Reference (Optional)
             </label>
             <input type="text" name="compliance_reference" id="compliance_reference" 
                    placeholder="e.g., AUTH-2026-001"

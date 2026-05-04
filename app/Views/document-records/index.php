@@ -14,6 +14,7 @@ $statusOptions = [
     'borrowed' => 'Borrowed',
     'archived' => 'Archived',
     'disposed' => 'Disposed',
+    'pending_archive' => 'Pending Archive',
 ];
 
 $folderTypeOptions = [
@@ -46,7 +47,7 @@ $formatLocation = static function (array $folder): string {
 
     $parts = [];
     if ($cabinet !== '') {
-        $parts[] = 'Cab ' . $cabinet;
+        $parts[] = 'Cabinets/Racks ' . $cabinet;
     }
     if ($rack !== '' && $rack !== $cabinet) {
         $parts[] = 'Rack ' . $rack;
@@ -312,11 +313,17 @@ ksort($locationOptions);
                                     case 'Archived':
                                         $statusClass = 'bg-gray-100 text-gray-800';
                                         break;
+                                    case 'Archival':
+                                        $statusClass = 'bg-orange-100 text-orange-800';
+                                        break;
                                     case 'Pending':
                                         $statusClass = 'bg-blue-100 text-blue-800';
                                         break;
                                     case 'Pending Update':
                                         $statusClass = 'bg-indigo-100 text-indigo-800';
+                                        break;
+                                    case 'Pending Archive':
+                                        $statusClass = 'bg-orange-100 text-orange-800';
                                         break;
                                     case 'Declined':
                                         $statusClass = 'bg-red-100 text-red-800';
@@ -372,20 +379,29 @@ ksort($locationOptions);
                                         <div class="flex items-center gap-2 whitespace-nowrap">
                                             <a href="<?= route_to('records.show', $folder['folder_id']) ?>" class="text-blue-600 hover:text-blue-900" title="View Details">View</a>
 
-                                            <?php if ($folderStatus !== 'Pending' && $folderStatus !== 'Pending Update'): ?>
+                                            <?php if ($folderStatus !== 'Pending' && $folderStatus !== 'Pending Update' && $folderStatus !== 'Pending Archive'): ?>
                                                 <span class="text-gray-300">|</span>
                                                 <a href="<?= route_to('records.edit', $folder['folder_id']) ?>" class="text-green-600 hover:text-green-900" title="Edit Folder">Edit</a>
                                             <?php endif; ?>
 
-                                            <?php if (can('approve_folder_archival') && $folderStatus !== 'Archived' && $folderStatus !== 'Disposed' && $folderStatus !== 'Pending' && $folderStatus !== 'Pending Update'): ?>
+                                            <?php if (can('create_archive') && $folderStatus !== 'Archived' && $folderStatus !== 'Archival' && $folderStatus !== 'Borrowed' && $folderStatus !== 'Disposed' && $folderStatus !== 'Pending' && $folderStatus !== 'Pending Update' && $folderStatus !== 'Pending Archive'): ?>
                                                 <span class="text-gray-300">|</span>
-                                                <form action="<?= route_to('records.archive', $folder['folder_id']) ?>" method="POST" style="display:inline;" data-confirm-message="Archive this folder?">
+                                                <form action="<?= route_to('records.archive', $folder['folder_id']) ?>" method="POST" style="display:inline;" data-confirm-message="Submit this folder for archive approval?">
                                                     <?= csrf_field() ?>
                                                     <button type="submit" class="cursor-pointer border-0 bg-transparent p-0 text-green-700 hover:text-green-900">Archive</button>
                                                 </form>
                                             <?php elseif ($folderStatus === 'Archived'): ?>
                                                 <span class="text-gray-300">|</span>
                                                 <span class="text-gray-400">Archived</span>
+                                            <?php elseif ($folderStatus === 'Borrowed'): ?>
+                                                <span class="text-gray-300">|</span>
+                                                <span class="text-red-600">Borrowed</span>
+                                            <?php elseif ($folderStatus === 'Archival'): ?>
+                                                <span class="text-gray-300">|</span>
+                                                <span class="text-orange-600">Archival</span>
+                                            <?php elseif ($folderStatus === 'Pending Archive'): ?>
+                                                <span class="text-gray-300">|</span>
+                                                <span class="text-orange-600">Archive pending</span>
                                             <?php endif; ?>
 
                                             <?php if (can('approve_folder_creation') && ($folderStatus === 'Pending' || $folderStatus === 'Pending Update')): ?>
