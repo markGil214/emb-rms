@@ -285,21 +285,26 @@
     .archive-actions {
         display: flex;
         flex-direction: row;
-        flex-wrap: wrap;
-        gap: 8px;
-        row-gap: 0;
+        flex-wrap: nowrap;
+        gap: 6px;
         align-items: center;
         min-width: 0;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 2px;
     }
 
     .archive-action-text {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 10px;
-        background: transparent;
+        justify-content: center;
+        padding: 6px 12px;
+        min-height: 32px;
+        background: #ffffff;
         border: 1px solid transparent;
-        border-radius: 5px;
+        border-radius: 8px;
         font-weight: 500;
         font-size: 13px;
         white-space: nowrap;
@@ -334,6 +339,35 @@
     .archive-action-text.action-secondary:hover {
         background: rgba(37, 99, 235, 0.08);
         border-color: #2563eb;
+    }
+
+    .archive-action-text.action-danger {
+        color: #dc2626;
+    }
+
+    .archive-action-text.action-danger:hover {
+        background: rgba(220, 38, 38, 0.08);
+        border-color: #dc2626;
+    }
+
+    .archive-action-text.action-muted {
+        color: #64748b;
+    }
+
+    .archive-action-text.action-muted:hover {
+        background: rgba(100, 116, 139, 0.08);
+        border-color: #64748b;
+    }
+
+    .archive-action-row {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .archive-actions .inline {
+        display: inline-flex;
     }
 
     /* Bulk actions toolbar */
@@ -382,6 +416,14 @@
     .archive-bulk-action-btn:hover {
         background: #eff6ff;
         border-color: #93c5fd;
+    }
+
+    .archive-bulk-action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        color: #94a3b8;
     }
 
     /* Checkbox styling */
@@ -862,8 +904,9 @@
                                         </a>
                                     <?php endif; ?>
 
+                                    <div class="archive-action-row">
                                     <?php if (($request['workflow_stage'] ?? '') === 'restoration' && can('approve_restore') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
-                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Approve this restoration request?', 'attr') ?>">
+                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Approve this restoration request?', 'attr') ?>">
                                             <?= csrf_field() ?>
                                             <button type="submit" class="archive-action-text action-primary">
                                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -871,7 +914,7 @@
                                             </button>
                                         </form>
                                     <?php elseif (($request['workflow_stage'] ?? '') === 'pending-archive' && can('approve_archive') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
-                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Approve this archive request?', 'attr') ?>">
+                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Approve this archive request?', 'attr') ?>">
                                             <?= csrf_field() ?>
                                             <button type="submit" class="archive-action-text action-primary">
                                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -879,16 +922,16 @@
                                             </button>
                                         </form>
                                         <?php if (!empty($request['decline_route'])): ?>
-                                            <form action="<?= route_to($request['decline_route'], $request['route_id']) ?>" method="POST" class="inline" data-confirm-message="<?= esc($request['decline_confirm_message'] ?? 'Reject this archive request?', 'attr') ?>">
+                                            <form action="<?= route_to($request['decline_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="reject" data-confirm-message="<?= esc($request['decline_confirm_message'] ?? 'Reject this archive request?', 'attr') ?>">
                                                 <?= csrf_field() ?>
-                                                <button type="submit" class="archive-action-text" style="color: #dc2626;">
+                                                <button type="submit" class="archive-action-text action-danger">
                                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                                     Reject
                                                 </button>
                                             </form>
                                         <?php endif; ?>
                                     <?php elseif (($request['workflow_stage'] ?? '') === 'pending-disposal' && can('approve_disposal') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
-                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Approve this disposal request?', 'attr') ?>">
+                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Approve this disposal request?', 'attr') ?>">
                                             <?= csrf_field() ?>
                                             <button type="submit" class="archive-action-text action-primary">
                                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -896,25 +939,26 @@
                                             </button>
                                         </form>
                                         <?php if (!empty($request['decline_route'])): ?>
-                                            <form action="<?= route_to($request['decline_route'], $request['route_id']) ?>" method="POST" class="inline" data-confirm-message="<?= esc($request['decline_confirm_message'] ?? 'Reject this disposal request?', 'attr') ?>">
+                                            <form action="<?= route_to($request['decline_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="reject" data-confirm-message="<?= esc($request['decline_confirm_message'] ?? 'Reject this disposal request?', 'attr') ?>">
                                                 <?= csrf_field() ?>
-                                                <button type="submit" class="archive-action-text" style="color: #dc2626;">
+                                                <button type="submit" class="archive-action-text action-danger">
                                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                                     Reject
                                                 </button>
                                             </form>
                                         <?php endif; ?>
                                     <?php elseif (!empty($request['fallback_action_label'])): ?>
-                                        <span class="archive-muted-action"><?= esc($request['fallback_action_label']) ?></span>
+                                        <span class="archive-action-text action-muted"><?= esc($request['fallback_action_label']) ?></span>
                                     <?php elseif (($request['workflow_stage'] ?? '') === 'approved-disposal' && can('approve_disposal') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
-                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Mark this archive disposal as completed?', 'attr') ?>">
+                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Mark this archive disposal as completed?', 'attr') ?>">
                                             <?= csrf_field() ?>
-                                            <button type="submit" class="archive-action-text" style="color: #64748b;">
+                                            <button type="submit" class="archive-action-text action-muted">
                                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                Complete
+                                                Mark Complete
                                             </button>
                                         </form>
                                     <?php endif; ?>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -1017,11 +1061,18 @@
 
                                     <?php if ($isRestorationPending): ?>
                                         <?php if (can('approve_restore')): ?>
-                                            <form action="<?= route_to('restoration.approve', $pendingRestoration['restoration_request_id']) ?>" method="POST" class="inline" data-confirm-message="Approve this restoration request?">
+                                            <form action="<?= route_to('restoration.approve', $pendingRestoration['restoration_request_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="Approve this restoration request?">
                                                 <?= csrf_field() ?>
                                                 <button type="submit" class="archive-action-text action-primary">
                                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                                     Approve
+                                                </button>
+                                            </form>
+                                            <form action="<?= route_to('restoration.reject', $pendingRestoration['restoration_request_id']) ?>" method="POST" class="inline" data-bulk-action="reject" data-confirm-message="Reject this restoration request and keep folder archived?">
+                                                <?= csrf_field() ?>
+                                                <button type="submit" class="archive-action-text action-danger">
+                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                    Reject
                                                 </button>
                                             </form>
                                         <?php else: ?>
@@ -1032,7 +1083,7 @@
                                         <?php endif; ?>
                                     <?php else: ?>
                                         <?php if ($status === 'Pending Disposal' && can('approve_disposal') && !empty($record['disposal_id'])): ?>
-                                            <form action="<?= route_to('disposal.approve', $record['disposal_id']) ?>" method="POST" class="inline" data-confirm-message="Approve this disposal request?">
+                                            <form action="<?= route_to('disposal.approve', $record['disposal_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="Approve this disposal request?">
                                                 <?= csrf_field() ?>
                                                 <button type="submit" class="archive-action-text action-primary">
                                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -1042,7 +1093,7 @@
                                         <?php endif; ?>
 
                                         <?php if ($status === 'Approved for Disposal' && can('approve_disposal') && !empty($record['disposal_id'])): ?>
-                                            <form action="<?= route_to('disposal.complete', $record['disposal_id']) ?>" method="POST" class="inline" data-confirm-message="Mark this archive disposal as completed?">
+                                            <form action="<?= route_to('disposal.complete', $record['disposal_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="Mark this archive disposal as completed?">
                                                 <?= csrf_field() ?>
                                                 <button type="submit" class="archive-action-text" style="color: #64748b;">
                                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -1052,7 +1103,7 @@
                                         <?php endif; ?>
 
                                         <?php if ($status !== 'Disposed' && can('request_restore')): ?>
-                                            <form action="<?= route_to('archive.restore', $folderId) ?>" method="POST" class="inline" data-confirm-message="Submit a restoration request for this folder?">
+                                            <form action="<?= route_to('archive.restore', $folderId) ?>" method="POST" class="inline" data-bulk-action="restore" data-confirm-message="Submit a restoration request for this folder?">
                                                 <?= csrf_field() ?>
                                                 <button type="submit" class="archive-action-text action-primary">
                                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
@@ -1078,6 +1129,37 @@
     var rowCheckboxes = Array.prototype.slice.call(document.querySelectorAll('.archive-row-checkbox'));
     var bulkActionsToolbar = document.getElementById('archiveBulkActionsToolbar');
     var bulkSelectedCount = document.getElementById('archiveBulkSelectedCount');
+    var bulkActionButtons = Array.prototype.slice.call(document.querySelectorAll('.archive-bulk-action-btn'));
+
+    bulkActionButtons.forEach(function (btn) {
+        btn.dataset.baseLabel = btn.textContent.trim();
+    });
+
+    function getSelectedRows() {
+        return rowCheckboxes
+            .filter(function (cb) { return cb.checked; })
+            .map(function (cb) { return cb.closest('tr'); })
+            .filter(function (row) { return !!row; });
+    }
+
+    function getSelectedActionForms(action) {
+        return getSelectedRows()
+            .map(function (row) { return row.querySelector('form[data-bulk-action="' + action + '"]'); })
+            .filter(function (form) { return !!form; });
+    }
+
+    function updateBulkActionButtons() {
+        var selectedCount = rowCheckboxes.filter(function (cb) { return cb.checked; }).length;
+
+        bulkActionButtons.forEach(function (btn) {
+            var action = btn.dataset.action;
+            var supportedCount = selectedCount > 0 ? getSelectedActionForms(action).length : 0;
+            var baseLabel = btn.dataset.baseLabel || btn.textContent.trim();
+
+            btn.textContent = baseLabel + (selectedCount > 0 ? ' (' + supportedCount + ')' : '');
+            btn.disabled = selectedCount === 0 || supportedCount === 0;
+        });
+    }
 
     function updateBulkActionsDisplay() {
         var selectedCount = rowCheckboxes.filter(function (cb) { return cb.checked; }).length;
@@ -1087,15 +1169,19 @@
             bulkActionsToolbar.classList.remove('hidden');
         } else {
             bulkActionsToolbar.classList.add('hidden');
-            selectAllCheckbox.checked = false;
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
         }
+
+        updateBulkActionButtons();
     }
 
     if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', function () {
             var isChecked = this.checked;
             rowCheckboxes.forEach(function (cb) {
-                if (!cb.parentElement.closest('tr').classList.contains('hidden')) {
+                if (!cb.parentElement.closest('tr').classList.contains('archive-row-hidden')) {
                     cb.checked = isChecked;
                 }
             });
@@ -1107,24 +1193,73 @@
         cb.addEventListener('change', updateBulkActionsDisplay);
     });
 
+    async function executeBulkAction(action) {
+        var selectedCheckboxes = rowCheckboxes.filter(function (cb) { return cb.checked; });
+        if (selectedCheckboxes.length === 0) {
+            alert('Please select at least one record.');
+            return;
+        }
+
+        var forms = getSelectedActionForms(action);
+        if (forms.length === 0) {
+            alert('No selected records support this action.');
+            return;
+        }
+
+        var actionLabel = action.charAt(0).toUpperCase() + action.slice(1);
+        if (!window.confirm(actionLabel + ' ' + forms.length + ' selected record(s)?')) {
+            return;
+        }
+
+        bulkActionButtons.forEach(function (btn) { btn.disabled = true; });
+
+        var successCount = 0;
+        var failureCount = 0;
+
+        for (var i = 0; i < forms.length; i++) {
+            var form = forms[i];
+            try {
+                var response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (response.ok) {
+                    successCount++;
+                } else {
+                    failureCount++;
+                }
+            } catch (error) {
+                failureCount++;
+            }
+        }
+
+        updateBulkActionButtons();
+
+        if (failureCount > 0) {
+            alert('Bulk ' + action + ' completed with partial success. Success: ' + successCount + ', Failed: ' + failureCount + '.');
+        }
+
+        window.location.reload();
+    }
+
     // Bulk action buttons
-    var bulkActionButtons = Array.prototype.slice.call(document.querySelectorAll('.archive-bulk-action-btn'));
     bulkActionButtons.forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
+        btn.addEventListener('click', async function (e) {
             e.preventDefault();
-            var action = this.dataset.action;
-            var selectedCheckboxes = rowCheckboxes.filter(function (cb) { return cb.checked; });
-            
-            if (selectedCheckboxes.length === 0) {
-                alert('Please select at least one record');
+            if (btn.disabled) {
                 return;
             }
-            
-            console.log('Bulk action:', action, 'Selected records:', selectedCheckboxes.length);
-            // TODO: Implement bulk action handling based on action type
-            // This would typically submit multiple forms or trigger a batch API call
+            var action = this.dataset.action;
+            await executeBulkAction(action);
         });
     });
+
+    updateBulkActionButtons();
 
     var searchInput = document.getElementById('archiveSearchInput');
     var modal = document.getElementById('archiveFiltersModal');

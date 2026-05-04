@@ -449,13 +449,13 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
             </li>
 
             <li>
-                <?php if (can('request_disposal') || can('approve_disposal')): ?>
-                <a href="<?= route_to('disposal.pending') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
-                :class="window.location.pathname === '<?= route_to('disposal.pending') ?>' ? 'bg-green-900' : ''">
+                <?php if (can('approve_disposal')): ?>
+                <a href="<?= route_to('disposal.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
+                :class="window.location.pathname === '<?= route_to('disposal.index') ?>' ? 'bg-green-900' : ''">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                     </svg>
-                    <span x-show="sidebarOpen" x-transition class="ml-3">File Disposal</span>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">Disposal Management</span>
                 </a>
                 <?php endif; ?>
             </li>

@@ -4,12 +4,12 @@
 
 <!-- Back Button -->
 <div class="mb-6 text-left">
-    <a href="<?= route_to('archive.index') ?>" 
+    <a href="<?= route_to('disposal.index') ?>" 
        class="inline-flex items-center px-3 py-2 rounded hover:bg-gray-200 transition-colors group">
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
-        <span class="ml-2 text-sm">Back to Archive Management</span>
+        <span class="ml-2 text-sm">Back to Disposal Management</span>
     </a>
 </div>
 
