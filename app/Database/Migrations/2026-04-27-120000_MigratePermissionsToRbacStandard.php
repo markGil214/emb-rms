@@ -68,13 +68,13 @@ class MigratePermissionsToRbacStandard extends Migration
             'update_relocation' => [],  // New permission, no direct mapping
             'approve_relocation' => ['approve_relocation'],
 
-            // Archive & Disposal (6 permissions)
+            // Archive & Disposal (7 permissions)
             'view_archive' => ['view_archive_module', 'view_disposal_workflow'],
             'create_archive' => ['archive_document'],
             'update_archive' => ['manage_archive_policies'],
-            'delete_archive' => ['archive_document'],
             'approve_disposal' => ['approve_disposal'],
-            'manage_retention' => ['manage_archive_policies'],
+            'request_restore' => ['archive_document'],
+            'approve_restore' => [],
 
             // System Admin (7 permissions)
             'view_users' => [],  // New permission
@@ -101,7 +101,7 @@ class MigratePermissionsToRbacStandard extends Migration
 
                 if (!$exists) {
                     // For new permissions without old mapping, only add to super_admin for now
-                    if ($newPermKey === 'view_users' || $newPermKey === 'update_relocation' || $newPermKey === 'delete_documents') {
+                    if ($newPermKey === 'view_users' || $newPermKey === 'update_relocation' || $newPermKey === 'delete_documents' || $newPermKey === 'approve_restore') {
                         if ($roleName === 'super_admin') {
                             $this->db->table('role_permissions')->insert([
                                 'role_id' => $roleId,
@@ -179,9 +179,9 @@ class MigratePermissionsToRbacStandard extends Migration
             'initiate_relocation' => ['view_relocation'],
             'request_relocation' => ['create_relocation'],
             'approve_relocation' => ['approve_relocation'],
-            'archive_document' => ['create_archive', 'delete_archive'],
+            'archive_document' => ['create_archive', 'request_restore'],
             'view_archive_module' => ['view_archive'],
-            'manage_archive_policies' => ['manage_retention'],
+            'manage_archive_policies' => ['update_archive'],
             'view_disposal_workflow' => ['view_archive'],
             'approve_disposal' => ['approve_disposal'],
             'manage_users' => ['create_users', 'update_users', 'delete_users'],
@@ -237,7 +237,7 @@ class MigratePermissionsToRbacStandard extends Migration
             'view_shelf_map', 'manage_racks', 'approve_create_documents', 'approve_archive',
             'view_borrow', 'create_borrow', 'update_borrow', 'approve_borrow',
             'view_relocation', 'create_relocation', 'update_relocation', 'approve_relocation',
-            'view_archive', 'create_archive', 'update_archive', 'delete_archive', 'approve_disposal', 'manage_retention',
+            'view_archive', 'create_archive', 'update_archive', 'approve_disposal', 'request_restore', 'approve_restore',
             'view_users', 'create_users', 'update_users', 'delete_users', 'manage_system_config', 'view_audit_logs', 'override',
         ];
 

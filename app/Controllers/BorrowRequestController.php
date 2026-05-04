@@ -114,7 +114,7 @@ class BorrowRequestController extends BaseController
             'purpose' => $this->request->getPost('purpose') ?? 'General request',
             'expected_return_date' => $this->request->getPost('expected_return_date'),
             'status' => 'Pending',  // ✅ Status is Pending, not Borrowed
-            'return_notes' => $this->request->getPost('notes') ?? null,
+            'notes' => $this->request->getPost('notes') ?: null,
             'created_by' => auth_user()['user_id'],
         ];
 

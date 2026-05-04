@@ -103,7 +103,7 @@ class RelocationController extends BaseController
         $rules = [
             'folder_id' => 'required|integer',
             'to_location_id' => 'required|integer',
-            'reason' => 'permit_empty|max_length[500]',
+            'reason' => 'permit_empty|max_length[1000]',
         ];
 
         if (!$this->validate($rules)) {
@@ -144,7 +144,7 @@ class RelocationController extends BaseController
             'folder_id' => $folderId,
             'from_location_id' => $folder['location_id'],
             'to_location_id' => $toLocationId,
-            'reason' => $this->request->getPost('reason'),
+            'reason' => $this->request->getPost('reason') ?: null,
             'status' => 'Pending',
             'requested_at' => date('Y-m-d H:i:s'),
             'requested_by' => auth_user()['user_id'],
@@ -286,7 +286,7 @@ class RelocationController extends BaseController
 
         $rules = [
             'to_location_id' => 'required|integer',
-            'reason' => 'permit_empty|max_length[500]',
+            'reason' => 'permit_empty|max_length[1000]',
         ];
 
         if (!$this->validate($rules)) {
@@ -310,7 +310,7 @@ class RelocationController extends BaseController
 
         if (!$this->relocationModel->update($relocationId, [
             'to_location_id' => $toLocationId,
-            'reason' => $this->request->getPost('reason'),
+            'reason' => $this->request->getPost('reason') ?: null,
         ])) {
             return redirect()->back()->withInput()->with('errors',
                 $this->relocationModel->errors() ?: ['general' => 'Failed to update relocation request']

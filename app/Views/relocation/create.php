@@ -137,8 +137,9 @@
                 <div class="space-y-3">
                     <label for="reason" class="block text-sm font-medium text-gray-700">Why are you relocating this folder?</label>
                     <textarea name="reason" id="reason" rows="4" 
+                              maxlength="1000"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="Enter reason..."></textarea>
+                              placeholder="Enter reason..."><?= esc(old('reason')) ?></textarea>
                     <p class="text-sm text-gray-500">Optional but recommended for audit trail and accountability</p>
                 </div>
             </div>

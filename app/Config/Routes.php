@@ -121,7 +121,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     $routes->get('/document-records/(:num)/history', 'FolderController::history/$1', ['as' => 'records.history', 'filter' => 'permission:search_documents']);
 
-    $routes->post('/document-records/(:num)/archive', 'ArchiveDisposalController::archiveFolderFromRecords/$1', ['as' => 'records.archive', 'filter' => 'permission:approve_folder_archival']);
+    $routes->post('/document-records/(:num)/archive', 'ArchiveDisposalController::archiveFolderFromRecords/$1', ['as' => 'records.archive', 'filter' => 'permission:create_archive']);
 
     $routes->get('/document-records/(:num)/edit',    'FolderController::edit/$1',  ['as' => 'records.edit', 'filter' => 'permission:edit_document_metadata']);
 
@@ -270,33 +270,43 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     // Archive operations
 
-    $routes->get('/archive-disposal/create-archive',   'ArchiveDisposalController::createArchive',      ['as' => 'archive.create', 'filter' => 'permission:request_archive']);
+    $routes->get('/archive/create',                     'ArchiveDisposalController::createArchive',      ['as' => 'archive.create', 'filter' => 'permission:request_archive']);
 
-    $routes->post('/archive-disposal/archive',          'ArchiveDisposalController::storeArchive',       ['as' => 'archive.store', 'filter' => 'permission:request_archive']);
+    $routes->post('/archive',                           'ArchiveDisposalController::storeArchive',       ['as' => 'archive.store', 'filter' => 'permission:request_archive']);
 
-    $routes->get('/archive-disposal/archive/(:num)',    'ArchiveDisposalController::showArchive/$1',    ['as' => 'archive.show']);
+    $routes->get('/archive/(:num)',                     'ArchiveDisposalController::showArchive/$1',    ['as' => 'archive.show']);
 
-    $routes->post('/archive-disposal/archive/(:num)/restore', 'ArchiveDisposalController::restoreFolder/$1', ['as' => 'archive.restore']);
+    $routes->post('/archive/(:num)/restore',            'ArchiveDisposalController::requestRestoration/$1', ['as' => 'archive.restore', 'filter' => 'permission:request_restore']);
 
-    $routes->get('/archive-disposal/search',            'ArchiveDisposalController::searchArchive',      ['as' => 'archive.search']);
+    $routes->get('/archive/search',                     'ArchiveDisposalController::searchArchive',      ['as' => 'archive.search']);
 
     
 
     // Disposal operations
 
-    $routes->get('/archive-disposal/create-disposal',   'ArchiveDisposalController::createDisposal',    ['as' => 'disposal.create', 'filter' => 'permission:request_disposal']);
+    $routes->get('/disposal',                           'ArchiveDisposalController::disposalIndex',     ['as' => 'disposal.index', 'filter' => 'permission:approve_disposal,approve_restore,approve_archive']);
 
-    $routes->post('/archive-disposal/disposal',         'ArchiveDisposalController::storeDisposal',     ['as' => 'disposal.store', 'filter' => 'permission:request_disposal']);
+    $routes->get('/disposal/(:num)',                    'ArchiveDisposalController::showDisposal/$1',   ['as' => 'disposal.show']);
 
-    $routes->get('/archive-disposal/disposal/(:num)',   'ArchiveDisposalController::showDisposal/$1',   ['as' => 'disposal.show']);
+    $routes->post('/disposal/(:num)/approve',           'ArchiveDisposalController::approveDisposal/$1', ['as' => 'disposal.approve', 'filter' => 'permission:approve_disposal']);
 
-    $routes->post('/archive-disposal/disposal/(:num)/approve', 'ArchiveDisposalController::approveDisposal/$1', ['as' => 'disposal.approve', 'filter' => 'permission:approve_disposal']);
+    $routes->post('/disposal/(:num)/reject',            'ArchiveDisposalController::rejectDisposal/$1', ['as' => 'disposal.reject', 'filter' => 'permission:approve_disposal']);
 
-    $routes->post('/archive-disposal/disposal/(:num)/complete', 'ArchiveDisposalController::completeDisposal/$1', ['as' => 'disposal.complete', 'filter' => 'permission:approve_disposal']);
+    $routes->post('/disposal/file/(:num)/approve',      'ArchiveDisposalController::approveFileDisposal/$1', ['as' => 'file-disposal.approve', 'filter' => 'permission:approve_disposal']);
 
-    $routes->get('/archive-disposal/disposal/pending',  'ArchiveDisposalController::pendingDisposal',   ['as' => 'disposal.pending', 'filter' => 'permission:approve_disposal']);
+    $routes->post('/disposal/(:num)/complete',          'ArchiveDisposalController::completeDisposal/$1', ['as' => 'disposal.complete', 'filter' => 'permission:approve_disposal']);
 
-    $routes->get('/archive-disposal/disposal/completed', 'ArchiveDisposalController::completedDisposal', ['as' => 'disposal.completed']);
+    $routes->post('/archive/restoration/(:num)/approve', 'ArchiveDisposalController::approveRestoration/$1', ['as' => 'restoration.approve', 'filter' => 'permission:approve_restore']);
+
+    $routes->post('/archive/restoration/(:num)/reject',  'ArchiveDisposalController::rejectRestoration/$1',  ['as' => 'restoration.reject', 'filter' => 'permission:approve_restore']);
+
+    $routes->post('/archive/request/(:num)/approve',    'ArchiveDisposalController::approveArchiveRequest/$1', ['as' => 'archive-request.approve', 'filter' => 'permission:approve_archive']);
+
+    $routes->post('/archive/request/(:num)/decline',    'ArchiveDisposalController::declineArchiveRequest/$1', ['as' => 'archive-request.decline', 'filter' => 'permission:approve_archive']);
+
+    $routes->get('/disposal/pending',                   'ArchiveDisposalController::pendingDisposal',   ['as' => 'disposal.pending', 'filter' => 'permission:approve_disposal,approve_restore,approve_archive']);
+
+    $routes->get('/disposal/completed',                 'ArchiveDisposalController::completedDisposal', ['as' => 'disposal.completed']);
 
 });
 

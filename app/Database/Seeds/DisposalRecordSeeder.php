@@ -37,7 +37,7 @@ class DisposalRecordSeeder extends Seeder
                     'archive_id' => $archive['archive_id'],
                     'disposal_date' => null, // Pending
                     'disposal_method' => 'Destruction',
-                    'approved_by' => $approver['user_id'],
+                    'approved_by' => null,
                     'compliance_reference' => 'COMP-2026-001',
                     'created_at' => date('Y-m-d H:i:s', strtotime('-20 days')),
                 ];

@@ -332,8 +332,8 @@ class PermissionService
             return 0;
         }
 
-        // Get all permissions from config
-        $allPermissions = Permissions::flat();
+        // Get all permission keys from config
+        $allPermissions = array_keys(Permissions::flat());
         
         // Get currently assigned permissions to super_admin
         $currentPerms = $this->db->table('role_permissions')

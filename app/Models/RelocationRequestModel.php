@@ -29,7 +29,7 @@ class RelocationRequestModel extends Model
     protected $validationRules = [
         'folder_id'         => 'required|integer',
         'to_location_id'    => 'required|integer',
-        'reason'            => 'permit_empty|max_length[500]',
+        'reason'            => 'permit_empty|max_length[1000]',
     ];
 
     protected $validationMessages = [
@@ -42,7 +42,7 @@ class RelocationRequestModel extends Model
             'integer' => 'Invalid location selection',
         ],
         'reason' => [
-            'max_length' => 'Reason cannot exceed 500 characters',
+            'max_length' => 'Reason cannot exceed 1000 characters',
         ],
     ];
 

@@ -67,6 +67,92 @@ class ArchiveRecordModel extends Model
     }
 
     /**
+     * Get archive records with disposal workflow and retention context.
+     */
+    public function getArchiveDisposalRecords(): array
+    {
+        $db = \Config\Database::connect();
+
+        $disposalFields = $db->tableExists('disposal_records')
+            ? $db->getFieldNames('disposal_records')
+            : [];
+        $hasRequestedBy = in_array('requested_by', $disposalFields, true);
+
+        $select = [
+            'f.folder_id',
+            'f.file_code',
+            'f.company_name',
+            'f.folder_type',
+            'f.status as folder_status',
+            'f.created_by as folder_created_by',
+            'f.updated_by as folder_updated_by',
+            'c.category_name',
+            'ar.archive_id',
+            'ar.archived_date',
+            'ar.archive_location_id',
+            'ar.archived_by',
+            'archiver.username as archived_by_name',
+            'folder_creator.username as folder_created_by_name',
+            'folder_updater.username as folder_updated_by_name',
+            'l.rack',
+            'l.shelf',
+            'dr.disposal_id',
+            'dr.disposal_date',
+            'dr.disposal_method',
+            'dr.compliance_reference',
+            'dr.approved_by',
+            'dr.created_at as disposal_requested_at',
+            'approver.username as approved_by_name',
+            $hasRequestedBy ? 'dr.requested_by as disposal_requested_by' : 'NULL as disposal_requested_by',
+            $hasRequestedBy ? 'requester.username as requested_by_name' : 'NULL as requested_by_name',
+        ];
+
+        $builder = $db->table('folders as f')
+            ->select(implode(', ', $select), false)
+            ->join('categories as c', 'c.category_id = f.category_id', 'left')
+            ->join('archive_records as ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = f.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false)
+            ->join('locations as l', 'l.location_id = ar.archive_location_id', 'left')
+            ->join('users as archiver', 'archiver.user_id = ar.archived_by', 'left')
+            ->join('users as folder_creator', 'folder_creator.user_id = f.created_by', 'left')
+            ->join('users as folder_updater', 'folder_updater.user_id = f.updated_by', 'left')
+            ->join('disposal_records as dr', 'dr.disposal_id = (SELECT dr2.disposal_id FROM disposal_records dr2 WHERE dr2.archive_id = ar.archive_id ORDER BY dr2.created_at DESC, dr2.disposal_id DESC LIMIT 1)', 'left', false)
+            ->join('users as approver', 'approver.user_id = dr.approved_by', 'left')
+            ->whereIn('f.status', ['Archived', 'Disposed'])
+            ->where('ar.archive_id IS NOT NULL', null, false);
+
+        if ($hasRequestedBy) {
+            $builder->join('users as requester', 'requester.user_id = dr.requested_by', 'left');
+        }
+
+        if (
+            $db->tableExists('folder_files') &&
+            in_array('retention_type', $db->getFieldNames('folder_files'), true) &&
+            in_array('expiration_date', $db->getFieldNames('folder_files'), true)
+        ) {
+            $retentionSubquery = "(SELECT folder_id,
+                    COUNT(*) as file_count,
+                    SUM(CASE WHEN retention_type = 'expiration' THEN 1 ELSE 0 END) as expiring_file_count,
+                    SUM(CASE WHEN retention_type = 'permanent' THEN 1 ELSE 0 END) as permanent_file_count,
+                    MIN(CASE WHEN retention_type = 'expiration' THEN expiration_date ELSE NULL END) as earliest_expiration_date,
+                    MAX(CASE WHEN retention_type = 'expiration' THEN expiration_date ELSE NULL END) as latest_expiration_date
+                FROM folder_files
+                GROUP BY folder_id) as retention_summary";
+
+            $builder
+                ->select('retention_summary.file_count, retention_summary.expiring_file_count, retention_summary.permanent_file_count, retention_summary.earliest_expiration_date, retention_summary.latest_expiration_date', false)
+                ->join($retentionSubquery, 'retention_summary.folder_id = f.folder_id', 'left', false);
+        } else {
+            $builder->select('0 as file_count, 0 as expiring_file_count, 0 as permanent_file_count, NULL as earliest_expiration_date, NULL as latest_expiration_date', false);
+        }
+
+        return $builder
+            ->orderBy('ar.archived_date', 'DESC')
+            ->orderBy('f.folder_id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
      * Get archive history for a folder
      */
     public function getFolderArchive($folderId)

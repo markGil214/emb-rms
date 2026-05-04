@@ -25,6 +25,7 @@
                 <div>
                     <label for="borrower_name" class="block text-sm font-medium text-gray-700">Borrower Name</label>
                     <input type="text" name="borrower_name" id="borrower_name" 
+                           value="<?= esc(old('borrower_name')) ?>"
                            placeholder="Enter borrower's name" required
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 </div>
@@ -32,6 +33,7 @@
                 <div>
                     <label for="borrower_email" class="block text-sm font-medium text-gray-700">Borrower Email</label>
                     <input type="email" name="borrower_email" id="borrower_email" 
+                           value="<?= esc(old('borrower_email')) ?>"
                            placeholder="Enter borrower's email address" required
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 </div>
@@ -75,7 +77,9 @@
                 <div>
                     <label for="notes" class="block text-sm font-medium text-gray-700">Notes (Optional)</label>
                     <textarea name="notes" id="notes" rows="4"
-                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                              maxlength="1000"
+                              placeholder="Add context for this borrow request..."
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"><?= esc(old('notes')) ?></textarea>
                 </div>
 
                 <div class="flex space-x-4">

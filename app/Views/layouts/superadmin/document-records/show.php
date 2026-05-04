@@ -326,9 +326,12 @@
                                             $disposalStatusClass = 'bg-gray-100 text-gray-700';
 
                                             if (in_array($explicitDisposalStatus, ['requested', 'pending'], true)) {
-                                                $disposalStatusLabel = 'Disposal Requested';
+                                                $disposalStatusLabel = 'Pending Disposal';
                                                 $disposalStatusClass = 'bg-blue-100 text-blue-700';
-                                            } elseif (in_array($explicitDisposalStatus, ['disposed', 'approved', 'completed'], true)) {
+                                            } elseif ($explicitDisposalStatus === 'approved') {
+                                                $disposalStatusLabel = 'Approved for Disposal';
+                                                $disposalStatusClass = 'bg-green-100 text-green-700';
+                                            } elseif (in_array($explicitDisposalStatus, ['disposed', 'completed'], true)) {
                                                 $disposalStatusLabel = 'Disposed';
                                                 $disposalStatusClass = 'bg-red-100 text-red-700';
                                             } elseif ($isReadyForDisposal) {

@@ -235,6 +235,30 @@ class FolderController extends BaseController
     public function edit(int $folderId)
     {
         $folder = $this->findFolderOrFail($folderId);
+        $db = \Config\Database::connect();
+        $locations = $db->table('locations')
+            ->select('location_id, rack, shelf')
+            ->orderBy('rack', 'ASC')
+            ->orderBy('shelf', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $locations = array_map(static function (array $location) {
+            return [
+                'location_id' => $location['location_id'],
+                'cabinet' => $location['rack'] ?? '',
+                'shelf' => $location['shelf'] ?? ($location['rack'] ?? ''),
+            ];
+        }, $locations);
+
+        $location = $db->table('locations')
+            ->where('location_id', $folder['location_id'])
+            ->get()
+            ->getRowArray();
+
+        $folder['cabinet'] = $location['rack'] ?? null;
+        $folder['rack'] = $location['shelf'] ?? null;
+
         $categories = $this->categoryModel
             ->orderBy('category_name', 'ASC')
             ->findAll();
@@ -242,6 +266,7 @@ class FolderController extends BaseController
         return view('document-records/edit', [
             'title' => 'Edit Folder',
             'folder' => $folder,
+            'locations' => $locations,
             'categories' => $categories,
             'selectedCategoryId' => old('category_id', $folder['category_id'] ?? ''),
         ]);
@@ -259,24 +284,40 @@ class FolderController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $postedRack = trim((string) ($this->request->getPost('cabinet') ?? ''));
+        $postedShelf = trim((string) ($this->request->getPost('shelf') ?? ''));
+
+        if (($postedRack === '' && $postedShelf !== '') || ($postedRack !== '' && $postedShelf === '')) {
+            return redirect()->back()->withInput()->with('errors', [
+                'location_id' => 'Please select both Rack and Shelf.',
+            ]);
+        }
+
         $data = [
             'company_name' => $this->request->getPost('company_name'),
             'folder_type' => $this->request->getPost('folder_type'),
             'category_id' => $this->request->getPost('category_id'),
-            'status' => $this->request->getPost('status'),
+            'status' => $folder['status'] ?? 'Available',
             'borrowed_date' => $this->request->getPost('borrowed_date') ?: null,
-            'due_date' => $this->request->getPost('due_date') ?: null,
+            'due_date' => $folder['due_date'] ?? null,
+            'location_id' => (int) ($this->request->getPost('location_id') ?: ($folder['location_id'] ?? 0)),
             'updated_by' => auth_user()['user_id'] ?? null,
         ];
 
-        // Update location code if cabinet/rack changed
-        $cabinet = $this->request->getPost('cabinet');
-        $rack = $this->request->getPost('rack');
-        if ($cabinet && $rack) {
-            $data['location_code'] = FileCodeGenerator::generateLocationCode($cabinet, $rack);
+        $db = \Config\Database::connect();
+        $selectedLocation = $db->table('locations')
+            ->where('location_id', $data['location_id'])
+            ->get()
+            ->getRowArray();
+
+        if (!$selectedLocation) {
+            return redirect()->back()->withInput()->with('error', 'Selected location not found');
         }
 
-        $db = \Config\Database::connect();
+        $data['location_code'] = FileCodeGenerator::generateLocationCode(
+            $selectedLocation['rack'] ?? '',
+            $selectedLocation['shelf'] ?? ''
+        );
 
         $existingPending = $db->table('document_edit_requests')
             ->where('folder_id', $folderId)
@@ -298,6 +339,7 @@ class FolderController extends BaseController
                 'borrowed_date' => $folder['borrowed_date'] ?? null,
                 'due_date' => $folder['due_date'] ?? null,
                 'location_code' => $folder['location_code'] ?? null,
+                'location_id' => $folder['location_id'] ?? null,
             ]),
             'reason' => 'Metadata update request',
             'status' => 'Pending',
@@ -444,9 +486,8 @@ class FolderController extends BaseController
         if ($isCreate) {
             $rules['location_id'] = 'required|integer';
         } else {
-            $rules['status'] = 'required|in_list[Available,Borrowed,Archived,Disposed,Pending,Pending Update,Declined]';
             $rules['borrowed_date'] = 'permit_empty|valid_date[Y-m-d]';
-            $rules['due_date'] = 'permit_empty|valid_date[Y-m-d]';
+            $rules['location_id'] = 'required|integer';
         }
 
         return $rules;
