@@ -208,7 +208,7 @@ $firstGroupId = !empty($allPermissions) ? array_keys($allPermissions)[0] : '';
                                     <?= esc($user['status']) ?>
                                 </span>
                             </td>
-                            <?php foreach ($permissions as $group => $groupPerms): ?>
+                            <?php foreach ($allPermissions as $group => $groupPerms): ?>
                                 <?php foreach ($groupPerms as $key => $label): ?>
                                     <td class="px-6 py-4 border-b border-gray-100 text-center">
                                         <?php 

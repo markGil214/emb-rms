@@ -113,6 +113,34 @@ class RoleSeeder extends Seeder
             $this->db->table('role_permissions')->insertBatch($rolePermissions);
         }
 
+        // START: Grant ALL permissions to super_admin
+        if (isset($roleMap['super_admin'])) {
+            $superAdminRoleId = $roleMap['super_admin']['role_id'];
+            $allPermissions = Permissions::flat();
+            $superAdminPerms = [];
+
+            // Get existing super_admin perms to avoid duplicates
+            $existingSuperAdminPerms = $this->db->table('role_permissions')
+                ->where('role_id', $superAdminRoleId)
+                ->get()->getResultArray();
+            $existingPermKeys = array_column($existingSuperAdminPerms, 'permission_key');
+
+            foreach (array_keys($allPermissions) as $permKey) {
+                if (!in_array($permKey, $existingPermKeys)) {
+                    $superAdminPerms[] = [
+                        'role_id' => $superAdminRoleId,
+                        'permission_key' => $permKey,
+                    ];
+                }
+            }
+
+            if (!empty($superAdminPerms)) {
+                $this->db->table('role_permissions')->insertBatch($superAdminPerms);
+                echo "✓ Granted " . count($superAdminPerms) . " additional permissions to super_admin.\n";
+            }
+        }
+        // END: Grant ALL permissions to super_admin
+
         echo empty($insertRows)
             ? "✓ Role default permissions synced successfully\n"
             : "✓ Roles and default permissions seeded successfully\n";
