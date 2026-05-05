@@ -20,8 +20,8 @@ class LoginController extends BaseController
 	 */
 	public function authenticate()
 	{
-		$username = $this->request->getPost('username');
-		$password = $this->request->getPost('password');
+		$username = trim((string) $this->request->getPost('username'));
+		$password = (string) $this->request->getPost('password');
 
 		// Validate input
 		if (!$username || !$password) {

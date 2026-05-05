@@ -56,10 +56,6 @@ $routes->setAutoRoute(false);  // DISABLED for security - use explicit routes on
 
  * Route Definitions
 
- * Named routes follow RESTful conventions (resource.action)
-
- * Apply filters at route level for security
-
  * --------------------------------------------------------------------
 
  */
@@ -67,7 +63,6 @@ $routes->setAutoRoute(false);  // DISABLED for security - use explicit routes on
 
 
 // Public routes - Guest only (login/register)
-
 $routes->get('/',                   'LoginController::index',      ['as' => 'login', 'filter' => 'guest']);
 
 $routes->post('/authenticate',      'LoginController::authenticate',['as' => 'login.authenticate', 'filter' => 'guest']);
@@ -79,6 +74,12 @@ $routes->post('/register/store',    'RegisterController::store',    ['as' => 're
 $routes->get('/logout',             'LoginController::logout',     ['as' => 'logout', 'filter' => 'auth']);
 
 $routes->post('/logout',            'LoginController::logout',     ['as' => 'logout', 'filter' => 'auth']);
+
+
+// Account Activation Flow (Public - No auth filter)
+$routes->get('/setup-password/(:num)',        'Admin\UserController::setupPassword/$1', ['as' => 'users.setup-password']);
+$routes->post('/setup-password/(:num)',       'Admin\UserController::completeSetup/$1', ['as' => 'users.complete-setup']);
+
 
 // Protected routes - Authenticated users only
 
@@ -147,11 +148,17 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
 $routes->group('', ['filter' => 'auth'], function($routes) {
 
+    $routes->get('/users',                        'Admin\UserController::index',         ['as' => 'users.index', 'filter' => 'permission:manage_users']);
+    $routes->get('/users/create',                 'Admin\UserController::create',        ['as' => 'users.create', 'filter' => 'permission:manage_users']);
+    $routes->post('/users',                       'Admin\UserController::store',         ['as' => 'users.store', 'filter' => 'permission:manage_users']);
+    $routes->get('/users/(:num)/status-confirm',  'Admin\UserController::confirmStatus/$1',['as' => 'users.status-confirm', 'filter' => 'permission:manage_users']);
+    $routes->post('/users/(:num)/status',         'Admin\UserController::updateStatus/$1',['as' => 'users.update-status', 'filter' => 'permission:manage_users']);
+
     $routes->get('/permissions',                        'Admin\PermissionController::index',       ['as' => 'permissions.index', 'filter' => 'permission:manage_users']);
 
-    $routes->post('/permissions/load/(:num)',           'Admin\PermissionController::loadUser/$1', ['as' => 'permissions.load', 'filter' => 'permission:manage_users']);
-
-    $routes->post('/permissions/save/(:num)',           'Admin\PermissionController::savePermissions/$1', ['as' => 'permissions.save', 'filter' => 'permission:manage_users']);
+    $routes->get('/permissions/load-user/(:num)',       'Admin\PermissionController::loadUser/$1', ['as' => 'permissions.load', 'filter' => 'permission:manage_users']);
+    $routes->post('/permissions/save-permissions/(:num)', 'Admin\PermissionController::savePermissions/$1', ['as' => 'permissions.save', 'filter' => 'permission:manage_users']);
+    $routes->post('/permissions/sync',                  'Admin\PermissionController::sync', ['as' => 'permissions.sync', 'filter' => 'permission:manage_users']);
 
     $routes->get('/permissions/search',                 'Admin\PermissionController::searchUsers', ['as' => 'permissions.search', 'filter' => 'permission:manage_users']);
 

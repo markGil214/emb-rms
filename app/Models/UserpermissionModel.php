@@ -18,6 +18,7 @@ class UserPermissionModel extends Model
     protected $useTimestamps = true;
     protected $dateFormat = 'datetime';
     protected $createdField = 'assigned_at';
+    protected $updatedField = '';
 
     public function getUserPermissions($userId)
     {

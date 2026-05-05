@@ -80,9 +80,14 @@
                                             : ($status === 'Restoration Requested'
                                             ? 'bg-yellow-100 text-yellow-700'
                                             : 'bg-orange-100 text-orange-700'));
+                                    $shortStatus = [
+                                        'Pending Disposal' => 'Pending',
+                                        'Approved for Disposal' => 'Approved',
+                                        'Disposed' => 'Disposed',
+                                    ][$status] ?? $status;
                                 ?>
                                 <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold <?= esc($statusClass) ?>">
-                                    <?= esc($status) ?>
+                                    <?= esc($shortStatus) ?>
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -102,18 +107,10 @@
                                             class="inline" data-confirm-message="<?= esc($disposal['confirm_message'] ?? 'Approve this request?', 'attr') ?>">
                                             <?= csrf_field() ?>
                                             <button type="submit"
-                                                    class="text-green-600 hover:text-green-900 font-medium"><?= esc($disposal['action_label'] ?? 'Approve') ?></button>
+                                                    class="text-green-600 hover:text-green-900 font-medium">Approve</button>
                                         </form>
                                     <?php else: ?>
                                         <span class="text-gray-500"><?= esc($disposal['fallback_action_label'] ?? 'Pending review') ?></span>
-                                    <?php endif; ?>
-                                    <?php if (!empty($disposal['decline_route']) && !empty($disposal['route_id'])): ?>
-                                        <form method="POST" action="<?= route_to($disposal['decline_route'], $disposal['route_id']) ?>"
-                                            class="inline" data-confirm-message="<?= esc($disposal['decline_confirm_message'] ?? 'Decline this request?', 'attr') ?>">
-                                            <?= csrf_field() ?>
-                                            <button type="submit"
-                                                    class="text-red-600 hover:text-red-900 font-medium"><?= esc($disposal['decline_label'] ?? 'Decline') ?></button>
-                                        </form>
                                     <?php endif; ?>
                                 </div>
                             </td>
@@ -124,5 +121,59 @@
         </div>
     <?php endif; ?>
 </div>
+
+<!-- ENHANCED DISPOSAL APPROVAL WITH FULL CONTEXT -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Find all disposal approval forms in the pending list
+    const disposalForms = document.querySelectorAll('form[data-confirm-message][action*="disposal.approve"]');
+    
+    disposalForms.forEach(function (form) {
+        // Find the submit button
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (!submitBtn) return;
+        
+        // Change to regular button to prevent default form submission
+        const newBtn = document.createElement('button');
+        newBtn.type = 'button';
+        newBtn.className = submitBtn.className;
+        newBtn.textContent = submitBtn.textContent;
+        submitBtn.replaceWith(newBtn);
+        
+        // Get data from the form's table row
+        const row = form.closest('tr');
+        if (!row) return;
+        
+        newBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            // Extract record data from the table row
+            const cells = row.querySelectorAll('td');
+            const requestId = cells[0]?.textContent?.trim() || 'Unknown';
+            const requestType = cells[1]?.textContent?.trim() || 'Disposal';
+            const subject = cells[2]?.textContent?.trim() || 'Unknown';
+            const method = cells[3]?.textContent?.trim() || '-';
+            const status = cells[4]?.textContent?.trim() || 'Pending';
+            const requestDate = cells[5]?.textContent?.trim() || '-';
+            const requestedBy = cells[6]?.textContent?.trim() || 'Unknown';
+            
+            window.showDisposalApproval({
+                disposalId: requestId,
+                folderCode: subject.split(' ')[0] || 'N/A',
+                companyName: subject || 'N/A',
+                disposalMethod: method,
+                requestedBy: requestedBy,
+                requestedDate: requestDate,
+                currentStatus: status,
+                message: form.getAttribute('data-confirm-message') || 'Approve this disposal request?',
+                approveCallback: function () {
+                    form.dataset.modalConfirmed = 'true';
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
 
 <?= $this->endSection() ?>

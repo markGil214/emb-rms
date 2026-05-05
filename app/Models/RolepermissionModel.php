@@ -18,6 +18,7 @@ class RolePermissionModel extends Model
     protected $useTimestamps = true;
     protected $dateFormat = 'datetime';
     protected $createdField = 'created_at';
+    protected $updatedField = '';
 
     public function getRolePermissions($roleId)
     {

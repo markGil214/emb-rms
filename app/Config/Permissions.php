@@ -5,65 +5,32 @@ namespace App\Config;
 class Permissions
 {
     /**
-     * All available permissions, organized by module
-     * Uses standardized CRUD + approval pattern:
-     * - view_*
-     * - create_*
-     * - update_*
-     * - delete_*
-     * - approve_*
-     * - manage_* (advanced admin)
+    * Comprehensive but streamlined permissions.
+    * Includes View/Create for all modules but excludes User/Permission management.
      */
     public static function all()
     {
         return [
             'DOCUMENT_RECORDS' => [
-                'view_documents' => 'View folders and documents in the system',
-                'search_documents' => 'Search and filter documents across system',
-                'create_documents' => 'Create new folders and upload documents',
-                'update_documents' => 'Edit folder details and document metadata',
-                'delete_documents' => 'Permanently delete documents',
-                'view_shelf_map' => 'View interactive shelf map and location visualization',
-                'manage_racks' => 'Create, edit, and delete racks and shelves',
-                'approve_create_documents' => 'Approve new folder creation requests',
-                'approve_archive' => 'Approve folder archival requests',
-            ],
-            'BORROW_MANAGEMENT' => [
-                'view_borrow' => 'View all borrow records and borrowing status',
-                'create_borrow' => 'Create new borrow requests',
-                'update_borrow' => 'Update borrow details and process returns',
-                'approve_borrow' => 'Approve or reject borrow requests',
-            ],
-            'RELOCATION_MANAGEMENT' => [
-                'view_relocation' => 'View relocation requests and status',
-                'create_relocation' => 'Create new relocation requests',
-                'update_relocation' => 'Update relocation details',
-                'approve_relocation' => 'Approve or reject relocation requests',
+                'manage_racks' => 'Manage Racks and Shelves',
+                'manage_categories' => 'Manage Document Categories',
             ],
             'ARCHIVE_DISPOSAL' => [
-                'view_archive' => 'View archived documents and disposal requests',
-                'create_archive' => 'Create archive records for documents',
-                'update_archive' => 'Edit archive records',
-                'request_disposal' => 'Request file disposal after expiration',
-                'approve_disposal' => 'Approve document disposal requests',
-                'request_restore' => 'Request restoration of archived folders',
-                'approve_restore' => 'Approve restoration requests for archived folders',
+                'view_audit_logs' => 'View System Audit Logs',
             ],
-            'SYSTEM_ADMIN' => [
-                'view_users' => 'View user accounts and role assignments',
-                'create_users' => 'Create new user accounts',
-                'update_users' => 'Edit user details and role assignments',
-                'delete_users' => 'Deactivate or remove user accounts',
-                'manage_system_config' => 'Configure system settings and parameters',
-                'view_audit_logs' => 'View system activity and change logs',
-                'override' => 'Override locked workflows and user restrictions',
+            'APPROVALS' => [
+                'approve_requests' => 'General Approval Authority',
+                'approve_borrow_requests' => 'Approve Borrow Requests',
+                'approve_relocation' => 'Approve Relocation Requests',
+                'approve_archive' => 'Approve Archival & Disposal',
+                'approve_disposal' => 'Approve Disposal Requests',
+            ],
+            'SYSTEM_ADMINISTRATION' => [
+                'manage_users' => 'Manage Users and System Permissions',
             ],
         ];
     }
 
-    /**
-     * Get flat array of all permissions with descriptions
-     */
     public static function flat()
     {
         $flat = [];
@@ -75,114 +42,84 @@ class Permissions
         return $flat;
     }
 
-    /**
-     * Get grouped permissions for UI rendering
-     */
     public static function grouped()
     {
         return self::all();
     }
 
     /**
-     * Get default permissions for each role
-     * Uses new RBAC permission keys
+     * Default permissions for each role
      */
     public static function roleDefaults()
     {
         return [
             'records_officer' => [
-                // Document records - basic access
                 'view_documents',
-                'search_documents',
-                'create_documents',
+                'create_document_record',
                 'view_shelf_map',
-                
-                // Borrow - can create and view
+                'search_documents',
                 'view_borrow',
-                'create_borrow',
-                'update_borrow',
-                
-                // Relocation - can request
-                'create_relocation',
-                
-                // Archive - can view and create
+                'view_all_borrow',
+                'request_borrow',
+                'view_relocation',
+                'request_relocation',
+                'initiate_relocation',
                 'view_archive',
-                'create_archive',
-                'request_restore',
+                'view_disposal',
                 'request_disposal',
             ],
             'admin' => [
-                // Document records - full access
                 'view_documents',
-                'search_documents',
-                'create_documents',
-                'update_documents',
+                'create_document_record',
                 'view_shelf_map',
+                'search_documents',
                 'manage_racks',
-                'approve_create_documents',
-                'approve_archive',
-                
-                // Borrow - can approve
+                'manage_categories',
                 'view_borrow',
-                'create_borrow',
-                'update_borrow',
-                'approve_borrow',
-                
-                // Relocation - can approve
+                'view_all_borrow',
+                'request_borrow',
                 'view_relocation',
-                'create_relocation',
-                'approve_relocation',
-                
-                // Archive - can manage
+                'request_relocation',
+                'initiate_relocation',
                 'view_archive',
-                'create_archive',
-                'update_archive',
+                'request_archive',
+                'view_disposal',
                 'request_disposal',
+                'approve_requests',
+                'approve_borrow_requests',
+                'approve_relocation',
+                'approve_archive',
                 'approve_disposal',
-                'request_restore',
-                'approve_restore',
+                'view_audit_logs',
+                'process_borrow_release',
+                'process_return',
             ],
             'super_admin' => [
-                // Document records - all
                 'view_documents',
-                'search_documents',
-                'create_documents',
-                'update_documents',
-                'delete_documents',
+                'create_document_record',
                 'view_shelf_map',
+                'search_documents',
                 'manage_racks',
-                'approve_create_documents',
-                'approve_archive',
-                
-                // Borrow - all
+                'manage_categories',
                 'view_borrow',
-                'create_borrow',
-                'update_borrow',
-                'approve_borrow',
-                
-                // Relocation - all
+                'view_all_borrow',
+                'request_borrow',
                 'view_relocation',
-                'create_relocation',
-                'update_relocation',
-                'approve_relocation',
-                
-                // Archive - all
+                'request_relocation',
+                'initiate_relocation',
                 'view_archive',
-                'create_archive',
-                'update_archive',
+                'request_archive',
+                'view_disposal',
                 'request_disposal',
+                'approve_requests',
+                'approve_borrow_requests',
+                'approve_relocation',
+                'approve_archive',
                 'approve_disposal',
-                'request_restore',
-                'approve_restore',
-                
-                // System - all
-                'view_users',
-                'create_users',
-                'update_users',
-                'delete_users',
-                'manage_system_config',
                 'view_audit_logs',
-                'override',
+                'process_borrow_release',
+                'process_return',
+                'manage_users', // Hidden internal safety
             ],
         ];
     }

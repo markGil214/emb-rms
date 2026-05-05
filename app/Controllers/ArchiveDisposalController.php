@@ -30,6 +30,10 @@ class ArchiveDisposalController extends BaseController
      */
     public function disposalIndex()
     {
+        if (!can('view_disposal') && !can('approve_disposal')) {
+            return redirect()->to('/dashboard')->with('error', 'Permission denied');
+        }
+
         $db = \Config\Database::connect();
 
         $archiveDisposalRecords = $this->archiveModel->getArchiveDisposalRecords();

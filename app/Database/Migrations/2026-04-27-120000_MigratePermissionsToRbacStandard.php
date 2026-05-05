@@ -50,7 +50,6 @@ class MigratePermissionsToRbacStandard extends Migration
             'search_documents' => ['search_documents'],
             'create_documents' => ['create_document_record', 'manage_categories'],
             'update_documents' => ['edit_document_metadata'],
-            'delete_documents' => [],  // New permission, no direct mapping
             'view_shelf_map' => ['view_shelf_map'],
             'manage_racks' => ['manage_racks'],
             'approve_create_documents' => ['approve_folder_creation'],
@@ -101,7 +100,7 @@ class MigratePermissionsToRbacStandard extends Migration
 
                 if (!$exists) {
                     // For new permissions without old mapping, only add to super_admin for now
-                    if ($newPermKey === 'view_users' || $newPermKey === 'update_relocation' || $newPermKey === 'delete_documents' || $newPermKey === 'approve_restore') {
+                    if ($newPermKey === 'view_users' || $newPermKey === 'update_relocation' || $newPermKey === 'approve_restore') {
                         if ($roleName === 'super_admin') {
                             $this->db->table('role_permissions')->insert([
                                 'role_id' => $roleId,
@@ -233,7 +232,7 @@ class MigratePermissionsToRbacStandard extends Migration
 
         // Remove all new permission records
         $newPermissions = [
-            'view_documents', 'search_documents', 'create_documents', 'update_documents', 'delete_documents',
+            'view_documents', 'search_documents', 'create_documents', 'update_documents',
             'view_shelf_map', 'manage_racks', 'approve_create_documents', 'approve_archive',
             'view_borrow', 'create_borrow', 'update_borrow', 'approve_borrow',
             'view_relocation', 'create_relocation', 'update_relocation', 'approve_relocation',

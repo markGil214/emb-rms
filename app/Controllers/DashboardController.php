@@ -25,7 +25,7 @@ class DashboardController extends BaseController
             'userRole' => $userRole,
             'permissions' => $permissionService->userPermissions($userId),
             'recentUsers' => $db->table('users')
-                ->select('username, email, role, created_at')
+                ->select('username, first_name, last_name, email, role, status, created_at')
                 ->orderBy('created_at', 'DESC')
                 ->limit(10)
                 ->get()

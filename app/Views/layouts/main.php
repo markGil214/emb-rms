@@ -91,7 +91,6 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= isset($title) ? esc($title) . ' - ' : '' ?>EMB Records System</title>
     <link rel="icon" type="image/x-icon" href="<?= base_url('images/EMB-Logo.png') ?>">
     <link rel="shortcut icon" href="<?= base_url('images/EMB-Logo.png') ?>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -99,6 +98,8 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="<?= base_url('assets/css/tailwind.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/loading-animation.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/modals.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/dark-mode.css') ?>">
     <style>
         html,
         body,
@@ -224,6 +225,229 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
         
         .dark .bg-green-600 {
             background-color: rgb(22 101 52) !important;
+        }
+
+        /* Dark mode for archive table wrapper and header section */
+        .dark .archive-table-wrap {
+            background-color: rgb(31 41 55) !important;
+            border-color: rgb(55 65 81) !important;
+        }
+
+        .dark .archive-table-wrap .bg-white {
+            background-color: rgb(31 41 55) !important;
+        }
+
+        .dark .archive-table-wrap > div {
+            background-color: rgb(31 41 55) !important;
+            border-color: rgb(55 65 81) !important;
+        }
+
+        .dark .archive-table-wrap .px-6.py-4 {
+            background-color: rgb(31 41 55) !important;
+        }
+
+        /* Dark mode for archive/disposal toolbars */
+
+        .dark .archive-toolbar {
+            background-color: transparent;
+        }
+
+        /* Dark mode for disposal summary cards and panel */
+        .dark .disposal-panel {
+            background-color: rgb(31 41 55) !important;
+        }
+
+        .dark .disposal-summary-card {
+            background-color: rgb(55 65 81) !important;
+            border-color: rgb(75 85 99) !important;
+        }
+
+        .dark .disposal-summary-card p.text-sm {
+            color: rgb(156 163 175) !important;
+        }
+
+        .dark .disposal-summary-card .text-3xl {
+            color: rgb(243 244 246) !important;
+        }
+
+        .dark .disposal-summary-card--blue {
+            background-color: rgb(7 89 133 / 0.3) !important;
+            border-left: 4px solid rgb(96 165 250) !important;
+        }
+
+        .dark .disposal-summary-card--amber {
+            background-color: rgb(92 51 23 / 0.3) !important;
+            border-left: 4px solid rgb(250 204 21) !important;
+        }
+
+        /* Dark mode for disposal records header section */
+        .dark .disposal-toolbar {
+            background-color: transparent;
+        }
+
+        .dark .disposal-search-wrap {
+            background-color: rgb(55 65 81) !important;
+            border-color: rgb(75 85 99) !important;
+        }
+
+        .dark .disposal-search-input {
+            background-color: rgb(55 65 81) !important;
+            color: rgb(243 244 246) !important;
+            border-color: rgb(75 85 99) !important;
+        }
+
+        .dark .disposal-search-input::placeholder {
+            color: rgb(107 114 128) !important;
+        }
+
+        .dark .disposal-search-input:focus {
+            background-color: rgb(55 65 81) !important;
+            color: rgb(243 244 246) !important;
+            border-color: rgb(59 130 246) !important;
+            box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1) !important;
+        }
+
+        .dark .disposal-search-icon {
+            color: rgb(107 114 128) !important;
+        }
+
+        .dark .disposal-quick-filter {
+            background-color: rgb(55 65 81) !important;
+            color: rgb(209 213 219) !important;
+            border-color: rgb(75 85 99) !important;
+        }
+
+        .dark .disposal-quick-filter:hover {
+            background-color: rgb(75 85 99) !important;
+            color: rgb(243 244 246) !important;
+        }
+
+        .dark .disposal-quick-filter.is-active {
+            background-color: rgb(59 130 246) !important;
+            color: rgb(243 244 246) !important;
+            border-color: rgb(59 130 246) !important;
+        }
+
+        /* Dark mode for disposal records section text */
+        .dark .disposal-panel .px-6.py-4 h2 {
+            color: rgb(243 244 246) !important;
+        }
+
+        .dark .disposal-panel .px-6.py-4 p {
+            color: rgb(156 163 175) !important;
+        }
+
+        .dark .archive-search-input {
+            background-color: rgb(31 41 55) !important;
+            color: rgb(243 244 246) !important;
+            border-color: rgb(55 65 81) !important;
+        }
+
+        .dark .archive-search-input::placeholder {
+            color: rgb(107 114 128) !important;
+        }
+
+        .dark .archive-search-input:focus {
+            background-color: rgb(31 41 55) !important;
+            color: rgb(243 244 246) !important;
+            border-color: rgb(59 130 246) !important;
+            box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1) !important;
+        }
+
+        .dark .archive-search-icon {
+            color: rgb(107 114 128) !important;
+        }
+
+        .dark .archive-quick-filter {
+            background-color: rgb(31 41 55) !important;
+            color: rgb(209 213 219) !important;
+            border-color: rgb(55 65 81) !important;
+        }
+
+        .dark .archive-quick-filter:hover {
+            background-color: rgb(55 65 81) !important;
+            color: rgb(243 244 246) !important;
+        }
+
+        .dark .archive-quick-filter.is-active {
+            background-color: rgb(59 130 246) !important;
+            color: rgb(243 244 246) !important;
+            border-color: rgb(59 130 246) !important;
+        }
+
+        .dark .archive-filter-trigger {
+            background-color: rgb(31 41 55) !important;
+            color: rgb(209 213 219) !important;
+            border-color: rgb(55 65 81) !important;
+        }
+
+        .dark .archive-filter-trigger:hover {
+            background-color: rgb(55 65 81) !important;
+            color: rgb(243 244 246) !important;
+        }
+
+        /* Dark mode for archive table */
+        .dark table.archive-table {
+            background-color: rgb(31 41 55) !important;
+            color: rgb(226 232 240) !important;
+        }
+
+        .dark table.archive-table thead {
+            background-color: rgb(55 65 81) !important;
+        }
+
+        .dark table.archive-table thead th {
+            background-color: rgb(55 65 81) !important;
+            color: rgb(156 163 175) !important;
+            border-color: rgb(75 85 99) !important;
+        }
+
+        .dark table.archive-table tbody tr {
+            border-color: rgb(55 65 81) !important;
+            background-color: rgb(31 41 55) !important;
+        }
+
+        .dark table.archive-table tbody tr:hover {
+            background-color: rgb(55 65 81) !important;
+        }
+
+        .dark table.archive-table tbody td {
+            color: rgb(226 232 240) !important;
+            border-color: rgb(55 65 81) !important;
+        }
+
+        .dark table.archive-table a {
+            color: rgb(96 165 250) !important;
+        }
+
+        .dark table.archive-table a:hover {
+            color: rgb(147 197 253) !important;
+            text-decoration: underline;
+        }
+
+        /* Dark mode for archive status badges */
+        .dark .archive-status-badge {
+            border-color: transparent;
+        }
+
+        .dark .archive-status-badge.bg-yellow-100 {
+            background-color: rgb(78 36 0 / 0.6) !important;
+            color: rgb(253 224 71) !important;
+        }
+
+        .dark .archive-status-badge.bg-blue-100 {
+            background-color: rgb(7 89 133 / 0.6) !important;
+            color: rgb(147 197 253) !important;
+        }
+
+        .dark .archive-status-badge.bg-green-100 {
+            background-color: rgb(20 83 45 / 0.6) !important;
+            color: rgb(134 239 172) !important;
+        }
+
+        .dark .archive-status-badge.bg-gray-200 {
+            background-color: rgb(75 85 99 / 0.6) !important;
+            color: rgb(203 213 225) !important;
         }
         
         /* Dark mode for buttons */
@@ -449,7 +673,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
             </li>
 
             <li>
-                <?php if (can('approve_disposal')): ?>
+                <?php if (can('view_disposal') || can('approve_disposal')): ?>
                 <a href="<?= route_to('disposal.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
                 :class="window.location.pathname === '<?= route_to('disposal.index') ?>' ? 'bg-green-900' : ''">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -462,11 +686,23 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
 
             <li>
                 <?php if (can('manage_users')): ?>
+                <a href="<?= route_to('users.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
+                :class="window.location.pathname === '<?= route_to('users.index') ?>' ? 'bg-green-900' : ''">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-1a4 4 0 00-4-4h-2m-4 5H2v-1a4 4 0 014-4h2m8-5a4 4 0 11-8 0 4 4 0 018 0zm6 3a3 3 0 100-6 3 3 0 000 6zM6 12a3 3 0 100-6 0 4 4 0 000 6z"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">User Management</span>
+                </a>
+                <?php endif; ?>
+            </li>
+
+            <li>
+                <?php if (can('manage_users')): ?>
                 <a href="<?= route_to('permissions.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
-                    <span x-show="sidebarOpen" x-transition class="ml-3">User Permission</span>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">Permissions</span>
                 </a>
                 <?php endif; ?>
             </li>
@@ -520,31 +756,28 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
                                     <div class="p-4 text-sm text-gray-500">No new notifications</div>
                                 </template>
                                 <template x-for="notification in notifications" :key="notification.id">
-                                    <div class="p-4 hover:bg-gray-50 border-b border-gray-100 last:border-b-0" @click="markAsRead(notification.id)">
-                                        <div class="flex items-start">
-                                            <div class="flex-shrink-0">
-                                                <div class="w-2 h-2 rounded-full mt-2"
-                                                     :class="{
-                                                         'bg-red-500': notification.type === 'danger',
-                                                         'bg-green-500': notification.type === 'success',
-                                                         'bg-yellow-500': notification.type === 'warning',
-                                                         'bg-blue-500': notification.type === 'info'
-                                                     }"></div>
-                                            </div>
-                                            <div class="ml-3 flex-1">
-                                                <p class="text-sm text-gray-900" x-text="notification.message"></p>
+                                    <a :href="notification.link" class="block p-4 hover:bg-gray-50 border-b border-gray-100 last:border-b-0" @click="markAsRead(notification.id)">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-gray-900" x-text="notification.message"></p>
                                                 <p class="text-xs text-gray-500 mt-1" x-text="notification.time"></p>
-                                                <a :href="notification.link" class="inline-block text-xs text-blue-600 hover:text-blue-800 font-medium mt-2" x-text="notification.linkText || 'View'"></a>
                                             </div>
+                                            <div class="w-2 h-2 rounded-full ml-2 mt-1 flex-shrink-0"
+                                                 :class="{
+                                                     'bg-red-500': notification.type === 'danger',
+                                                     'bg-green-500': notification.type === 'success',
+                                                     'bg-yellow-500': notification.type === 'warning',
+                                                     'bg-blue-500': notification.type === 'info'
+                                                 }"></div>
                                         </div>
-                                    </div>
+                                    </a>
                                 </template>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Dark Mode Toggle -->
-                    <button @click="toggleDarkMode()" 
+                    <button @click="toggleDarkMode()"
                             class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                             :class="darkMode ? 'text-yellow-500' : 'text-gray-600'"
                             :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
@@ -661,136 +894,11 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
     </main>
     </div>
 
-    <div id="appConfirmModal" style="position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; padding:16px;" aria-hidden="true">
-        <div style="position:absolute; inset:0; background:rgba(15,23,42,0.18);"></div>
-        <div id="appConfirmModalCard" style="position:relative; z-index:1; width:100%; max-width:480px; overflow:hidden; border-radius:12px; background:#ffffff; box-shadow:0 10px 30px rgba(15,23,42,0.18); border:1px solid rgba(15,23,42,0.08); color:#111827; min-height:280px;">
-            <div style="padding:36px 36px 24px 36px;">
-                <h3 id="appConfirmModalTitle" style="margin:0; font-size:17px; line-height:24px; font-weight:600; color:#111827;">Confirmation</h3>
-                <p style="margin:12px 0 0 0; font-size:14px; line-height:22px; color:#4b5563;">Please review this action before continuing.</p>
-                <p id="appConfirmModalMessage" style="margin:20px 0 0 0; padding:16px 18px; font-size:14px; line-height:24px; color:#374151; background:#ffffff; border:1px solid #e5e7eb; border-radius:10px;">Are you sure?</p>
-            </div>
-            <div style="display:flex; align-items:center; justify-content:flex-end; gap:12px; padding:20px 36px; background:#f8fafc; border-top:1px solid #e5e7eb;">
-                <button id="appConfirmCancel" type="button" style="appearance:none; border:0; background:transparent; padding:10px 14px; border-radius:8px; font-size:14px; font-weight:500; color:#6b7280; cursor:pointer;">Cancel</button>
-                <button id="appConfirmConfirm" type="button" style="appearance:none; border:0; background:#2563eb; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; color:#ffffff; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.08);">Confirm</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        (function () {
-            const modal = document.getElementById('appConfirmModal');
-            if (!modal) {
-                return;
-            }
-
-            const titleEl = document.getElementById('appConfirmModalTitle');
-            const messageEl = document.getElementById('appConfirmModalMessage');
-            const cancelBtn = document.getElementById('appConfirmCancel');
-            const confirmBtn = document.getElementById('appConfirmConfirm');
-            const modalCard = document.getElementById('appConfirmModalCard');
-
-            let onConfirm = null;
-            let onCancel = null;
-
-            function closeModal() {
-                modal.style.display = 'none';
-                modal.setAttribute('aria-hidden', 'true');
-                onConfirm = null;
-                onCancel = null;
-            }
-
-            function openModal(message, confirmCallback, cancelCallback, options) {
-                const opts = options || {};
-
-                titleEl.textContent = opts.title || 'Confirmation';
-                messageEl.textContent = message || 'Are you sure?';
-                confirmBtn.textContent = opts.confirmText || 'Confirm';
-                cancelBtn.textContent = opts.cancelText || 'Cancel';
-
-                onConfirm = typeof confirmCallback === 'function' ? confirmCallback : null;
-                onCancel = typeof cancelCallback === 'function' ? cancelCallback : null;
-
-                modal.style.display = 'flex';
-                modal.setAttribute('aria-hidden', 'false');
-            }
-
-            cancelBtn.addEventListener('click', function () {
-                const callback = onCancel;
-                closeModal();
-                if (callback) {
-                    callback();
-                }
-            });
-
-            confirmBtn.addEventListener('click', function () {
-                const callback = onConfirm;
-                closeModal();
-                if (callback) {
-                    callback();
-                }
-            });
-
-            modal.addEventListener('click', function (event) {
-                if (modalCard && !modalCard.contains(event.target)) {
-                    const callback = onCancel;
-                    closeModal();
-                    if (callback) {
-                        callback();
-                    }
-                }
-            });
-
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && modal.style.display !== 'none') {
-                    const callback = onCancel;
-                    closeModal();
-                    if (callback) {
-                        callback();
-                    }
-                }
-            });
-
-            window.showAppConfirm = function (message, confirmCallback, cancelCallback, options) {
-                openModal(message, confirmCallback, cancelCallback, options || {});
-            };
-
-            window.showAppAlert = function (message, options) {
-                openModal(message, null, null, Object.assign({
-                    title: 'Notice',
-                    confirmText: 'Confirm',
-                    cancelText: 'Cancel'
-                }, options || {}));
-            };
-
-            document.addEventListener('submit', function (event) {
-                const form = event.target;
-                if (!(form instanceof HTMLFormElement)) {
-                    return;
-                }
-
-                const message = form.getAttribute('data-confirm-message');
-                if (!message) {
-                    return;
-                }
-
-                if (form.dataset.modalConfirmed === 'true') {
-                    form.dataset.modalConfirmed = 'false';
-                    return;
-                }
-
-                event.preventDefault();
-
-                window.showAppConfirm(message, function () {
-                    form.dataset.modalConfirmed = 'true';
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                    } else {
-                        form.submit();
-                    }
-                });
-            });
-        })();
-    </script>
+    <!-- Professional Modal System -->
+    <script src="<?= base_url('assets/js/modal-system.js') ?>"></script>
+    
+    <!-- Request Context Helpers -->
+    <script src="<?= base_url('assets/js/request-context-helpers.js') ?>"></script>
     
     <!-- Loading Animation Script -->
     <script src="<?= base_url('js/loading-animation.js') ?>"></script>

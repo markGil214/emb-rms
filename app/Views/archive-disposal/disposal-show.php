@@ -10,6 +10,11 @@
         'Disposed' => 'bg-gray-200 text-gray-700',
     ];
     $statusClass = $statusClasses[$status] ?? 'bg-gray-100 text-gray-700';
+    $shortStatus = [
+        'Pending Disposal' => 'Pending',
+        'Approved for Disposal' => 'Approved',
+        'Disposed' => 'Disposed',
+    ][$status] ?? $status;
 
     $formatDate = static function ($value, string $format = 'M d, Y g:i A'): string {
         $value = trim((string) ($value ?? ''));
@@ -35,7 +40,7 @@
     <div class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-xl font-semibold text-gray-900">Disposal Information</h2>
         <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold <?= esc($statusClass) ?>">
-            <?= esc($status) ?>
+            <?= esc($shortStatus) ?>
         </span>
     </div>
 
@@ -87,12 +92,40 @@
                 </div>
 
                 <?php if ($status === 'Approved for Disposal' && can('approve_disposal')): ?>
-                    <form action="<?= route_to('disposal.complete', $disposal['disposal_id']) ?>" method="POST" data-confirm-message="Mark this archive disposal as completed?">
+                    <form id="disposalApprovalForm" action="<?= route_to('disposal.complete', $disposal['disposal_id']) ?>" method="POST" data-confirm-message="Mark this archive disposal as completed?">
                         <?= csrf_field() ?>
-                        <button type="submit" class="inline-flex items-center rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
-                            Mark Disposed
+                        <button type="button" id="disposalApprovalBtn" class="inline-flex items-center rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
+                            Approve
                         </button>
                     </form>
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const form = document.getElementById('disposalApprovalForm');
+                        const btn = document.getElementById('disposalApprovalBtn');
+                        
+                        if (btn && form) {
+                            btn.addEventListener('click', function (e) {
+                                e.preventDefault();
+                                
+                                window.showDisposalApproval({
+                                    disposalId: '<?= esc($disposal['disposal_id']) ?>',
+                                    folderId: '<?= esc($folder['folder_id'] ?? '') ?>',
+                                    folderCode: '<?= esc($folder['file_code'] ?? '-') ?>',
+                                    companyName: '<?= esc($folder['company_name'] ?? '-') ?>',
+                                    disposalMethod: '<?= esc($disposal['disposal_method'] ?? '-') ?>',
+                                    requestedBy: '<?= esc($disposal['requested_by_name'] ?? $disposal['requested_by'] ?? 'Unknown') ?>',
+                                    requestedDate: '<?= esc($disposal['created_at'] ?? '') ?>',
+                                    currentStatus: 'Approved',
+                                    message: 'Mark this disposal record as completed.',
+                                    approveCallback: function () {
+                                        form.dataset.modalConfirmed = 'true';
+                                        form.submit();
+                                    }
+                                });
+                            });
+                        }
+                    });
+                    </script>
                 <?php endif; ?>
             </div>
         </div>

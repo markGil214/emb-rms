@@ -43,9 +43,15 @@ class BaseController extends Controller
 		// Do Not Edit This Line
 		parent::initController($request, $response, $logger);
 
-		//--------------------------------------------------------------------
-		// Preload any models, libraries, etc, here.
-		//--------------------------------------------------------------------
-		// E.g.: $this->session = \Config\Services::session();
+		// Auto-sync permissions if the user is a Super Admin
+		if (function_exists('auth_user') && ($user = auth_user())) {
+			$role = strtolower($user['role'] ?? '');
+			if ($role === 'superadmin' || $role === 'super_admin') {
+				$permService = service('permissionService');
+				if ($permService) {
+					$permService->syncAllRolePermissions();
+				}
+			}
+		}
 	}
 }

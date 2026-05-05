@@ -11,10 +11,21 @@ use App\Config\Permissions;
 class PermissionService
 {
     private const SYSTEM_DEFAULT_PERMISSIONS = [
-        'request_borrow',
+        'view_documents',
+        'create_document_record',
+        'search_documents',
+        'view_shelf_map',
+        'view_borrow',
         'view_all_borrow',
-        'process_borrow_release',
+        'request_borrow',
+        'view_relocation',
+        'request_relocation',
+        'initiate_relocation',
+        'view_archive',
+        'view_disposal',
+        'request_disposal',
         'view_alerts_module',
+        'process_borrow_release',
     ];
 
     protected $roleModel;
@@ -58,20 +69,26 @@ class PermissionService
      */
     public function getRolePermissions($userId)
     {
-        $userRole = $this->userRoleModel->getUserRole($userId);
-        
-        if (!$userRole) {
+        // 1. Get role name (handles both RBAC and legacy columns)
+        $roleName = $this->getUserRole($userId);
+        if (!$roleName) {
             return [];
         }
 
-        $rolePermissions = $this->rolePermissionModel->getRolePermissions($userRole['role_id']);
-        
-        $permissions = [];
-        foreach ($rolePermissions as $rp) {
-            $permissions[] = $rp['permission_key'];
+        // 2. Get database permissions (if they have an RBAC role)
+        $dbPermissions = [];
+        $userRole = $this->userRoleModel->getUserRole($userId);
+        if ($userRole) {
+            $rolePermissions = $this->rolePermissionModel->getRolePermissions($userRole['role_id']);
+            $dbPermissions = array_column($rolePermissions, 'permission_key');
         }
 
-        return $permissions;
+        // 3. Get defaults from config for this role
+        $defaults = Permissions::roleDefaults();
+        $configPermissions = $defaults[$roleName] ?? [];
+
+        // Merge both
+        return array_values(array_unique(array_merge($dbPermissions, $configPermissions)));
     }
 
     /**
@@ -197,14 +214,18 @@ class PermissionService
      */
     public function getUserRole($userId)
     {
+        // 1. Try RBAC system (user_roles table)
         $userRole = $this->userRoleModel->getUserRole($userId);
-        
-        if (!$userRole) {
-            return null;
+        if ($userRole) {
+            $role = $this->roleModel->find($userRole['role_id']);
+            if ($role && isset($role['role_name'])) {
+                return strtolower((string) $role['role_name']);
+            }
         }
-
-        $role = $this->roleModel->find($userRole['role_id']);
-        return $role['role_name'] ?? null;
+        
+        // 2. Fallback to legacy column (users table)
+        $user = $this->db->table('users')->where('user_id', $userId)->get()->getRowArray();
+        return strtolower((string) ($user['role'] ?? ''));
     }
 
     /**
@@ -227,7 +248,12 @@ class PermissionService
      */
     public function getRoleId($roleName)
     {
-        $role = $this->roleModel->where('role_name', $roleName)->first();
+        $roleName = strtolower((string) $roleName);
+        $role = $this->roleModel->groupStart()
+            ->where('role_name', $roleName)
+            ->orWhere('role_name', strtoupper($roleName))
+            ->groupEnd()
+            ->first();
         return $role['role_id'] ?? null;
     }
 
@@ -319,6 +345,39 @@ class PermissionService
     }
 
     /**
+     * Sync all role permissions from the Permissions config to the database
+     * 
+     * @return array Summary of synced roles
+     */
+    public function syncAllRolePermissions()
+    {
+        $defaults = Permissions::roleDefaults();
+        $summary = [];
+
+        foreach ($defaults as $roleName => $permissionKeys) {
+            $roleId = $this->getRoleId($roleName);
+            if (!$roleId) continue;
+
+            // Remove existing role permissions
+            $this->db->table('role_permissions')->where('role_id', $roleId)->delete();
+
+            // Insert new defaults
+            $synced = 0;
+            foreach ($permissionKeys as $key) {
+                $this->db->table('role_permissions')->insert([
+                    'role_id' => $roleId,
+                    'permission_key' => $key,
+                    'created_at' => date('Y-m-d H:i:s'),
+                ]);
+                $synced++;
+            }
+            $summary[$roleName] = $synced;
+        }
+
+        return $summary;
+    }
+
+    /**
      * Sync all permissions from Permissions config to super_admin role
      * Ensures super_admin always has all permissions, including new ones
      * 
@@ -362,15 +421,17 @@ class PermissionService
             
             // Log if audit log available
             if ($assignedById) {
-                $auditLog = model('AuditlogModel');
-                $auditLog->log(
-                    'permissions_synced',
-                    'role',
-                    $superAdminId,
-                    null,
-                    ['synced_count' => $synced, 'permissions' => $missingPerms],
-                    $assignedById
-                );
+                $auditModel = model('AuditlogModel');
+                if ($auditModel) {
+                     $auditModel->log(
+                        'permissions_synced',
+                        'role',
+                        $superAdminId,
+                        null,
+                        ['synced_count' => $synced, 'permissions' => $missingPerms],
+                        $assignedById
+                    );
+                }
             }
         }
 

@@ -22,31 +22,36 @@ class Authentication
      * Attempt to login user with credentials
      * Regenerates session ID after successful login (prevent session fixation)
      * 
-     * @param string $username
+     * @param string $identifier Username or Email
      * @param string $password
      * @return bool
      */
-    /**
-     * Attempt to login user with credentials
-     * Regenerates session ID after successful login (prevent session fixation)
-     * 
-     * @param string $username
-     * @param string $password
-     * @return bool
-     */
-    public function login($username, $password)
+    public function login($identifier, $password)
     {
-        $user = $this->userModel
-            ->where('username', $username)
-            ->first();
+        $builder = $this->userModel->builder();
+        $user = $builder->groupStart()
+                ->where('username', $identifier)
+                ->orWhere('email', $identifier)
+            ->groupEnd()
+            ->get()
+            ->getRowArray();
 
         if (!$user) {
-            $this->logger->info('Failed login attempt - user not found: ' . $username);
+            $this->logger->info('Failed login attempt - user not found: ' . $identifier);
             return false;
         }
 
-        if (!password_verify($password, $user['password'])) {
-            $this->logger->info('Failed login attempt - invalid password for user: ' . $username);
+        // Verify password
+        if (!password_verify($password, $user['password'] ?? '')) {
+            $this->logger->info('Failed login attempt - invalid password for user: ' . ($user['username'] ?? $identifier));
+            return false;
+        }
+
+        // Block Inactive and Pending accounts from logging in via standard portal
+        $status = $user['status'] ?? 'Active';
+        if (in_array($status, ['Inactive', 'Pending'])) {
+            $statusReason = ($status === 'Pending') ? 'account not yet activated' : 'account deactivated';
+            $this->logger->info("Failed login attempt - $statusReason: " . ($user['username'] ?? $identifier));
             return false;
         }
 
@@ -56,14 +61,17 @@ class Authentication
         $this->session->set([
             'user_id' => $user['user_id'],
             'username' => $user['username'],
+            'first_name' => $user['first_name'] ?? null,
+            'last_name' => $user['last_name'] ?? null,
             'email' => $user['email'],
             'role' => $user['role'],
+            'status' => $status,
             'logged_in' => true,
         ]);
 
         $this->generateToken($user['user_id']);
 
-        $this->logger->info('User logged in: ' . $username . ' (ID: ' . $user['user_id'] . ')');
+        $this->logger->info('User logged in: ' . $user['username'] . ' (ID: ' . $user['user_id'] . ')');
 
         return true;
     }
@@ -97,7 +105,29 @@ class Authentication
      */
     public function check(): bool
     {
-        return $this->session->get('logged_in') === true;
+
+        if ($this->session->get('logged_in') !== true) {
+            return false;
+        }
+
+        $userId = (int) $this->session->get('user_id');
+        if ($userId <= 0) {
+            return false;
+        }
+
+        $user = $this->userModel->select('user_id, status')->find($userId);
+        if (!$user) {
+            $this->session->destroy();
+            return false;
+        }
+
+        if (($user['status'] ?? 'Active') === 'Inactive') {
+            $this->logger->info('Blocked session for inactive user ID: ' . $userId);
+            $this->session->destroy();
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -114,8 +144,11 @@ class Authentication
         return [
             'user_id' => $this->session->get('user_id'),
             'username' => $this->session->get('username'),
+            'first_name' => $this->session->get('first_name'),
+            'last_name' => $this->session->get('last_name'),
             'email' => $this->session->get('email'),
             'role' => $this->session->get('role'),
+            'status' => $this->session->get('status'),
         ];
     }
 

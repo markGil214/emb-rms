@@ -167,8 +167,9 @@
         min-height: 42px;
         border-radius: 10px;
         padding: 10px 16px;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
+        line-height: 1.1;
         transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
     }
 
@@ -230,10 +231,34 @@
         padding: 64px 24px;
         text-align: center;
     }
+
+    .dark .disposal-dashboard .disposal-panel {
+        background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+        border-color: #374151;
+    }
+
+    .dark .disposal-dashboard .disposal-summary-card {
+        background: #374151;
+        border-color: #4b5563;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+
+    .dark .disposal-dashboard .disposal-summary-card:hover {
+        border-color: #6b7280;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    }
+
+    .dark .disposal-dashboard .disposal-summary-card p.text-sm {
+        color: #9ca3af !important;
+    }
+
+    .dark .disposal-dashboard .disposal-summary-card p.text-3xl {
+        color: #f3f4f6 !important;
+    }
 </style>
 
 <div class="disposal-dashboard">
-    <div class="disposal-panel p-6 sm:p-8">
+    <div class="disposal-panel archive-table-wrap p-6 sm:p-8">
         <div class="disposal-summary-grid">
             <?php foreach ($summaryCards as $card): ?>
                 <div class="disposal-summary-card disposal-summary-card--<?= esc($card['color']) ?>">
@@ -244,7 +269,7 @@
         </div>
     </div>
 
-    <div class="disposal-panel overflow-hidden">
+    <div class="disposal-panel archive-table-wrap overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
@@ -340,8 +365,14 @@
                                         } elseif ($statusText === 'Disposed') {
                                             $statusBadgeClass = 'disposal-status-badge--disposed';
                                         }
+
+                                        $shortStatusText = [
+                                            'Pending Disposal' => 'Pending',
+                                            'Approved for Disposal' => 'Approved',
+                                            'Disposed' => 'Disposed',
+                                        ][$statusText] ?? $statusText;
                                     ?>
-                                    <span class="disposal-status-badge <?= esc($statusBadgeClass) ?>"><?= esc($statusText) ?></span>
+                                    <span class="disposal-status-badge <?= esc($statusBadgeClass) ?>"><?= esc($shortStatusText) ?></span>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-700"><?= esc($record['method'] ?? '-') ?></td>
                                 <td class="px-6 py-4 text-sm text-gray-700"><?= esc($formatDate($record['requested_at'] ?? null)) ?></td>
@@ -350,13 +381,13 @@
                                 <td class="px-6 py-4 text-sm">
                                     <div class="flex items-center gap-3">
                                         <?php if (!empty($record['view_route']) && !empty($record['view_id'])): ?>
-                                            <a href="<?= route_to($record['view_route'], (int) $record['view_id']) ?>" class="disposal-action disposal-action--secondary">View Details</a>
+                                            <a href="<?= route_to($record['view_route'], (int) $record['view_id']) ?>" class="disposal-action disposal-action--secondary">View</a>
                                         <?php endif; ?>
 
                                         <?php if (can('approve_disposal') && !empty($record['approve_route']) && !empty($record['approve_id'])): ?>
                                             <form method="POST" action="<?= route_to($record['approve_route'], (int) $record['approve_id']) ?>" class="inline" data-confirm-message="<?= esc($record['confirm_message'] ?? 'Approve this disposal request?', 'attr') ?>">
                                                 <?= csrf_field() ?>
-                                                <button type="submit" class="disposal-action disposal-action--primary">Approve Request</button>
+                                                <button type="submit" class="disposal-action disposal-action--primary">Approve</button>
                                             </form>
                                         <?php endif; ?>
 
@@ -430,5 +461,57 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 <?php endif; ?>
+
+<!-- ENHANCED DISPOSAL APPROVAL WITH FULL CONTEXT -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Find all disposal approval forms (those with data-confirm-message)
+    const disposalForms = document.querySelectorAll('form[data-confirm-message][action*="disposal.approve"], form[data-confirm-message][action*="disposal.complete"]');
+    
+    disposalForms.forEach(function (form) {
+        // Find the submit button
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (!submitBtn) return;
+        
+        // Change to regular button to prevent default form submission
+        const newBtn = document.createElement('button');
+        newBtn.type = 'button';
+        newBtn.className = submitBtn.className;
+        newBtn.textContent = submitBtn.textContent;
+        submitBtn.replaceWith(newBtn);
+        
+        // Get data from the form's data attributes (if available)
+        const row = form.closest('tr');
+        if (!row) return;
+        
+        newBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            // Extract record data from the table row
+            const cells = row.querySelectorAll('td');
+            const subject = cells[0]?.textContent?.trim() || 'Unknown';
+            const status = cells[2]?.textContent?.trim() || 'Pending';
+            const method = cells[3]?.textContent?.trim() || '-';
+            const requestDate = cells[4]?.textContent?.trim() || '-';
+            const requestedBy = cells[5]?.textContent?.trim() || 'Unknown';
+            
+            window.showDisposalApproval({
+                disposalId: form.action.split('/').pop() || 'Unknown',
+                folderCode: subject.split(' ')[0] || 'N/A',
+                companyName: subject || 'N/A',
+                disposalMethod: method,
+                requestedBy: requestedBy,
+                requestedDate: requestDate,
+                currentStatus: status,
+                message: form.getAttribute('data-confirm-message') || 'Approve this disposal request?',
+                approveCallback: function () {
+                    form.dataset.modalConfirmed = 'true';
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
 
 <?= $this->endSection() ?>

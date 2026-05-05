@@ -70,8 +70,8 @@
     $summaryCards = [
         ['label' => 'Archived', 'count' => $statusCounts['Archived'] ?? 0, 'icon' => 'archive', 'color' => 'blue'],
         ['label' => 'Pending Archive', 'count' => $statusCounts['Pending Archive'] ?? 0, 'icon' => 'clock', 'color' => 'orange'],
-        ['label' => 'Pending Disposal', 'count' => $statusCounts['Pending Disposal'] ?? 0, 'icon' => 'clock', 'color' => 'orange'],
-        ['label' => 'Approved for Disposal', 'count' => $statusCounts['Approved for Disposal'] ?? 0, 'icon' => 'check', 'color' => 'green'],
+        ['label' => 'Pending', 'count' => $statusCounts['Pending Disposal'] ?? 0, 'icon' => 'clock', 'color' => 'orange'],
+        ['label' => 'Approved', 'count' => $statusCounts['Approved for Disposal'] ?? 0, 'icon' => 'check', 'color' => 'green'],
         ['label' => 'Disposed', 'count' => $statusCounts['Disposed'] ?? 0, 'icon' => 'disposed', 'color' => 'gray'],
     ];
     // Filter out empty status cards (count = 0) to reduce clutter
@@ -368,6 +368,65 @@
 
     .archive-actions .inline {
         display: inline-flex;
+    }
+
+    .dark .archive-actions {
+        scrollbar-color: #475569 #1f2937;
+    }
+
+    .dark .archive-action-text {
+        background: #1f2937;
+        border-color: #374151;
+        color: #e5e7eb;
+    }
+
+    .dark .archive-action-text:hover {
+        background-color: #374151;
+        border-color: #6b7280;
+    }
+
+    .dark .archive-action-text.action-primary {
+        color: #86efac;
+        background: rgba(22, 163, 74, 0.2);
+        border-color: rgba(22, 163, 74, 0.35);
+    }
+
+    .dark .archive-action-text.action-primary:hover {
+        background: rgba(22, 163, 74, 0.3);
+        border-color: #4ade80;
+    }
+
+    .dark .archive-action-text.action-secondary {
+        color: #93c5fd;
+        background: rgba(37, 99, 235, 0.2);
+        border-color: rgba(37, 99, 235, 0.35);
+    }
+
+    .dark .archive-action-text.action-secondary:hover {
+        background: rgba(37, 99, 235, 0.3);
+        border-color: #60a5fa;
+    }
+
+    .dark .archive-action-text.action-danger {
+        color: #fca5a5;
+        background: rgba(220, 38, 38, 0.2);
+        border-color: rgba(220, 38, 38, 0.35);
+    }
+
+    .dark .archive-action-text.action-danger:hover {
+        background: rgba(220, 38, 38, 0.3);
+        border-color: #f87171;
+    }
+
+    .dark .archive-action-text.action-muted {
+        color: #cbd5e1;
+        background: rgba(100, 116, 139, 0.2);
+        border-color: rgba(100, 116, 139, 0.35);
+    }
+
+    .dark .archive-action-text.action-muted:hover {
+        background: rgba(100, 116, 139, 0.3);
+        border-color: #94a3b8;
     }
 
     /* Bulk actions toolbar */
@@ -782,8 +841,8 @@
                         <select id="modalArchiveStatusFilter" class="archive-filter-option w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500">
                             <option value="">All Archive Status</option>
                             <option value="Archived" <?= $activeStatusFilter === 'Archived' ? 'selected' : '' ?>>Archived (Active records)</option>
-                            <option value="Pending Archive" <?= $activeStatusFilter === 'Pending Archive' ? 'selected' : '' ?>>Pending Archive (Awaiting approval)</option>
-                            <option value="Disposed" <?= $activeStatusFilter === 'Disposed' ? 'selected' : '' ?>>Disposed (Completed)</option>
+                            <option value="Pending Archive" <?= $activeStatusFilter === 'Pending Archive' ? 'selected' : '' ?>>Pending (Awaiting approval)</option>
+                            <option value="Disposed" <?= $activeStatusFilter === 'Disposed' ? 'selected' : '' ?>>Disposed</option>
                         </select>
                     </div>
 

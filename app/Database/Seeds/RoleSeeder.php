@@ -14,9 +14,6 @@ class RoleSeeder extends Seeder
             return;
         }
 
-        // Check if roles already exist
-        $existingRoles = $this->db->table('roles')->countAllResults();
-
         $roles = [
             [
                 'role_name' => 'records_officer',
@@ -35,16 +32,34 @@ class RoleSeeder extends Seeder
             ],
         ];
 
-        // Insert roles only when missing
-        if ($existingRoles === 0) {
-            $this->db->table('roles')->insertBatch($roles);
-        }
-
-        // Get inserted role IDs
         $rolesInDb = $this->db->table('roles')->get()->getResult('array');
         $roleMap = [];
         foreach ($rolesInDb as $role) {
-            $roleMap[$role['role_name']] = $role['role_id'];
+            $roleMap[$role['role_name']] = $role;
+        }
+
+        $insertRows = [];
+        foreach ($roles as $role) {
+            if (isset($roleMap[$role['role_name']])) {
+                $this->db->table('roles')
+                    ->where('role_id', $roleMap[$role['role_name']]['role_id'])
+                    ->update([
+                        'description' => $role['description'],
+                        'is_system_role' => $role['is_system_role'],
+                    ]);
+                continue;
+            }
+
+            $insertRows[] = $role;
+        }
+
+        if (!empty($insertRows)) {
+            $this->db->table('roles')->insertBatch($insertRows);
+            $rolesInDb = $this->db->table('roles')->get()->getResult('array');
+            $roleMap = [];
+            foreach ($rolesInDb as $role) {
+                $roleMap[$role['role_name']] = $role;
+            }
         }
 
         // Get default permissions
@@ -57,6 +72,27 @@ class RoleSeeder extends Seeder
             $existingMap[$rp['role_id'] . '|' . $rp['permission_key']] = true;
         }
 
+        $defaultRoleIds = [];
+        foreach (array_keys($defaults) as $roleName) {
+            if (isset($roleMap[$roleName])) {
+                $defaultRoleIds[] = $roleMap[$roleName]['role_id'];
+            }
+        }
+
+        if (!empty($defaultRoleIds)) {
+            $this->db->table('role_permissions')
+                ->whereIn('role_id', $defaultRoleIds)
+                ->delete();
+        }
+
+        if ($this->tableExists('user_permissions')) {
+            $this->db->table('user_permissions')
+                ->where('permission_key', 'delete_documents')
+                ->delete();
+        }
+
+        $existingMap = [];
+
         // Insert missing role permissions
         $rolePermissions = [];
         foreach ($defaults as $roleName => $permissions) {
@@ -64,13 +100,8 @@ class RoleSeeder extends Seeder
                 continue;
             }
 
-            $roleId = $roleMap[$roleName];
+            $roleId = $roleMap[$roleName]['role_id'];
             foreach ($permissions as $permission) {
-                $mapKey = $roleId . '|' . $permission;
-                if (isset($existingMap[$mapKey])) {
-                    continue;
-                }
-
                 $rolePermissions[] = [
                     'role_id' => $roleId,
                     'permission_key' => $permission,
@@ -82,12 +113,9 @@ class RoleSeeder extends Seeder
             $this->db->table('role_permissions')->insertBatch($rolePermissions);
         }
 
-        if ($existingRoles > 0) {
-            echo "✓ Role default permissions synced successfully\n";
-            return;
-        }
-
-        echo "✓ Roles and default permissions seeded successfully\n";
+        echo empty($insertRows)
+            ? "✓ Role default permissions synced successfully\n"
+            : "✓ Roles and default permissions seeded successfully\n";
     }
 
     private function tableExists(string $table): bool

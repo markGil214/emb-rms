@@ -21,11 +21,40 @@ class PermissionController extends BaseController
 		$db = \Config\Database::connect();
 		$permissionService = service('permissionService');
 
-		// Get all users
-		$users = $db->table('users')
-			->orderBy('username', 'ASC')
+		// Ensure audit_logs table exists to prevent crash
+		if (!$db->tableExists('audit_logs')) {
+			$db->query("CREATE TABLE IF NOT EXISTS `audit_logs` (
+				`log_id` int(11) NOT NULL AUTO_INCREMENT,
+				`user_id` int(11) DEFAULT NULL,
+				`entity_type` varchar(50) DEFAULT NULL,
+				`entity_id` int(11) DEFAULT NULL,
+				`action` varchar(100) DEFAULT NULL,
+				`old_data` text DEFAULT NULL,
+				`new_data` text DEFAULT NULL,
+				`created_at` datetime DEFAULT NULL,
+				PRIMARY KEY (`log_id`),
+				KEY `idx_user` (`user_id`),
+				KEY `idx_entity` (`entity_type`, `entity_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+		}
+
+		$usersByRole = [];
+		$usersWithRoles = $db->table('users u')
+			->select("u.user_id, u.username, u.email, u.first_name, u.last_name, TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS full_name, COALESCE(u.status, 'Active') AS status, COALESCE(r.role_name, u.role) AS role_name")
+			->join('user_roles ur', 'ur.user_id = u.user_id', 'left')
+			->join('roles r', 'r.role_id = ur.role_id', 'left')
+			->orderBy('u.username', 'ASC')
 			->get()
 			->getResultArray();
+
+		foreach ($usersWithRoles as $user) {
+			$roleName = trim((string) ($user['role_name'] ?? ''));
+			if ($roleName === '') {
+				continue;
+			}
+
+			$usersByRole[$roleName][] = $user;
+		}
 
 		// Get all roles
 		$roles = $db->table('roles')
@@ -33,14 +62,22 @@ class PermissionController extends BaseController
 			->get()
 			->getResultArray();
 
-		// Get all permissions (grouped)
-		$allPermissions = Permissions::grouped();
+		// Get all permissions (grouped) for the matrix columns
+		$allPermissions = $permissionService->getGroupedPermissions();
+
+		// Get all permissions for all users to pre-populate the matrix
+		$userPermissionsMap = [];
+		foreach ($usersWithRoles as $user) {
+			$userPermissionsMap[$user['user_id']] = $permissionService->userPermissions($user['user_id']);
+		}
 
 		$data = [
 			'title' => 'User Permissions',
-			'users' => $users,
+			'users' => $usersWithRoles,
+			'usersByRole' => $usersByRole,
 			'roles' => $roles,
 			'permissions' => $allPermissions,
+			'userPermissionsMap' => $userPermissionsMap,
 		];
 
 		return view('permissions/manage', $data);
@@ -63,6 +100,9 @@ class PermissionController extends BaseController
 		if (!$user) {
 			return $this->response->setJSON(['error' => 'User not found'], 404);
 		}
+
+		$user['status'] = trim((string) ($user['status'] ?? '')) ?: 'Active';
+		$user['full_name'] = trim((string) (($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')));
 
 		// Get user's role
 		$userRole = $permissionService->getUserRole($userId);
@@ -171,6 +211,32 @@ class PermissionController extends BaseController
 	}
 
 	/**
+	 * Sync permissions from Config file to Database
+	 */
+	public function sync()
+	{
+		if (!can('manage_users')) {
+			return $this->response->setJSON(['error' => 'Forbidden'], 403);
+		}
+
+		$permissionService = service('permissionService');
+		$adminId = session()->get('user_id');
+
+		// 1. Sync all role defaults
+		$summary = $permissionService->syncAllRolePermissions();
+
+		// 2. Force Super Admin sync
+		$syncedCount = $permissionService->syncSuperAdminPermissions($adminId);
+
+		return $this->response->setJSON([
+			'success' => true, 
+			'message' => 'System-wide synchronization complete. Role defaults updated and Super Admin verified.',
+			'summary' => $summary,
+			'syncedCount' => $syncedCount
+		]);
+	}
+
+	/**
 	 * Search users via AJAX
 	 */
 	public function searchUsers()
@@ -183,7 +249,8 @@ class PermissionController extends BaseController
 		$db = \Config\Database::connect();
 
 		$users = $db->table('users')
-			->where("username LIKE '%{$query}%' OR email LIKE '%{$query}%'")
+			->select("user_id, username, email, first_name, last_name, TRIM(CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, ''))) AS full_name, COALESCE(status, 'Active') AS status")
+			->where("username LIKE '%{$query}%' OR email LIKE '%{$query}%' OR first_name LIKE '%{$query}%' OR last_name LIKE '%{$query}%'")
 			->limit(10)
 			->get()
 			->getResultArray();

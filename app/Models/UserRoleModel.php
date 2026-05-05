@@ -18,6 +18,7 @@ class UserRoleModel extends Model
     protected $useTimestamps = true;
     protected $dateFormat = 'datetime';
     protected $createdField = 'assigned_at';
+    protected $updatedField = '';
 
     public function getUserRole($userId)
     {
@@ -26,14 +27,18 @@ class UserRoleModel extends Model
 
     public function assignRole($userId, $roleId, $assignedById = null)
     {
-        return $this->updateBatch([
+        $exists = $this->where('user_id', $userId)->first();
+
+        $data = [
             'user_id' => $userId,
             'role_id' => $roleId,
             'assigned_by_id' => $assignedById,
-        ], 'user_id') ?: $this->insert([
-            'user_id' => $userId,
-            'role_id' => $roleId,
-            'assigned_by_id' => $assignedById,
-        ]);
+        ];
+
+        if ($exists) {
+            return $this->update($exists['user_role_id'], $data);
+        }
+
+        return $this->insert($data);
     }
 }
