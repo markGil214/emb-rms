@@ -126,7 +126,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     $routes->get('/document-records/(:num)/history', 'FolderController::history/$1', ['as' => 'records.history', 'filter' => 'permission:search_documents']);
 
-    $routes->post('/document-records/(:num)/archive', 'ArchiveDisposalController::archiveFolderFromRecords/$1', ['as' => 'records.archive', 'filter' => 'permission:create_archive']);
+    $routes->post('/document-records/(:num)/archive', 'ArchiveDisposalController::archiveFolderFromRecords/$1', ['as' => 'records.archive', 'filter' => 'permission:approve_archive']);
 
     $routes->get('/document-records/(:num)/edit',    'FolderController::edit/$1',  ['as' => 'records.edit', 'filter' => 'permission:edit_document_metadata']);
 
@@ -198,25 +198,25 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
 $routes->group('', ['filter' => 'auth'], function($routes) {
 
-    $routes->get('/borrows',                  'BorrowRequestController::index',     ['as' => 'borrows.index', 'filter' => 'permission:view_own_borrow,view_all_borrow']);
+    $routes->get('/borrows',                  'BorrowRequestController::index',     ['as' => 'borrows.index', 'filter' => 'permission:view_borrow,approve_borrow_requests']);
 
     $routes->get('/borrows/create',           'BorrowRequestController::create',    ['as' => 'borrows.create', 'filter' => 'permission:request_borrow']);
 
     $routes->post('/borrows',                 'BorrowRequestController::store',     ['as' => 'borrows.store', 'filter' => 'permission:request_borrow']);
 
-    $routes->get('/borrows/(:num)',           'BorrowRequestController::show/$1',   ['as' => 'borrows.show', 'filter' => 'permission:view_own_borrow,view_all_borrow']);
+    $routes->get('/borrows/(:num)',           'BorrowRequestController::show/$1',   ['as' => 'borrows.show', 'filter' => 'permission:view_borrow,approve_borrow_requests']);
 
     $routes->post('/borrows/(:num)/approve',  'BorrowRequestController::approve/$1',['as' => 'borrows.approve', 'filter' => 'permission:approve_borrow_requests']);
 
-    $routes->post('/borrows/(:num)/return',   'BorrowRequestController::return/$1', ['as' => 'borrows.return', 'filter' => 'permission:process_return']);
+    $routes->post('/borrows/(:num)/return',   'BorrowRequestController::return/$1', ['as' => 'borrows.return', 'filter' => 'permission:approve_borrow_requests']);
 
-    $routes->post('/borrows/(:num)/notify',   'BorrowRequestController::notify/$1', ['as' => 'borrows.notify', 'filter' => 'permission:process_return']);
+    $routes->post('/borrows/(:num)/notify',   'BorrowRequestController::notify/$1', ['as' => 'borrows.notify', 'filter' => 'permission:approve_borrow_requests']);
 
     $routes->post('/borrows/(:num)/decline',  'BorrowRequestController::decline/$1',['as' => 'borrows.decline', 'filter' => 'permission:approve_borrow_requests']);
 
     $routes->get('/borrows/pending',          'BorrowRequestController::pending',   ['as' => 'borrows.pending', 'filter' => 'permission:approve_borrow_requests']);
 
-    $routes->get('/borrows/borrowed',         'BorrowRequestController::borrowed',  ['as' => 'borrows.borrowed', 'filter' => 'permission:view_own_borrow,view_all_borrow']);
+    $routes->get('/borrows/borrowed',         'BorrowRequestController::borrowed',  ['as' => 'borrows.borrowed', 'filter' => 'permission:view_borrow,approve_borrow_requests']);
 
     $routes->get('/borrows/overdue',          'BorrowRequestController::overdue',   ['as' => 'borrows.overdue', 'filter' => 'permission:view_pending_returns']);
 
@@ -226,9 +226,9 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
 $routes->group('reports', ['filter' => 'auth'], function($routes) {
 
-    $routes->get('/overdue',                  'ReportController::viewOverdue',      ['as' => 'reports.overdue', 'filter' => 'permission:view_all_borrow']);
+    $routes->get('/overdue',                  'ReportController::viewOverdue',      ['as' => 'reports.overdue', 'filter' => 'permission:approve_borrow_requests']);
 
-    $routes->get('/overdue/export',           'ReportController::exportOverdueCSV', ['as' => 'reports.overdue.export', 'filter' => 'permission:view_all_borrow']);
+    $routes->get('/overdue/export',           'ReportController::exportOverdueCSV', ['as' => 'reports.overdue.export', 'filter' => 'permission:approve_borrow_requests']);
 
 });
 
@@ -281,9 +281,9 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     // Archive operations
 
-    $routes->get('/archive/create',                     'ArchiveDisposalController::createArchive',      ['as' => 'archive.create', 'filter' => 'permission:request_archive']);
+    $routes->get('/archive/create',                     'ArchiveDisposalController::createArchive',      ['as' => 'archive.create', 'filter' => 'permission:approve_archive']);
 
-    $routes->post('/archive',                           'ArchiveDisposalController::storeArchive',       ['as' => 'archive.store', 'filter' => 'permission:request_archive']);
+    $routes->post('/archive',                           'ArchiveDisposalController::storeArchive',       ['as' => 'archive.store', 'filter' => 'permission:approve_archive']);
 
     $routes->get('/archive/(:num)',                     'ArchiveDisposalController::showArchive/$1',    ['as' => 'archive.show']);
 

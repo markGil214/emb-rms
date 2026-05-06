@@ -30,7 +30,7 @@ try {
     }
 
     $overdueCount = count($borrowModel->getAllOverdue());
-    if ($overdueCount > 0 && (can('view_own_borrow') || can('view_all_borrow') || can('view_pending_returns'))) {
+    if ($overdueCount > 0 && (can('view_borrow') || can('approve_borrow_requests') || can('view_pending_returns'))) {
         $headerNotifications[] = [
             'id' => 1,
             'type' => 'danger',
@@ -703,7 +703,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
             </li>
 
             <li>
-                    <?php if (can('view_documents') || can('create_document_record') || can('edit_document_metadata') || can('search_documents') || can('manage_racks') || can('manage_categories') || can('approve_folder_creation') || can('approve_folder_archival')): ?>
+                    <?php if (can('view_documents') || can('create_document_record') || can('edit_document_metadata') || can('search_documents') || can('manage_racks') || can('manage_categories') || can('approve_folder_creation') || can('approve_archive')): ?>
                 <a href="<?= route_to('records') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
                 :class="window.location.pathname === '<?= route_to('records') ?>' ? 'bg-green-900' : ''">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -715,7 +715,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
             </li>
 
             <li>
-                <?php if (can('request_borrow') || can('approve_borrow_requests') || can('process_borrow_release') || can('process_return')): ?>
+                <?php if (can('request_borrow') || can('approve_borrow_requests') || can('view_borrow')): ?>
                 <a href="<?= route_to('borrows.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
                 :class="window.location.pathname === '<?= route_to('borrows.index') ?>' ? 'bg-green-900' : ''">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -732,7 +732,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
             </li>
 
             <li>
-                <?php if (can('request_relocation') || can('approve_relocation')): ?>
+                <?php if (can('initiate_relocation') || can('approve_relocation')): ?>
                 <a href="<?= route_to('relocations.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
                 :class="window.location.pathname === '<?= route_to('relocations.index') ?>' ? 'bg-green-900' : ''">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -744,7 +744,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
             </li>
 
             <li>
-                <?php if (can('archive_document') || can('create_archive') || can('view_archive_module') || can('view_archive') || can('request_archive') || can('approve_archive') || can('request_restore') || can('approve_restore')): ?>
+                <?php if (can('approve_archive') || can('request_restore') || can('approve_restore')): ?>
                 <a href="<?= route_to('archive.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
                 :class="window.location.pathname === '<?= route_to('archive.index') ?>' ? 'bg-green-900' : ''">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -756,7 +756,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
             </li>
 
             <li>
-                <?php if (can('view_disposal') || can('approve_disposal')): ?>
+                <?php if (can('request_disposal') || can('approve_disposal')): ?>
                 <a href="<?= route_to('disposal.index') ?>" class="flex items-center p-3 rounded hover:bg-green-900 transition-colors group"
                 :class="window.location.pathname === '<?= route_to('disposal.index') ?>' ? 'bg-green-900' : ''">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

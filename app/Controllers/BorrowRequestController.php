@@ -27,9 +27,9 @@ class BorrowRequestController extends BaseController
     {
         $userId = auth_user()['user_id'];
 
-        // Permission-based filtering: Users with view_all_borrow see everything
-        // Users with only view_own_borrow see only their records
-        if (!can('view_all_borrow')) {
+        // Permission-based filtering: Users with approve_borrow_requests see everything
+        // Users with only view_borrow see only their records
+        if (!can('approve_borrow_requests')) {
             $borrows = $this->borrowModel->getUserBorrows($userId);
         } else {
             $borrows = $this->borrowModel->getAllByLatestActivity();
@@ -159,7 +159,7 @@ class BorrowRequestController extends BaseController
         $userId = auth_user()['user_id'];
         if (
             $borrow['created_by'] !== $userId &&
-            !can('view_all_borrow')
+            !can('approve_borrow_requests')
         ) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
@@ -211,7 +211,7 @@ class BorrowRequestController extends BaseController
      */
     public function return(int $transactionId)
     {
-        if (!can('process_return')) {
+        if (!can('approve_borrow_requests')) {
             return redirect()->back()->with('error', 'Permission denied');
         }
 
@@ -239,7 +239,7 @@ class BorrowRequestController extends BaseController
      */
     public function notify(int $transactionId)
     {
-        if (!can('process_return')) {
+        if (!can('approve_borrow_requests')) {
             return redirect()->back()->with('error', 'Permission denied');
         }
 

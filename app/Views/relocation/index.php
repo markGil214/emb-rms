@@ -30,7 +30,7 @@
                 </button>
             </div>
 
-            <?php if (can('request_relocation')): ?>
+            <?php if (can('initiate_relocation')): ?>
                 <a href="<?= route_to('relocations.create') ?>"
                    class="inline-flex w-auto flex-none items-center justify-center space-x-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

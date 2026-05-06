@@ -38,7 +38,7 @@ class ReportController extends BaseController
     public function exportOverdueCSV()
     {
         // Permission check
-        if (!can('view_all_borrow')) {
+        if (!can('approve_borrow_requests')) {
             return redirect()->back()->with('error', 'Permission denied');
         }
 
@@ -182,7 +182,7 @@ class ReportController extends BaseController
     public function viewOverdue()
     {
         // Permission check
-        if (!can('view_all_borrow')) {
+        if (!can('approve_borrow_requests')) {
             return redirect()->back()->with('error', 'Permission denied');
         }
 

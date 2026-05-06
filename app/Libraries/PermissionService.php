@@ -11,21 +11,7 @@ use App\Config\Permissions;
 class PermissionService
 {
     private const SYSTEM_DEFAULT_PERMISSIONS = [
-        'view_documents',
-        'create_document_record',
-        'search_documents',
-        'view_shelf_map',
-        'view_borrow',
-        'view_all_borrow',
-        'request_borrow',
-        'view_relocation',
-        'request_relocation',
-        'initiate_relocation',
-        'view_archive',
-        'view_disposal',
-        'request_disposal',
-        'view_alerts_module',
-        'process_borrow_release',
+        // All permissions are now managed via roles and custom assignments
     ];
 
     protected $roleModel;

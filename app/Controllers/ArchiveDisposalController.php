@@ -30,7 +30,7 @@ class ArchiveDisposalController extends BaseController
      */
     public function disposalIndex()
     {
-        if (!can('view_disposal') && !can('approve_disposal')) {
+        if (!can('request_disposal') && !can('approve_disposal')) {
             return redirect()->to('/dashboard')->with('error', 'Permission denied');
         }
 
@@ -138,7 +138,7 @@ class ArchiveDisposalController extends BaseController
      */
     public function createArchive()
     {
-        if (!can('request_archive')) {
+        if (!can('approve_archive')) {
             return redirect()->back()->with('error', 'Permission denied');
         }
 
@@ -162,7 +162,7 @@ class ArchiveDisposalController extends BaseController
      */
     public function storeArchive()
     {
-        if (!can('request_archive')) {
+        if (!can('approve_archive')) {
             return redirect()->back()->with('error', 'Permission denied');
         }
 
@@ -220,7 +220,7 @@ class ArchiveDisposalController extends BaseController
 
         // Log audit
         $auditLog = service('auditLog');
-        $auditLog->log(auth_user()['user_id'], 'create_archive', "folder_id:{$data['folder_id']}");
+        $auditLog->log(auth_user()['user_id'], 'approve_archive', "folder_id:{$data['folder_id']}");
 
         $db->transComplete();
 
@@ -618,7 +618,7 @@ class ArchiveDisposalController extends BaseController
      */
     public function archiveFolderFromRecords(int $folderId)
     {
-        if (!can('create_archive') && !can('request_archive') && !can('archive_document')) {
+        if (!can('approve_archive')) {
             return redirect()->back()->with('error', 'Permission denied');
         }
 
@@ -648,7 +648,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'] ?? null, 'request_archive', "folder_id:{$folderId}");
+            $auditLog->log(auth_user()['user_id'] ?? null, 'approve_archive', "folder_id:{$folderId}");
         } catch (\Throwable $e) {
             log_message('error', 'Archive request audit logging failed: {message}', ['message' => $e->getMessage()]);
         }

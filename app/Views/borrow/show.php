@@ -118,7 +118,7 @@
                             Decline Request
                         </button>
                     </form>
-                <?php elseif (($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Overdue') && can('process_return')): ?>
+                <?php elseif (($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Overdue') && can('approve_borrow_requests')): ?>
                     <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/return" class="inline">
                         <?= csrf_field() ?>
                         <button type="submit" 

@@ -13,14 +13,14 @@
     }
 
     .activation-header {
-        padding: 40px;
+        padding: 24px;
         text-align: center;
         background: #f8fafc;
         border-bottom: 1px solid #f1f5f9;
     }
 
     .activation-body {
-        padding: 48px;
+        padding: 32px;
     }
 
     .icon-box {
@@ -32,7 +32,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 24px;
+        margin: 0 auto 16px;
     }
 
     .label-text {
@@ -84,7 +84,7 @@
         border: none;
         cursor: pointer;
         transition: all 0.3s;
-        margin-top: 32px;
+        margin-top: 24px;
         font-size: 16px;
         box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
     }
@@ -113,7 +113,6 @@
     }
 </style>
 
-<div class="max-w-8xl mx-auto px-4">
     <div class="activation-card">
         <div class="activation-header">
             <div class="icon-box">
@@ -148,7 +147,7 @@
             <form method="POST" action="<?= route_to('users.complete-setup', $user['user_id']) ?>">
                 <?= csrf_field() ?>
                 
-                <div class="mb-8">
+                <div class="mb-6">
                     <label class="label-text">Activation Code (OTP)</label>
                     <input type="text" name="otp" class="custom-input otp-input" placeholder="••••••••" required maxlength="8" autocomplete="off" autofocus>
                     <p class="text-[10px] text-gray-400 mt-2 text-center uppercase font-bold tracking-widest">Check your email for this code</p>
@@ -159,7 +158,7 @@
                     <input type="password" name="password" class="custom-input" placeholder="At least 8 characters" required>
                 </div>
 
-                <div class="mb-6">
+                <div class="mb-4">
                     <label class="label-text">Confirm Password</label>
                     <input type="password" name="confirm_password" class="custom-input" placeholder="Repeat your password" required>
                 </div>
@@ -172,5 +171,4 @@
             </form>
         </div>
     </div>
-</div>
 <?= $this->endSection() ?>

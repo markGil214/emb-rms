@@ -87,7 +87,7 @@
                                                     <?= csrf_field() ?>
                                                     <button type="submit" class="text-red-600 hover:text-red-900">Decline</button>
                                                 </form>
-                                            <?php elseif (($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Overdue') && can('process_return')): ?>
+                                            <?php elseif (($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Overdue') && can('approve_borrow_requests')): ?>
                                                 <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/return" class="inline" data-confirm-message="Return this folder now?">
                                                     <?= csrf_field() ?>
                                                     <button type="submit" class="text-red-600 hover:text-red-900">Return</button>

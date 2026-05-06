@@ -430,7 +430,6 @@
                                             <select name="status" class="quick-select" <?= $isSelf ? 'disabled' : '' ?> title="<?= $isSelf ? 'You cannot deactivate yourself' : '' ?>">
                                                 <option value="Active" <?= $status === 'Active' ? 'selected' : '' ?>>Active</option>
                                                 <option value="Inactive" <?= $status === 'Inactive' ? 'selected' : '' ?>>Inactive</option>
-                                                <option value="Pending" <?= $status === 'Pending' ? 'selected' : '' ?>>Pending</option>
                                             </select>
                                             <button type="submit" class="save-action-btn" <?= $isSelf ? 'disabled' : '' ?>>
                                                 Update

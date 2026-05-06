@@ -10,9 +10,8 @@
 
     <title><?= isset($title) ? esc($title) : 'EMB Records System' ?></title>
 
-    <link rel="stylesheet" href="assets/css/tailwind.css">
-
-    <link rel="stylesheet" href="/css/loading-animation.css">
+    <link rel="stylesheet" href="<?= base_url('assets/css/tailwind.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/loading-animation.css') ?>">
 
     <style>
         html,
@@ -31,10 +30,6 @@
         <!-- Left Side - Branding -->
 
         <div class="bg-gradient-to-br from-green-600 to-green-400 text-white p-10 flex flex-col justify-center items-center text-center flex-1">
-
-            <img src="/images/EMB-Logo.png" alt="EMB Records Logo"
-
-                class="w-40 h-auto max-h-40 object-contain rounded-xl mb-5">
 
             <h1 class="text-5xl font-bold mb-5 flex items-center gap-4">
 

@@ -143,24 +143,23 @@ class PermissionController extends BaseController
 		$roleId = $this->request->getPost('role_id');
 		$selectedPermissions = $this->request->getPost('permissions') ?? [];
 
-		// ✅ Get current role before making changes
-		$currentUserRole = $permissionService->getUserRole($userId);
-		$currentRoleId = null;
-		if ($currentUserRole) {
-			$role = $db->table('roles')
-				->where('role_name', $currentUserRole)
-				->get()->getRowArray();
-			$currentRoleId = $role['role_id'] ?? null;
+		// ✅ Get current role info
+		$userRoleName = $permissionService->getUserRole($userId);
+		$dbRole = $db->table('roles')->where('role_name', $userRoleName)->get()->getRowArray();
+		$currentRoleId = $dbRole['role_id'] ?? null;
+
+		// ✅ If roleId not provided, use current one
+		if (!$roleId) {
+			$roleId = $currentRoleId;
 		}
 
-		// ✅ Only assign new role if it actually changed
-		if ($roleId && $roleId !== $currentRoleId) {
-			$currentSession = session();
-			$adminId = $currentSession->get('user_id');
+		// ✅ Only assign new role if it actually changed and was provided
+		if ($roleId && $roleId != $currentRoleId && $this->request->getPost('role_id')) {
+			$adminId = session()->get('user_id');
 			$permissionService->assignRole($userId, $roleId, $adminId);
 		}
 
-		// Get current user's role permissions (after potential role change)
+		// Get permissions from the role (these cannot be unchecked per-user in current architecture)
 		$rolePermissions = [];
 		if ($roleId) {
 			$rolePerms = $db->table('role_permissions')
@@ -171,8 +170,7 @@ class PermissionController extends BaseController
 		}
 
 		// ✅ Get current custom permissions before making changes
-		$currentCustomPerms = $permissionService->getCustomPermissions($userId);
-		$currentPermsArray = array_column($currentCustomPerms, 'permission_key');
+		$currentPermsArray = $permissionService->getCustomPermissions($userId);
 		
 		// ✅ Only manage custom permissions (not from role)
 		$customSelectedPerms = array_diff($selectedPermissions, $rolePermissions);

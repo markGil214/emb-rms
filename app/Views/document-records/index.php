@@ -384,7 +384,7 @@ ksort($locationOptions);
                                                 <a href="<?= route_to('records.edit', $folder['folder_id']) ?>" class="text-green-600 hover:text-green-900" title="Edit Folder">Edit</a>
                                             <?php endif; ?>
 
-                                            <?php if ((can('create_archive') || can('request_archive')) && $folderStatus !== 'Archived' && $folderStatus !== 'Archival' && $folderStatus !== 'Borrowed' && $folderStatus !== 'Disposed' && $folderStatus !== 'Pending' && $folderStatus !== 'Pending Update' && $folderStatus !== 'Pending Archive'): ?>
+                                            <?php if (can('approve_archive') && $folderStatus !== 'Archived' && $folderStatus !== 'Archival' && $folderStatus !== 'Borrowed' && $folderStatus !== 'Disposed' && $folderStatus !== 'Pending' && $folderStatus !== 'Pending Update' && $folderStatus !== 'Pending Archive'): ?>
                                                 <span class="text-gray-300">|</span>
                                                 <form action="<?= route_to('records.archive', $folder['folder_id']) ?>" method="POST" style="display:inline;" data-confirm-message="Submit this folder for archive approval?">
                                                     <?= csrf_field() ?>

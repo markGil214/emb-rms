@@ -282,8 +282,9 @@ $firstGroupId = !empty($allPermissions) ? array_keys($allPermissions)[0] : '';
             const userId = $(this).data('user');
             const perm = $(this).data('perm');
             const isChecked = $(this).is(':checked');
-
-            if (!usersToUpdate[userId]) usersToUpdate[userId] = [];
+            if (!usersToUpdate[userId]) {
+                usersToUpdate[userId] = [];
+            }
             if (isChecked) usersToUpdate[userId].push(perm);
         });
 
