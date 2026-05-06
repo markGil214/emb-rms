@@ -1,4 +1,4 @@
-<?= $this->extend('layouts/main') ?>
+<?= $this->extend('layouts/auth') ?>
 
 <?= $this->section('content') ?>
 <style>
@@ -8,7 +8,7 @@
         border: 1px solid #e2e8f0;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
         max-width: 550px;
-        margin: 80px auto;
+        margin: 20px auto;
         overflow: hidden;
         text-align: center;
     }

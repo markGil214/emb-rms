@@ -91,9 +91,12 @@ class ArchiveRecordModel extends Model
             'ar.archived_date',
             'ar.archive_location_id',
             'ar.archived_by',
-            'archiver.username as archived_by_name',
-            'folder_creator.username as folder_created_by_name',
-            'folder_updater.username as folder_updated_by_name',
+            'archiver.username as archived_by_username',
+            'CASE WHEN archiver.first_name IS NOT NULL AND archiver.first_name != "" THEN CONCAT(archiver.first_name, " ", archiver.last_name) ELSE archiver.username END as archived_by_name',
+            'folder_creator.username as folder_created_by_username',
+            'CASE WHEN folder_creator.first_name IS NOT NULL AND folder_creator.first_name != "" THEN CONCAT(folder_creator.first_name, " ", folder_creator.last_name) ELSE folder_creator.username END as folder_created_by_name',
+            'folder_updater.username as folder_updated_by_username',
+            'CASE WHEN folder_updater.first_name IS NOT NULL AND folder_updater.first_name != "" THEN CONCAT(folder_updater.first_name, " ", folder_updater.last_name) ELSE folder_updater.username END as folder_updated_by_name',
             'l.rack',
             'l.shelf',
             'dr.disposal_id',
@@ -102,9 +105,9 @@ class ArchiveRecordModel extends Model
             'dr.compliance_reference',
             'dr.approved_by',
             'dr.created_at as disposal_requested_at',
-            'approver.username as approved_by_name',
+            'CASE WHEN approver.first_name IS NOT NULL AND approver.first_name != "" THEN CONCAT(approver.first_name, " ", approver.last_name) ELSE approver.username END as approved_by_name',
             $hasRequestedBy ? 'dr.requested_by as disposal_requested_by' : 'NULL as disposal_requested_by',
-            $hasRequestedBy ? 'requester.username as requested_by_name' : 'NULL as requested_by_name',
+            $hasRequestedBy ? 'CASE WHEN requester.first_name IS NOT NULL AND requester.first_name != "" THEN CONCAT(requester.first_name, " ", requester.last_name) ELSE requester.username END as requested_by_name' : 'NULL as requested_by_name',
         ];
 
         $builder = $db->table('folders as f')

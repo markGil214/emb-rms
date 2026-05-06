@@ -384,7 +384,7 @@ ksort($locationOptions);
                                                 <a href="<?= route_to('records.edit', $folder['folder_id']) ?>" class="text-green-600 hover:text-green-900" title="Edit Folder">Edit</a>
                                             <?php endif; ?>
 
-                                            <?php if (can('create_archive') && $folderStatus !== 'Archived' && $folderStatus !== 'Archival' && $folderStatus !== 'Borrowed' && $folderStatus !== 'Disposed' && $folderStatus !== 'Pending' && $folderStatus !== 'Pending Update' && $folderStatus !== 'Pending Archive'): ?>
+                                            <?php if ((can('create_archive') || can('request_archive')) && $folderStatus !== 'Archived' && $folderStatus !== 'Archival' && $folderStatus !== 'Borrowed' && $folderStatus !== 'Disposed' && $folderStatus !== 'Pending' && $folderStatus !== 'Pending Update' && $folderStatus !== 'Pending Archive'): ?>
                                                 <span class="text-gray-300">|</span>
                                                 <form action="<?= route_to('records.archive', $folder['folder_id']) ?>" method="POST" style="display:inline;" data-confirm-message="Submit this folder for archive approval?">
                                                     <?= csrf_field() ?>
@@ -402,19 +402,6 @@ ksort($locationOptions);
                                             <?php elseif ($folderStatus === 'Pending Archive'): ?>
                                                 <span class="text-gray-300">|</span>
                                                 <span class="text-orange-600">Archive pending</span>
-                                            <?php endif; ?>
-
-                                            <?php if (can('approve_folder_creation') && ($folderStatus === 'Pending' || $folderStatus === 'Pending Update')): ?>
-                                                <span class="text-gray-300">|</span>
-                                                <form action="<?= route_to('records.approve', $folder['folder_id']) ?>" method="POST" style="display:inline;" data-confirm-message="Approve this request?">
-                                                    <?= csrf_field() ?>
-                                                    <button type="submit" class="cursor-pointer border-0 bg-transparent p-0 text-blue-600 hover:text-blue-900">Approve</button>
-                                                </form>
-                                                <span class="text-gray-300">|</span>
-                                                <form action="<?= route_to('records.decline', $folder['folder_id']) ?>" method="POST" style="display:inline;" data-confirm-message="Decline this request?">
-                                                    <?= csrf_field() ?>
-                                                    <button type="submit" class="cursor-pointer border-0 bg-transparent p-0 text-red-600 hover:text-red-900">Decline</button>
-                                                </form>
                                             <?php endif; ?>
                                         </div>
                                     </td>

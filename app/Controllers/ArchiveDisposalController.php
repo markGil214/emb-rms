@@ -957,6 +957,21 @@ class ArchiveDisposalController extends BaseController
             return 'Disposed';
         }
 
+        // Check for disposal record
+        if (!empty($record['disposal_id'])) {
+            $status = (string) ($record['status'] ?? '');
+            if ($status === 'Rejected') {
+                return 'Archived'; // If rejected, it's back to being just archived
+            }
+            if (!empty($record['disposal_date'])) {
+                return 'Disposed';
+            }
+            if (!empty($record['approved_by'])) {
+                return 'Approved for Disposal';
+            }
+            return 'Pending Disposal';
+        }
+
         return 'Archived';
     }
 
@@ -1005,10 +1020,12 @@ class ArchiveDisposalController extends BaseController
             return [];
         }
 
-        $requests = $db->table('restoration_requests')
-            ->select('restoration_request_id, folder_id')
-            ->where('status', 'Pending')
-            ->orderBy('restoration_request_id', 'DESC')
+        $requests = $db->table('restoration_requests rr')
+            ->select('rr.restoration_request_id, rr.folder_id, 
+                CASE WHEN u.first_name IS NOT NULL AND u.first_name != "" THEN CONCAT(u.first_name, " ", u.last_name) ELSE u.username END as requested_by_name')
+            ->join('users u', 'u.user_id = rr.requested_by', 'left')
+            ->where('rr.status', 'Pending')
+            ->orderBy('rr.restoration_request_id', 'DESC')
             ->get()
             ->getResultArray();
 
@@ -1034,7 +1051,8 @@ class ArchiveDisposalController extends BaseController
 
         if ($canReviewArchive) {
             $pendingArchiveFolders = $db->table('folders f')
-                ->select('f.folder_id, f.file_code, f.company_name, f.status, f.updated_by, f.updated_at, u.username')
+                ->select('f.folder_id, f.file_code, f.company_name, f.status, f.updated_by, f.updated_at, 
+                    CASE WHEN u.first_name IS NOT NULL AND u.first_name != "" THEN CONCAT(u.first_name, " ", u.last_name) ELSE u.username END as full_name')
                 ->join('users u', 'u.user_id = f.updated_by', 'left')
                 ->where('f.status', 'Pending Archive')
                 ->orderBy('f.updated_at', 'DESC')
@@ -1051,7 +1069,7 @@ class ArchiveDisposalController extends BaseController
                     'method' => 'Archive folder',
                     'status' => 'Pending Archive',
                     'requested_at' => $folder['updated_at'] ?? null,
-                    'requested_by' => $folder['username'] ?? $folder['updated_by'] ?? '-',
+                    'requested_by' => $folder['full_name'] ?? $folder['updated_by'] ?? '-',
                     'view_route' => 'records.show',
                     'view_id' => $folder['folder_id'],
                     'approve_route' => 'archive-request.approve',

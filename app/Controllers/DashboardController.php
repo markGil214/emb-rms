@@ -139,6 +139,46 @@ class DashboardController extends BaseController
                 $pendingCount++;
             }
         }
+
+        // Add pending archival requests
+        $pendingArchive = $db->table('folders')
+            ->where('status', 'Pending Archive')
+            ->countAllResults();
+        $pendingCount += $pendingArchive;
+
+        // Add pending relocation requests if table exists
+        if ($db->tableExists('relocation_requests')) {
+            $pendingRelocation = $db->table('relocation_requests')
+                ->where('status', 'Pending')
+                ->countAllResults();
+            $pendingCount += $pendingRelocation;
+        }
+
+        // Add pending disposal requests
+        if ($db->tableExists('disposal_records')) {
+            $pendingDisposal = $db->table('disposal_records')
+                ->where('disposal_date', null)
+                ->where('approved_by', null)
+                ->where('status !=', 'Rejected')
+                ->countAllResults();
+            $pendingCount += $pendingDisposal;
+        }
+
+        // Add pending file-level disposal requests
+        if ($db->tableExists('file_disposal_requests')) {
+            $pendingFileDisposal = $db->table('file_disposal_requests')
+                ->where('status', 'Pending')
+                ->countAllResults();
+            $pendingCount += $pendingFileDisposal;
+        }
+
+        // Add pending restoration requests
+        if ($db->tableExists('restoration_requests')) {
+            $pendingRestoration = $db->table('restoration_requests')
+                ->where('status', 'Pending')
+                ->countAllResults();
+            $pendingCount += $pendingRestoration;
+        }
         
         return $pendingCount;
     }

@@ -172,8 +172,25 @@ class FolderModel extends Model
             ->join('locations', 'locations.location_id = folders.location_id', 'left')
             ->join('categories', 'categories.category_id = folders.category_id', 'left')
             ->join('borrow_transactions bt', 'bt.transaction_id = folders.current_borrow_transaction_id', 'left')
-            ->join('archive_records ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = folders.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false)
-            ->where('folders.status !=', 'Archived');
+            ->join('archive_records ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = folders.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false);
+
+        $statusMap = [
+            'available' => 'Available',
+            'borrowed' => 'Borrowed',
+            'archived' => 'Archived',
+            'disposed' => 'Disposed',
+            'pending_archive' => 'Pending Archive',
+        ];
+
+        $status = strtolower(trim((string) ($filters['status'] ?? '')));
+        if ($status === 'archived') {
+            $builder->where('folders.status', 'Archived');
+        } elseif ($status !== '' && isset($statusMap[$status])) {
+            $builder->where('folders.status', $statusMap[$status]);
+            $builder->where('folders.status !=', 'Archived'); // Secondary safety
+        } else {
+            $builder->where('folders.status !=', 'Archived');
+        }
 
         $search = trim((string) ($filters['search'] ?? ''));
         if ($search !== '') {
@@ -187,18 +204,6 @@ class FolderModel extends Model
                 ->groupEnd();
         }
 
-        $status = strtolower(trim((string) ($filters['status'] ?? '')));
-        $statusMap = [
-            'available' => 'Available',
-            'borrowed' => 'Borrowed',
-            'archived' => 'Archived',
-            'disposed' => 'Disposed',
-            'pending_archive' => 'Pending Archive',
-        ];
-
-        if ($status !== '' && isset($statusMap[$status])) {
-            $builder->where('folders.status', $statusMap[$status]);
-        }
 
         $folderType = trim((string) ($filters['folder_type'] ?? ''));
         if ($folderType !== '') {
@@ -235,7 +240,6 @@ class FolderModel extends Model
             ->join('categories', 'categories.category_id = folders.category_id', 'left')
             ->join('borrow_transactions bt', 'bt.transaction_id = folders.current_borrow_transaction_id', 'left')
             ->join('archive_records ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = folders.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false)
-            ->where('folders.status !=', 'Archived')
             ->get()
             ->getResultArray();
     }

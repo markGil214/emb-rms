@@ -74,6 +74,7 @@
                     </div>
                 </div>
 
+                <?php if (is_super_admin()): ?>
                 <!-- Active Users -->
                 <div class="bg-white rounded-xl shadow border border-gray-200 p-4 hover:shadow-md transition-all duration-300">
                     <div class="flex items-center justify-between">
@@ -89,6 +90,7 @@
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
 
                 <!-- Available Documents -->
                 <div class="bg-white rounded-xl shadow border border-gray-200 p-4 hover:shadow-md transition-all duration-300">
@@ -127,80 +129,82 @@
             <!-- Content Grid -->
             <div class="dashboard-content-grid grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
                 
-                <!-- Recent Users Table -->
-                <div class="dashboard-recent-users xl:col-span-2 bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-                    <div class="p-6 border-b border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-semibold text-gray-900">Recent Users</h3>
-                            <button @click="refreshStats()" class="px-4 py-2 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-medium transition-colors">
-                                Refresh
+                <?php if (is_super_admin()): ?>
+                    <!-- Recent Users Table -->
+                    <div class="dashboard-recent-users xl:col-span-2 bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Recent Users</h3>
+                                <button @click="refreshStats()" class="px-4 py-2 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-medium transition-colors">
+                                    Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Username</th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Email</th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Role</th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    <?php foreach ($recentUsers as $user): ?>
+                                        <tr class="hover:bg-gray-50 transition-colors">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                        <span class="text-blue-600 font-semibold text-sm">
+                                                            <?= strtoupper(substr($user['username'], 0, 1)) ?>
+                                                        </span>
+                                                    </div>
+                                                    <div class="ml-4">
+                                                        <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($user['username']) ?></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">
+                                                    <?= htmlspecialchars(trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: '-') ?>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900"><?= htmlspecialchars($user['email']) ?></div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    <?= $user['role'] === 'SuperAdmin' ? 'bg-purple-100 text-purple-800' : ($user['role'] === 'Admin' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-green-100 text-green-800') ?>">
+                                                    <?= htmlspecialchars($user['role']) ?>
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full <?= (($user['status'] ?? 'Active') === 'Inactive') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?>">
+                                                    <?= htmlspecialchars($user['status'] ?? 'Active') ?>
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                <?= date('M d, Y', strtotime($user['created_at'])) ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="p-4 border-t border-gray-200">
+                            <button class="w-full px-4 py-2 text-sm bg-gray-50 text-gray-700 hover:bg-100 rounded-lg font-medium transition-colors">
+                                View all users
                             </button>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Username</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Email</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Role</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Created</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-100">
-                                <?php foreach ($recentUsers as $user): ?>
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                                    <span class="text-blue-600 font-semibold text-sm">
-                                                        <?= strtoupper(substr($user['username'], 0, 1)) ?>
-                                                    </span>
-                                                </div>
-                                                <div class="ml-4">
-                                                    <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($user['username']) ?></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">
-                                                <?= htmlspecialchars(trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: '-') ?>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900"><?= htmlspecialchars($user['email']) ?></div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                <?= $user['role'] === 'SuperAdmin' ? 'bg-purple-100 text-purple-800' : ($user['role'] === 'Admin' ? 'bg-blue-100 text-blue-800' :
-                                                'bg-green-100 text-green-800') ?>">
-                                                <?= htmlspecialchars($user['role']) ?>
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full <?= (($user['status'] ?? 'Active') === 'Inactive') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?>">
-                                                <?= htmlspecialchars($user['status'] ?? 'Active') ?>
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            <?= date('M d, Y', strtotime($user['created_at'])) ?>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="p-4 border-t border-gray-200">
-                        <button class="w-full px-4 py-2 text-sm bg-gray-50 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors">
-                            View all users
-                        </button>
-                    </div>
-                </div>
+                <?php endif; ?>
 
                 <!-- Document Status Chart -->
-                <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+                <div class="<?= is_super_admin() ? '' : 'xl:col-span-3' ?> bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
                     <div class="p-4 border-b border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-900">Document Status</h3>
                     </div>

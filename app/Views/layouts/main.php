@@ -1,6 +1,12 @@
 <?php
 $headerNotifications = [];
 $pendingBorrowCount = 0;
+$borrowOnlyCount = 0;
+$relocationOnlyCount = 0;
+$pendingArchiveCount = 0;
+$pendingDisposalCount = 0;
+$disposalOnlyCount = 0;
+$restoreOnlyCount = 0;
 
 try {
     $borrowModel = new \App\Models\BorrowTransactionModel();
@@ -74,6 +80,78 @@ try {
                 'time' => 'Awaiting action',
                 'read' => false,
                 'link' => base_url('relocations/pending'),
+                'linkText' => 'View',
+            ];
+        }
+    }
+
+    // Add pending archival requests to the count and notifications
+    if (can('approve_archive')) {
+        $pendingArchiveCount = $db->table('folders')
+            ->where('status', 'Pending Archive')
+            ->countAllResults();
+
+        if ($pendingArchiveCount > 0) {
+            $pendingBorrowCount += $pendingArchiveCount;
+            $headerNotifications[] = [
+                'id' => 4,
+                'type' => 'warning',
+                'message' => $pendingArchiveCount . ' folder archival request(s) pending approval.',
+                'time' => 'Archival pending',
+                'read' => false,
+                'link' => base_url('archive'),
+                'linkText' => 'View',
+            ];
+        }
+    }
+
+    // Add pending disposal requests to the count and notifications
+    if (can('approve_disposal')) {
+        $disposalOnlyCount = 0;
+        if ($db->tableExists('disposal_records')) {
+            $disposalOnlyCount += $db->table('disposal_records')
+                ->where('disposal_date', null)
+                ->where('approved_by', null)
+                ->where('status !=', 'Rejected')
+                ->countAllResults();
+        }
+        
+        if ($db->tableExists('file_disposal_requests')) {
+            $disposalOnlyCount += $db->table('file_disposal_requests')
+                ->where('status', 'Pending')
+                ->countAllResults();
+        }
+
+        if ($disposalOnlyCount > 0) {
+            $pendingDisposalCount = $disposalOnlyCount;
+            $pendingBorrowCount += $disposalOnlyCount;
+            $headerNotifications[] = [
+                'id' => 5,
+                'type' => 'danger',
+                'message' => $disposalOnlyCount . ' disposal request(s) pending approval.',
+                'time' => 'Disposal pending',
+                'read' => false,
+                'link' => base_url('disposal/pending'),
+                'linkText' => 'View',
+            ];
+        }
+    }
+
+    // Add pending restoration requests to the count and notifications
+    if (can('approve_restore') && $db->tableExists('restoration_requests')) {
+        $restoreOnlyCount = $db->table('restoration_requests')
+            ->where('status', 'Pending')
+            ->countAllResults();
+
+        if ($restoreOnlyCount > 0) {
+            $pendingBorrowCount += $restoreOnlyCount;
+            $headerNotifications[] = [
+                'id' => 6,
+                'type' => 'info',
+                'message' => $restoreOnlyCount . ' restoration request(s) pending approval.',
+                'time' => 'Restore pending',
+                'read' => false,
+                'link' => base_url('archive'),
                 'linkText' => 'View',
             ];
         }
@@ -644,6 +722,11 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                     </svg>
                     <span x-show="sidebarOpen" x-transition class="ml-3">Borrow Management</span>
+                    <?php if ($borrowOnlyCount > 0): ?>
+                        <span x-show="sidebarOpen" class="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                            <?= $borrowOnlyCount ?>
+                        </span>
+                    <?php endif; ?>
                 </a>
                 <?php endif; ?>
             </li>
@@ -680,6 +763,11 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                     </svg>
                     <span x-show="sidebarOpen" x-transition class="ml-3">Disposal Management</span>
+                    <?php if ($pendingDisposalCount > 0): ?>
+                        <span x-show="sidebarOpen" class="ml-auto bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                            <?= $pendingDisposalCount ?>
+                        </span>
+                    <?php endif; ?>
                 </a>
                 <?php endif; ?>
             </li>

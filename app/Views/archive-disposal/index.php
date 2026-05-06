@@ -68,11 +68,10 @@
     };
 
     $summaryCards = [
-        ['label' => 'Archived', 'count' => $statusCounts['Archived'] ?? 0, 'icon' => 'archive', 'color' => 'blue'],
-        ['label' => 'Pending Archive', 'count' => $statusCounts['Pending Archive'] ?? 0, 'icon' => 'clock', 'color' => 'orange'],
-        ['label' => 'Pending', 'count' => $statusCounts['Pending Disposal'] ?? 0, 'icon' => 'clock', 'color' => 'orange'],
-        ['label' => 'Approved', 'count' => $statusCounts['Approved for Disposal'] ?? 0, 'icon' => 'check', 'color' => 'green'],
-        ['label' => 'Disposed', 'count' => $statusCounts['Disposed'] ?? 0, 'icon' => 'disposed', 'color' => 'gray'],
+        ['label' => 'Archived', 'count' => $statusCounts['Archived'] ?? 0, 'icon' => 'archive', 'color' => 'blue', 'filter' => 'archived'],
+        ['label' => 'Pending', 'count' => ($statusCounts['Pending Archive'] ?? 0) + ($statusCounts['Pending Disposal'] ?? 0) + (count($pendingRestorationsByFolder ?? [])), 'icon' => 'clock', 'color' => 'orange', 'filter' => 'pending'],
+        ['label' => 'Approved', 'count' => $statusCounts['Approved for Disposal'] ?? 0, 'icon' => 'check', 'color' => 'green', 'filter' => 'approved-disposal'],
+        ['label' => 'Disposed', 'count' => $statusCounts['Disposed'] ?? 0, 'icon' => 'disposed', 'color' => 'gray', 'filter' => 'disposed'],
     ];
     // Filter out empty status cards (count = 0) to reduce clutter
     $summaryCards = array_filter($summaryCards, function($card) { return $card['count'] > 0; });
@@ -732,7 +731,8 @@
         ?>
         <?php $isActive = $activeStatusFilter === $card['label']; ?>
         <a
-            href="<?= route_to('archive.index') ?>?status=<?= urlencode($card['label']) ?>"
+            href="javascript:void(0)"
+            data-card-filter="<?= esc($card['filter']) ?>"
             class="archive-summary-card archive-summary-card--<?= esc($color) ?> <?= $isActive ? 'archive-summary-card--active' : '' ?> bg-white rounded-lg border border-gray-200 p-5"
             title="Click to filter by <?= esc($card['label']) ?>"
             aria-label="Filter records by <?= esc($card['label']) ?>: <?= esc((string) $card['count']) ?> records"
@@ -809,8 +809,8 @@
 
                 <div class="archive-quick-filters" aria-label="Quick filters">
                     <button type="button" class="archive-quick-filter is-active" data-activity-filter="all" title="Show all records">All</button>
-                    <button type="button" class="archive-quick-filter" data-activity-filter="pending-archive" title="Pending approval">Pending</button>
-                    <button type="button" class="archive-quick-filter" data-activity-filter="approved-disposal" title="Ready for next step">Approved</button>
+                    <button type="button" class="archive-quick-filter" data-activity-filter="pending" title="Show all pending actions (Archive, Disposal, Restoration)">Pending</button>
+                    <button type="button" class="archive-quick-filter" data-activity-filter="approved-disposal" title="Show records approved for disposal">Approved</button>
                 </div>
 
                 <button type="button" id="openArchiveFiltersModal" class="archive-filter-trigger" title="Open advanced filters">
@@ -1036,16 +1036,28 @@
                                 : (($status === 'Pending Disposal' || $status === 'Approved for Disposal')
                                     ? $status
                                     : (($status === 'Disposed') ? 'Disposal Completed' : 'No active workflow'));
-                            $requestedBy = $record['requested_by_name']
-                                ?? $record['folder_created_by_name']
-                                ?? $record['folder_updated_by_name']
-                                ?? $record['folder_created_by']
-                                ?? '-';
-                            $approvedBy = $record['archived_by_name']
-                                ?? $record['archived_by']
-                                ?? $record['approved_by_name']
-                                ?? $record['approved_by']
-                                ?? '-';
+                            if ($isRestorationPending) {
+                                $requestedBy = $pendingRestoration['requested_by_name'] ?? '-';
+                                $approvedBy = '-';
+                            } elseif ($status === 'Pending Disposal') {
+                                $requestedBy = $record['requested_by_name'] ?? '-';
+                                $approvedBy = '-';
+                            } elseif ($status === 'Approved for Disposal') {
+                                $requestedBy = $record['requested_by_name'] ?? '-';
+                                $approvedBy = $record['approved_by_name'] ?? '-';
+                            } else {
+                                // Default logic for stable Archived state
+                                $requestedBy = $record['requested_by_name']
+                                    ?? $record['folder_created_by_name']
+                                    ?? $record['folder_updated_by_name']
+                                    ?? $record['folder_created_by']
+                                    ?? '-';
+                                $approvedBy = $record['archived_by_name']
+                                    ?? $record['archived_by']
+                                    ?? $record['approved_by_name']
+                                    ?? $record['approved_by']
+                                    ?? '-';
+                            }
                             $searchText = strtolower(trim(implode(' ', array_filter([
                                 (string) ($record['file_code'] ?? ''),
                                 (string) ($record['company_name'] ?? ''),
@@ -1353,12 +1365,24 @@
             return false;
         }
 
-        if (filters.activity !== 'all' && activityStage !== filters.activity) {
-            return false;
+        if (filters.activity !== 'all') {
+            if (filters.activity === 'pending') {
+                // Broad match for anything pending
+                if (activityStage !== 'pending-archive' && activityStage !== 'restoration' && activityStage !== 'pending-disposal' && workflowStatus.indexOf('pending') === -1) {
+                    return false;
+                }
+            } else if (activityStage !== filters.activity) {
+                return false;
+            }
         }
 
-        if (filters.archiveStatus !== '' && archiveStatus !== filters.archiveStatus) {
-            return false;
+        if (filters.archiveStatus !== '') {
+            var statusToMatch = filters.archiveStatus;
+            if (statusToMatch === 'archived' && (archiveStatus === 'archived' || activityStage === 'restoration')) {
+                // Restoration pending folders are still technically archived
+            } else if (archiveStatus !== statusToMatch) {
+                return false;
+            }
         }
 
         if (filters.workflowStatus !== '' && workflowStatus !== filters.workflowStatus) {
@@ -1441,6 +1465,34 @@
         button.addEventListener('click', function () {
             setActiveQuickFilter(button.dataset.activityFilter || 'all');
             applyFilters();
+        });
+    });
+
+    var summaryCards = Array.prototype.slice.call(document.querySelectorAll('.archive-summary-card'));
+    summaryCards.forEach(function (card) {
+        card.addEventListener('click', function (e) {
+            e.preventDefault();
+            var filter = this.dataset.cardFilter;
+            
+            // If it's one of the quick filters, use that
+            if (filter === 'pending' || filter === 'approved-disposal' || filter === 'all') {
+                setActiveQuickFilter(filter);
+                if (archiveStatusFilter) archiveStatusFilter.value = '';
+                if (workflowStatusFilter) workflowStatusFilter.value = '';
+            } else {
+                // Otherwise it's a specific archive status
+                setActiveQuickFilter('all');
+                if (archiveStatusFilter) archiveStatusFilter.value = filter;
+                if (workflowStatusFilter) workflowStatusFilter.value = '';
+            }
+            
+            applyFilters();
+            
+            // Scroll to table
+            var tableWrap = document.querySelector('.archive-table-wrap');
+            if (tableWrap) {
+                tableWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         });
     });
 
