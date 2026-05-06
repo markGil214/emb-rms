@@ -160,41 +160,6 @@
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
     }
 
-    .disposal-action {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 42px;
-        border-radius: 10px;
-        padding: 10px 16px;
-        font-size: 13px;
-        font-weight: 600;
-        line-height: 1.1;
-        transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
-    }
-
-    .disposal-action--primary {
-        background: #16a34a;
-        color: #ffffff;
-        border: 1px solid #15803d;
-    }
-
-    .disposal-action--primary:hover {
-        background: #15803d;
-        color: #ffffff;
-    }
-
-    .disposal-action--secondary {
-        background: #f9fafb;
-        border: 1px solid #e5e7eb;
-        color: #374151;
-    }
-
-    .disposal-action--secondary:hover {
-        background: #f3f4f6;
-        color: #111827;
-    }
-
     .disposal-status-badge {
         display: inline-flex;
         align-items: center;
@@ -381,14 +346,21 @@
                                 <td class="px-6 py-4 text-sm">
                                     <div class="flex items-center gap-3">
                                         <?php if (!empty($record['view_route']) && !empty($record['view_id'])): ?>
-                                            <a href="<?= route_to($record['view_route'], (int) $record['view_id']) ?>" class="disposal-action disposal-action--secondary">View</a>
+                                            <?= view('components/button', [
+                                                'label' => 'View',
+                                                'url' => route_to($record['view_route'], (int) $record['view_id']),
+                                                'style' => 'info'
+                                            ]) ?>
                                         <?php endif; ?>
 
                                         <?php if (can('approve_disposal') && !empty($record['approve_route']) && !empty($record['approve_id'])): ?>
-                                            <form method="POST" action="<?= route_to($record['approve_route'], (int) $record['approve_id']) ?>" class="inline" data-confirm-message="<?= esc($record['confirm_message'] ?? 'Approve this disposal request?', 'attr') ?>">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" class="disposal-action disposal-action--primary">Approve</button>
-                                            </form>
+                                            <?= view('components/button', [
+                                                'label' => 'Approve',
+                                                'type' => 'submit',
+                                                'style' => 'primary',
+                                                'action' => route_to($record['approve_route'], (int) $record['approve_id']),
+                                                'confirm' => $record['confirm_message'] ?? 'Approve this disposal request?'
+                                            ]) ?>
                                         <?php endif; ?>
 
                                         <?php if ((empty($record['view_route']) || empty($record['view_id'])) && (empty($record['approve_route']) || empty($record['approve_id']))): ?>

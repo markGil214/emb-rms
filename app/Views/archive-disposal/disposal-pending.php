@@ -97,20 +97,24 @@
                                 <?= esc($disposal['requested_by'] ?? '-') ?>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <div class="flex space-x-2">
+                                <div class="flex items-center gap-2">
                                     <?php if (!empty($disposal['view_route']) && (!empty($disposal['view_id']) || !empty($disposal['route_id']))): ?>
-                                        <a href="<?= route_to($disposal['view_route'], $disposal['view_id'] ?? $disposal['route_id']) ?>"
-                                           class="text-blue-600 hover:text-blue-900">View</a>
+                                        <?= view('components/button', [
+                                            'label' => 'View',
+                                            'url' => route_to($disposal['view_route'], $disposal['view_id'] ?? $disposal['route_id']),
+                                            'style' => 'info'
+                                        ]) ?>
                                     <?php endif; ?>
                                     <?php if (!empty($disposal['approve_route']) && !empty($disposal['route_id'])): ?>
-                                        <form method="POST" action="<?= route_to($disposal['approve_route'], $disposal['route_id']) ?>"
-                                            class="inline" data-confirm-message="<?= esc($disposal['confirm_message'] ?? 'Approve this request?', 'attr') ?>">
-                                            <?= csrf_field() ?>
-                                            <button type="submit"
-                                                    class="text-green-600 hover:text-green-900 font-medium">Approve</button>
-                                        </form>
+                                        <?= view('components/button', [
+                                            'label' => 'Approve',
+                                            'type' => 'submit',
+                                            'style' => 'primary',
+                                            'action' => route_to($disposal['approve_route'], $disposal['route_id']),
+                                            'confirm' => $disposal['confirm_message'] ?? 'Approve this request?'
+                                        ]) ?>
                                     <?php else: ?>
-                                        <span class="text-gray-500"><?= esc($disposal['fallback_action_label'] ?? 'Pending review') ?></span>
+                                        <span class="text-gray-500 text-sm"><?= esc($disposal['fallback_action_label'] ?? 'Pending review') ?></span>
                                     <?php endif; ?>
                                 </div>
                             </td>

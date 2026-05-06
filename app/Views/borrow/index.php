@@ -26,10 +26,12 @@
                     </div>
                 </div>
                 
-                <a href="/borrows/create" 
-                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                    + Request Borrow
-                </a>
+                <?= view('components/button', [
+                    'label' => '+ Request Borrow',
+                    'url' => '/borrows/create',
+                    'style' => 'info',
+                    'class' => 'px-4 py-2'
+                ]) ?>
             </div>
         </div>
         
@@ -76,27 +78,43 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <a href="/borrows/<?= $borrow['transaction_id'] ?>" class="text-blue-600 hover:text-blue-900">View</a>
+                                        <div class="flex items-center gap-2">
+                                            <?= view('components/button', [
+                                                'label' => 'View',
+                                                'url' => "/borrows/{$borrow['transaction_id']}",
+                                                'style' => 'info'
+                                            ]) ?>
+                                            
                                             <?php if ($borrow['status'] === 'Pending' && can('approve_borrow_requests')): ?>
-                                                <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/approve" class="inline">
-                                                    <?= csrf_field() ?>
-                                                    <button type="submit" class="text-green-600 hover:text-green-900">Approve</button>
-                                                </form>
-                                                <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/decline" class="inline" data-confirm-message="Decline this borrow request?">
-                                                    <?= csrf_field() ?>
-                                                    <button type="submit" class="text-red-600 hover:text-red-900">Decline</button>
-                                                </form>
+                                                <?= view('components/button', [
+                                                    'label' => 'Approve',
+                                                    'type' => 'submit',
+                                                    'style' => 'primary',
+                                                    'action' => "/borrows/{$borrow['transaction_id']}/approve"
+                                                ]) ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Decline',
+                                                    'type' => 'submit',
+                                                    'style' => 'danger',
+                                                    'action' => "/borrows/{$borrow['transaction_id']}/decline",
+                                                    'confirm' => 'Decline this borrow request?'
+                                                ]) ?>
                                             <?php elseif (($borrow['status'] === 'Borrowed' || $borrow['status'] === 'Overdue') && can('approve_borrow_requests')): ?>
-                                                <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/return" class="inline" data-confirm-message="Return this folder now?">
-                                                    <?= csrf_field() ?>
-                                                    <button type="submit" class="text-red-600 hover:text-red-900">Return</button>
-                                                </form>
+                                                <?= view('components/button', [
+                                                    'label' => 'Return',
+                                                    'type' => 'submit',
+                                                    'style' => 'danger',
+                                                    'action' => "/borrows/{$borrow['transaction_id']}/return",
+                                                    'confirm' => 'Return this folder now?'
+                                                ]) ?>
                                                 <?php if ($borrow['status'] === 'Overdue'): ?>
-                                                    <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/notify" class="inline" data-confirm-message="Send overdue reminder email to borrower now?">
-                                                        <?= csrf_field() ?>
-                                                        <button type="submit" class="text-amber-600 hover:text-amber-900">Notify</button>
-                                                    </form>
+                                                    <?= view('components/button', [
+                                                        'label' => 'Notify',
+                                                        'type' => 'submit',
+                                                        'style' => 'warning',
+                                                        'action' => "/borrows/{$borrow['transaction_id']}/notify",
+                                                        'confirm' => 'Send overdue reminder email to borrower now?'
+                                                    ]) ?>
                                                 <?php endif; ?>
                                             <?php endif; ?>
                                         </div>

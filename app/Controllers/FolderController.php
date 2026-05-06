@@ -99,7 +99,15 @@ class FolderController extends BaseController
         $db->transStart();
 
         $companyName = $this->request->getPost('company_name');
+        $folderType = $this->request->getPost('folder_type');
+        $categoryId = (int) $this->request->getPost('category_id');
         $nextCode = FileCodeGenerator::getNextFromCompany($companyName);
+
+        // Check for duplicate: same company name and folder type
+        if ($this->folderModel->isDuplicate($companyName, $folderType)) {
+            $db->transRollback();
+            return redirect()->back()->withInput()->with('error', 'A folder with the same company name and folder type already exists.');
+        }
 
         $locationId = (int) $this->request->getPost('location_id');
         $location = $db->table('locations')->where('location_id', $locationId)->get()->getRow();
@@ -118,9 +126,9 @@ class FolderController extends BaseController
         $data = [
             'file_code' => $nextCode,
             'location_code' => $locationCode,
-            'company_name' => $this->request->getPost('company_name'),
-            'folder_type' => $this->request->getPost('folder_type'),
-            'category_id' => $this->request->getPost('category_id'),
+            'company_name' => $companyName,
+            'folder_type' => $folderType,
+            'category_id' => $categoryId,
             'status' => 'Pending',
             'location_id' => $locationId,
             'created_by' => auth_user()['user_id'] ?? null,
@@ -293,10 +301,19 @@ class FolderController extends BaseController
             ]);
         }
 
+        $companyName = $this->request->getPost('company_name');
+        $folderType = $this->request->getPost('folder_type');
+        $categoryId = (int) $this->request->getPost('category_id');
+
+        // Check for duplicate: same company name and folder type (exclude current folder)
+        if ($this->folderModel->isDuplicate($companyName, $folderType, $folderId)) {
+            return redirect()->back()->withInput()->with('error', 'A folder with the same company name and folder type already exists.');
+        }
+
         $data = [
-            'company_name' => $this->request->getPost('company_name'),
-            'folder_type' => $this->request->getPost('folder_type'),
-            'category_id' => $this->request->getPost('category_id'),
+            'company_name' => $companyName,
+            'folder_type' => $folderType,
+            'category_id' => $categoryId,
             'status' => $folder['status'] ?? 'Available',
             'borrowed_date' => $this->request->getPost('borrowed_date') ?: null,
             'due_date' => $folder['due_date'] ?? null,
@@ -319,13 +336,27 @@ class FolderController extends BaseController
             $selectedLocation['shelf'] ?? ''
         );
 
-        $existingPending = $db->table('document_edit_requests')
+        if ($folder['status'] === 'Pending') {
+            $this->folderModel->update($folderId, $data);
+            return redirect()->to('/document-records')->with('success', 'Pending folder updated successfully.');
+        }
+
+        $db = \Config\Database::connect();
+        $existingRequest = $db->table('document_edit_requests')
             ->where('folder_id', $folderId)
             ->where('status', 'Pending')
-            ->countAllResults();
+            ->get()
+            ->getRowArray();
 
-        if ($existingPending > 0) {
-            return redirect()->back()->withInput()->with('error', 'A pending update request already exists for this folder.');
+        if ($existingRequest) {
+            $db->table('document_edit_requests')
+                ->where('edit_request_id', $existingRequest['edit_request_id'])
+                ->update([
+                    'proposed_changes' => json_encode($data),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+            
+            return redirect()->to('/document-records')->with('success', 'Existing update request updated.');
         }
 
         $requestData = [

@@ -153,14 +153,12 @@ ksort($locationOptions);
                     <?php endif; ?>
 
                     <?php if (can('create_document_record')): ?>
-                        <a href="<?= route_to('records.create') ?>"
-                           class="inline-flex items-center space-x-1 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition-colors duration-200 hover:bg-blue-700">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            <span class="hidden sm:inline">Create Folder</span>
-                            <span class="sm:hidden">Create</span>
-                        </a>
+                        <?= view('components/button', [
+                            'label' => '+ Create Folder',
+                            'url' => route_to('records.create'),
+                            'style' => 'info',
+                            'class' => 'px-3 py-2'
+                        ]) ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -377,31 +375,56 @@ ksort($locationOptions);
                                     </td>
                                     <td class="whitespace-nowrap px-4 py-2 text-sm font-medium">
                                         <div class="flex items-center gap-2 whitespace-nowrap">
-                                            <a href="<?= route_to('records.show', $folder['folder_id']) ?>" class="text-blue-600 hover:text-blue-900" title="View Details">View</a>
+                                            <?= view('components/button', [
+                                                'label' => 'View',
+                                                'url' => route_to('records.show', $folder['folder_id']),
+                                                'style' => 'info',
+                                                'title' => 'View Details'
+                                            ]) ?>
 
-                                            <?php if ($folderStatus !== 'Pending' && $folderStatus !== 'Pending Update' && $folderStatus !== 'Pending Archive'): ?>
-                                                <span class="text-gray-300">|</span>
-                                                <a href="<?= route_to('records.edit', $folder['folder_id']) ?>" class="text-green-600 hover:text-green-900" title="Edit Folder">Edit</a>
+                                            <?php if ($folderStatus !== 'Pending Archive'): ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Edit',
+                                                    'url' => route_to('records.edit', $folder['folder_id']),
+                                                    'style' => 'info',
+                                                    'title' => 'Edit Folder'
+                                                ]) ?>
+                                            <?php endif; ?>
+
+                                            <?php if (can('approve_folder_creation') && ($folderStatus === 'Pending' || $folderStatus === 'Pending Update')): ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Approve',
+                                                    'type' => 'submit',
+                                                    'style' => 'primary',
+                                                    'action' => route_to('records.approve', $folder['folder_id']),
+                                                    'confirm' => 'Are you sure you want to approve this folder?'
+                                                ]) ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Decline',
+                                                    'type' => 'submit',
+                                                    'style' => 'danger',
+                                                    'action' => route_to('records.decline', $folder['folder_id']),
+                                                    'confirm' => 'Are you sure you want to decline this folder?'
+                                                ]) ?>
                                             <?php endif; ?>
 
                                             <?php if (can('approve_archive') && $folderStatus !== 'Archived' && $folderStatus !== 'Archival' && $folderStatus !== 'Borrowed' && $folderStatus !== 'Disposed' && $folderStatus !== 'Pending' && $folderStatus !== 'Pending Update' && $folderStatus !== 'Pending Archive'): ?>
-                                                <span class="text-gray-300">|</span>
-                                                <form action="<?= route_to('records.archive', $folder['folder_id']) ?>" method="POST" style="display:inline;" data-confirm-message="Submit this folder for archive approval?">
-                                                    <?= csrf_field() ?>
-                                                    <button type="submit" class="cursor-pointer border-0 bg-transparent p-0 text-green-700 hover:text-green-900">Archive</button>
-                                                </form>
+                                                <?= view('components/button', [
+                                                    'label' => 'Archive',
+                                                    'type' => 'submit',
+                                                    'style' => 'secondary',
+                                                    'class' => 'text-green-700',
+                                                    'action' => route_to('records.archive', $folder['folder_id']),
+                                                    'confirm' => 'Submit this folder for archive approval?'
+                                                ]) ?>
                                             <?php elseif ($folderStatus === 'Archived'): ?>
-                                                <span class="text-gray-300">|</span>
-                                                <span class="text-gray-400">Archived</span>
+                                                <span class="text-gray-400 font-medium px-2">Archived</span>
                                             <?php elseif ($folderStatus === 'Borrowed'): ?>
-                                                <span class="text-gray-300">|</span>
-                                                <span class="text-red-600">Borrowed</span>
+                                                <span class="text-red-600 font-medium px-2">Borrowed</span>
                                             <?php elseif ($folderStatus === 'Archival'): ?>
-                                                <span class="text-gray-300">|</span>
-                                                <span class="text-orange-600">Archival</span>
+                                                <span class="text-orange-600 font-medium px-2">Archival</span>
                                             <?php elseif ($folderStatus === 'Pending Archive'): ?>
-                                                <span class="text-gray-300">|</span>
-                                                <span class="text-orange-600">Archive pending</span>
+                                                <span class="text-orange-600 font-medium px-2">Archive pending</span>
                                             <?php endif; ?>
                                         </div>
                                     </td>

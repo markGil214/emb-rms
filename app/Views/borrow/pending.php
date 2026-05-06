@@ -46,12 +46,18 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= date('M d, Y', strtotime($borrow['created_at'])) ?></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= date('M d, Y', strtotime($borrow['expected_return_date'])) ?></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <a href="/borrows/<?= $borrow['transaction_id'] ?>" class="text-blue-600 hover:text-blue-900">View</a>
-                                            <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/approve" class="inline">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" class="text-green-600 hover:text-green-900 font-medium">Approve</button>
-                                            </form>
+                                        <div class="flex items-center gap-2">
+                                            <?= view('components/button', [
+                                                'label' => 'View',
+                                                'url' => "/borrows/{$borrow['transaction_id']}",
+                                                'style' => 'info'
+                                            ]) ?>
+                                            <?= view('components/button', [
+                                                'label' => 'Approve',
+                                                'type' => 'submit',
+                                                'style' => 'primary',
+                                                'action' => "/borrows/{$borrow['transaction_id']}/approve"
+                                            ]) ?>
                                         </div>
                                     </td>
                                 </tr>

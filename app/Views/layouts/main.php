@@ -105,6 +105,26 @@ try {
         }
     }
 
+    // Add pending folder creation/update requests
+    if (can('approve_folder_creation')) {
+        $pendingFolderApprovalCount = $db->table('folders')
+            ->whereIn('status', ['Pending', 'Pending Update'])
+            ->countAllResults();
+
+        if ($pendingFolderApprovalCount > 0) {
+            $pendingBorrowCount += $pendingFolderApprovalCount;
+            $headerNotifications[] = [
+                'id' => 7,
+                'type' => 'info',
+                'message' => $pendingFolderApprovalCount . ' folder request(s) pending approval.',
+                'time' => 'Awaiting action',
+                'read' => false,
+                'link' => base_url('document-records'),
+                'linkText' => 'View',
+            ];
+        }
+    }
+
     // Add pending disposal requests to the count and notifications
     if (can('approve_disposal')) {
         $disposalOnlyCount = 0;
@@ -563,6 +583,108 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
         
         .dark .border-green-200 {
             border-color: rgb(20 83 45) !important;
+        }
+
+        /* Reusable Disposal Action Button Styles */
+        .disposal-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1;
+            transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+            text-decoration: none !important;
+            cursor: pointer;
+        }
+
+        .disposal-action--primary {
+            background: #16a34a !important;
+            color: #ffffff !important;
+            border: 1px solid #15803d !important;
+        }
+
+        .disposal-action--primary:hover {
+            background: #15803d !important;
+        }
+
+        .disposal-action--secondary {
+            background: #ffffff !important;
+            border: 1px solid #e5e7eb !important;
+            color: #374151 !important;
+        }
+
+        .disposal-action--secondary:hover {
+            background: #f3f4f6 !important;
+            color: #111827 !important;
+        }
+
+        .disposal-action--danger {
+            background: #ef4444 !important;
+            color: #ffffff !important;
+            border: 1px solid #b91c1c !important;
+        }
+
+        .disposal-action--danger:hover {
+            background: #dc2626 !important;
+        }
+
+        .disposal-action--warning {
+            background: #f59e0b !important;
+            color: #ffffff !important;
+            border: 1px solid #d97706 !important;
+        }
+
+        .disposal-action--warning:hover {
+            background: #d97706 !important;
+        }
+
+        .disposal-action--info {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border: 1px solid #1d4ed8 !important;
+        }
+
+        .disposal-action--info:hover {
+            background: #1d4ed8 !important;
+        }
+
+        /* Dark Mode Overrides */
+        .dark .disposal-action--primary {
+            background: #059669 !important;
+            border-color: #065f46 !important;
+        }
+
+        .dark .disposal-action--secondary {
+            background: #374151 !important;
+            border-color: #4b5563 !important;
+            color: #ffffff !important;
+        }
+
+        .dark .disposal-action--secondary:hover {
+            background: #4b5563 !important;
+        }
+
+        .dark .disposal-action--danger {
+            background: #dc2626 !important;
+            border-color: #991b1b !important;
+        }
+
+        .dark .disposal-action--warning {
+            background: #d97706 !important;
+            border-color: #92400e !important;
+        }
+
+        .dark .disposal-action--info {
+            background: #1d4ed8 !important;
+            border-color: #1e40af !important;
+        }
+
+        .dark .disposal-action {
+            color: #ffffff !important;
         }
     </style>
 </head>

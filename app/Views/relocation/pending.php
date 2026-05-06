@@ -45,12 +45,21 @@
                                     <?= date('M d, Y', strtotime($rel['requested_at'])) ?>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <a href="<?= route_to('relocations.show', $rel['relocation_id']) ?>" 
-                                       class="text-blue-600 hover:text-blue-900 text-sm mr-3">View</a>
-                                    <form action="<?= route_to('relocations.approve', $rel['relocation_id']) ?>" method="post" class="inline">
-                                        <?= csrf_field() ?>
-                                        <button type="submit" class="text-green-600 hover:text-green-900 text-sm">Approve</button>
-                                    </form>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <?= view('components/button', [
+                                            'label' => 'View',
+                                            'url' => route_to('relocations.show', $rel['relocation_id']),
+                                            'style' => 'info'
+                                        ]) ?>
+                                        <form action="<?= route_to('relocations.approve', $rel['relocation_id']) ?>" method="post" class="inline">
+                                            <?= csrf_field() ?>
+                                            <?= view('components/button', [
+                                                'label' => 'Approve',
+                                                'type' => 'submit',
+                                                'style' => 'primary'
+                                            ]) ?>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

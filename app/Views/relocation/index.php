@@ -188,51 +188,39 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex items-center justify-end space-x-2">
-                                        <a href="<?= route_to('relocations.show', $rel['relocation_id']) ?>" 
-                                           class="text-blue-600 hover:text-blue-900 inline-flex items-center space-x-1"
-                                           title="View Details">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                            </svg>
-                                            <span>View</span>
-                                        </a>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <?= view('components/button', [
+                                            'label' => 'View',
+                                            'url' => route_to('relocations.show', $rel['relocation_id']),
+                                            'style' => 'info',
+                                            'title' => 'View Details'
+                                        ]) ?>
                                         
                                         <?php if ($rel['status'] === 'Pending'): ?>
                                             <?php if (can('initiate_relocation')): ?>
-                                            <a href="<?= route_to('relocations.edit', $rel['relocation_id']) ?>" 
-                                               class="text-green-600 hover:text-green-900 inline-flex items-center space-x-1"
-                                               title="Edit Request">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                                </svg>
-                                                <span>Edit</span>
-                                            </a>
+                                                <?= view('components/button', [
+                                                    'label' => 'Edit',
+                                                    'url' => route_to('relocations.edit', $rel['relocation_id']),
+                                                    'style' => 'info',
+                                                    'title' => 'Edit Request'
+                                                ]) ?>
                                             <?php endif; ?>
                                             
                                             <?php if (can('approve_relocation')): ?>
-                                            <form action="<?= route_to('relocations.approve', $rel['relocation_id']) ?>" method="post" class="inline">
-                                                <button type="submit" 
-                                                        class="text-green-600 hover:text-green-900 inline-flex items-center space-x-1"
-                                                        title="Approve Request">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                    </svg>
-                                                    <span>Approve</span>
-                                                </button>
-                                            </form>
-                                            
-                                            <form action="<?= route_to('relocations.decline', $rel['relocation_id']) ?>" method="post" class="inline">
-                                                <button type="submit" 
-                                                        class="text-red-600 hover:text-red-900 inline-flex items-center space-x-1"
-                                                        title="Decline Request">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                    </svg>
-                                                    <span>Decline</span>
-                                                </button>
-                                            </form>
+                                                <?= view('components/button', [
+                                                    'label' => 'Approve',
+                                                    'type' => 'submit',
+                                                    'style' => 'primary',
+                                                    'action' => route_to('relocations.approve', $rel['relocation_id']),
+                                                    'confirm' => 'Approve this relocation request?'
+                                                ]) ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Decline',
+                                                    'type' => 'submit',
+                                                    'style' => 'danger',
+                                                    'action' => route_to('relocations.decline', $rel['relocation_id']),
+                                                    'confirm' => 'Decline this relocation request?'
+                                                ]) ?>
                                             <?php endif; ?>
                                         <?php endif; ?>
                                     </div>

@@ -243,4 +243,24 @@ class FolderModel extends Model
             ->get()
             ->getResultArray();
     }
+
+    /**
+     * Check if a folder with the same company_name and folder_type already exists.
+     *
+     * @param string   $companyName
+     * @param string   $folderType
+     * @param int|null $excludeFolderId Folder ID to exclude (for updates)
+     * @return bool True if a duplicate exists
+     */
+    public function isDuplicate(string $companyName, string $folderType, ?int $excludeFolderId = null): bool
+    {
+        $builder = $this->where('company_name', $companyName)
+            ->where('folder_type', $folderType);
+
+        if ($excludeFolderId !== null) {
+            $builder->where('folder_id !=', $excludeFolderId);
+        }
+
+        return $builder->countAllResults() > 0;
+    }
 }

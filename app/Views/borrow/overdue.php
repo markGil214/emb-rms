@@ -66,12 +66,18 @@
                                         <?= (int) ((time() - strtotime($borrow['expected_return_date'])) / 86400) ?> days
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <a href="/borrows/<?= $borrow['transaction_id'] ?>" class="text-blue-600 hover:text-blue-900">View</a>
-                                            <form method="POST" action="/borrows/<?= $borrow['transaction_id'] ?>/return" class="inline">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" class="text-red-600 hover:text-red-900 font-medium">Mark Return</button>
-                                            </form>
+                                        <div class="flex items-center gap-2">
+                                            <?= view('components/button', [
+                                                'label' => 'View',
+                                                'url' => "/borrows/{$borrow['transaction_id']}",
+                                                'style' => 'info'
+                                            ]) ?>
+                                            <?= view('components/button', [
+                                                'label' => 'Mark Return',
+                                                'type' => 'submit',
+                                                'style' => 'danger',
+                                                'action' => "/borrows/{$borrow['transaction_id']}/return"
+                                            ]) ?>
                                         </div>
                                     </td>
                                 </tr>

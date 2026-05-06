@@ -113,7 +113,14 @@ class UserController extends BaseController
 			'role_id' => 'required|integer',
 		];
 
-		if (! $this->validate($rules)) {
+		if (! $this->validate($rules, [
+			'username' => [
+				'is_unique' => 'The username you entered is already registered in the system.',
+			],
+			'email' => [
+				'is_unique' => 'The email address you entered already exists in our records. Please use a different one.',
+			]
+		])) {
 			return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
 		}
 

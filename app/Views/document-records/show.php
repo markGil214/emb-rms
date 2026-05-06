@@ -278,7 +278,7 @@
 
                                 <th class="border px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Uploaded</th>
 
-                                <th class="border px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="border px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Disposal Status</th>
 
                                 <th class="border px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
 
@@ -302,7 +302,7 @@
 
                                             </svg>
 
-                                            <span class="font-medium text-gray-900 text-sm"><?= esc($file['file_name']) ?></span>
+                                            <a href="<?= route_to('file.download', $file['file_id']) ?>" target="_blank" class="font-medium text-blue-600 hover:text-blue-800 text-sm hover:underline"><?= esc($file['file_name']) ?></a>
 
                                         </div>
 

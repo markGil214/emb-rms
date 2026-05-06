@@ -34,7 +34,7 @@
                 <img src="/images/EMB-Logo.png" alt="EMB Records Logo"
                     class="w-40 h-auto max-h-40 object-contain rounded-xl mb-5">
                 <h1 class="text-5xl font-bold mb-5 flex items-center gap-4 text-center">
-                    EMB Record System
+                    EMB Records Management
                 </h1>
             </div>
         </div>
@@ -101,10 +101,7 @@
                     Sign In
                 </button>
             </form>
-            <div class="signup-link text-center mt-8 text-sm text-gray-600">
-                Don't have an account? <a href="#"
-                    class="text-green-600 no-underline font-semibold hover:text-green-700">Contact Administrator</a>
-            </div>
+
         </div>
     </div>
 

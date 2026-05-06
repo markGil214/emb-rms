@@ -956,67 +956,68 @@
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm">
                                 <div class="archive-actions">
-                                    <?php if (!empty($request['view_route']) && !empty($request['view_id'])): ?>
-                                        <a href="<?= route_to($request['view_route'], $request['view_id']) ?>" class="archive-action-text action-secondary">
-                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                            View
-                                        </a>
-                                    <?php endif; ?>
+                                    <div class="flex items-center gap-2">
+                                        <?php if (!empty($request['view_route']) && !empty($request['view_id'])): ?>
+                                            <?= view('components/button', [
+                                                'label' => 'View',
+                                                'url' => route_to($request['view_route'], $request['view_id']),
+                                                'style' => 'info'
+                                            ]) ?>
+                                        <?php endif; ?>
 
-                                    <div class="archive-action-row">
-                                    <?php if (($request['workflow_stage'] ?? '') === 'restoration' && can('approve_restore') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
-                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Approve this restoration request?', 'attr') ?>">
-                                            <?= csrf_field() ?>
-                                            <button type="submit" class="archive-action-text action-primary">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                Approve
-                                            </button>
-                                        </form>
-                                    <?php elseif (($request['workflow_stage'] ?? '') === 'pending-archive' && can('approve_archive') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
-                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Approve this archive request?', 'attr') ?>">
-                                            <?= csrf_field() ?>
-                                            <button type="submit" class="archive-action-text action-primary">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                Approve
-                                            </button>
-                                        </form>
-                                        <?php if (!empty($request['decline_route'])): ?>
-                                            <form action="<?= route_to($request['decline_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="reject" data-confirm-message="<?= esc($request['decline_confirm_message'] ?? 'Reject this archive request?', 'attr') ?>">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" class="archive-action-text action-danger">
-                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                    Reject
-                                                </button>
-                                            </form>
+                                        <?php if (($request['workflow_stage'] ?? '') === 'restoration' && can('approve_restore') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
+                                            <?= view('components/button', [
+                                                'label' => 'Approve',
+                                                'type' => 'submit',
+                                                'style' => 'primary',
+                                                'action' => route_to($request['approve_route'], $request['route_id']),
+                                                'confirm' => $request['confirm_message'] ?? 'Approve this restoration request?'
+                                            ]) ?>
+                                        <?php elseif (($request['workflow_stage'] ?? '') === 'pending-archive' && can('approve_archive') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
+                                            <?= view('components/button', [
+                                                'label' => 'Approve',
+                                                'type' => 'submit',
+                                                'style' => 'primary',
+                                                'action' => route_to($request['approve_route'], $request['route_id']),
+                                                'confirm' => $request['confirm_message'] ?? 'Approve this archive request?'
+                                            ]) ?>
+                                            <?php if (!empty($request['decline_route'])): ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Reject',
+                                                    'type' => 'submit',
+                                                    'style' => 'danger',
+                                                    'action' => route_to($request['decline_route'], $request['route_id']),
+                                                    'confirm' => $request['decline_confirm_message'] ?? 'Reject this archive request?'
+                                                ]) ?>
+                                            <?php endif; ?>
+                                        <?php elseif (($request['workflow_stage'] ?? '') === 'pending-disposal' && can('approve_disposal') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
+                                            <?= view('components/button', [
+                                                'label' => 'Approve',
+                                                'type' => 'submit',
+                                                'style' => 'primary',
+                                                'action' => route_to($request['approve_route'], $request['route_id']),
+                                                'confirm' => $request['confirm_message'] ?? 'Approve this disposal request?'
+                                            ]) ?>
+                                            <?php if (!empty($request['decline_route'])): ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Reject',
+                                                    'type' => 'submit',
+                                                    'style' => 'danger',
+                                                    'action' => route_to($request['decline_route'], $request['route_id']),
+                                                    'confirm' => $request['decline_confirm_message'] ?? 'Reject this disposal request?'
+                                                ]) ?>
+                                            <?php endif; ?>
+                                        <?php elseif (!empty($request['fallback_action_label'])): ?>
+                                            <span class="text-xs font-semibold text-gray-500 uppercase"><?= esc($request['fallback_action_label']) ?></span>
+                                        <?php elseif (($request['workflow_stage'] ?? '') === 'approved-disposal' && can('approve_disposal') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
+                                            <?= view('components/button', [
+                                                'label' => 'Mark Complete',
+                                                'type' => 'submit',
+                                                'style' => 'secondary',
+                                                'action' => route_to($request['approve_route'], $request['route_id']),
+                                                'confirm' => $request['confirm_message'] ?? 'Mark this archive disposal as completed?'
+                                            ]) ?>
                                         <?php endif; ?>
-                                    <?php elseif (($request['workflow_stage'] ?? '') === 'pending-disposal' && can('approve_disposal') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
-                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Approve this disposal request?', 'attr') ?>">
-                                            <?= csrf_field() ?>
-                                            <button type="submit" class="archive-action-text action-primary">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                Approve
-                                            </button>
-                                        </form>
-                                        <?php if (!empty($request['decline_route'])): ?>
-                                            <form action="<?= route_to($request['decline_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="reject" data-confirm-message="<?= esc($request['decline_confirm_message'] ?? 'Reject this disposal request?', 'attr') ?>">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" class="archive-action-text action-danger">
-                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                    Reject
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
-                                    <?php elseif (!empty($request['fallback_action_label'])): ?>
-                                        <span class="archive-action-text action-muted"><?= esc($request['fallback_action_label']) ?></span>
-                                    <?php elseif (($request['workflow_stage'] ?? '') === 'approved-disposal' && can('approve_disposal') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
-                                        <form action="<?= route_to($request['approve_route'], $request['route_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="<?= esc($request['confirm_message'] ?? 'Mark this archive disposal as completed?', 'attr') ?>">
-                                            <?= csrf_field() ?>
-                                            <button type="submit" class="archive-action-text action-muted">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                Mark Complete
-                                            </button>
-                                        </form>
-                                    <?php endif; ?>
                                     </div>
                                 </div>
                             </td>
@@ -1123,66 +1124,66 @@
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                                 <?= esc($approvedBy ?: '-') ?>
                             </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">
+                             <td class="px-4 py-3 whitespace-nowrap text-sm">
                                 <div class="archive-actions">
-                                    <a href="<?= route_to('records.show', $folderId) ?>" class="archive-action-text action-secondary">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                        View
-                                    </a>
+                                    <div class="flex items-center gap-2">
+                                        <?= view('components/button', [
+                                            'label' => 'View',
+                                            'url' => route_to('records.show', $folderId),
+                                            'style' => 'info'
+                                        ]) ?>
 
-                                    <?php if ($isRestorationPending): ?>
-                                        <?php if (can('approve_restore')): ?>
-                                            <form action="<?= route_to('restoration.approve', $pendingRestoration['restoration_request_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="Approve this restoration request?">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" class="archive-action-text action-primary">
-                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                    Approve
-                                                </button>
-                                            </form>
-                                            <form action="<?= route_to('restoration.reject', $pendingRestoration['restoration_request_id']) ?>" method="POST" class="inline" data-bulk-action="reject" data-confirm-message="Reject this restoration request and keep folder archived?">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" class="archive-action-text action-danger">
-                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                    Reject
-                                                </button>
-                                            </form>
+                                        <?php if ($isRestorationPending): ?>
+                                            <?php if (can('approve_restore')): ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Approve',
+                                                    'type' => 'submit',
+                                                    'style' => 'primary',
+                                                    'action' => route_to('restoration.approve', $pendingRestoration['restoration_request_id']),
+                                                    'confirm' => 'Approve this restoration request?'
+                                                ]) ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Reject',
+                                                    'type' => 'submit',
+                                                    'style' => 'danger',
+                                                    'action' => route_to('restoration.reject', $pendingRestoration['restoration_request_id']),
+                                                    'confirm' => 'Reject this restoration request and keep folder archived?'
+                                                ]) ?>
+                                            <?php else: ?>
+                                                <span class="text-xs font-semibold text-yellow-600 uppercase">Pending</span>
+                                            <?php endif; ?>
                                         <?php else: ?>
-                                            <span class="archive-muted-action">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                Pending
-                                            </span>
-                                        <?php endif; ?>
-                                    <?php else: ?>
-                                        <?php if ($status === 'Pending Disposal' && can('approve_disposal') && !empty($record['disposal_id'])): ?>
-                                            <form action="<?= route_to('disposal.approve', $record['disposal_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="Approve this disposal request?">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" class="archive-action-text action-primary">
-                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                    Approve
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
+                                            <?php if ($status === 'Pending Disposal' && can('approve_disposal') && !empty($record['disposal_id'])): ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Approve',
+                                                    'type' => 'submit',
+                                                    'style' => 'primary',
+                                                    'action' => route_to('disposal.approve', $record['disposal_id']),
+                                                    'confirm' => 'Approve this disposal request?'
+                                                ]) ?>
+                                            <?php endif; ?>
 
-                                        <?php if ($status === 'Approved for Disposal' && can('approve_disposal') && !empty($record['disposal_id'])): ?>
-                                            <form action="<?= route_to('disposal.complete', $record['disposal_id']) ?>" method="POST" class="inline" data-bulk-action="approve" data-confirm-message="Mark this archive disposal as completed?">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" class="archive-action-text" style="color: #64748b;">
-                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                    Complete
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
+                                            <?php if ($status === 'Approved for Disposal' && can('approve_disposal') && !empty($record['disposal_id'])): ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Complete',
+                                                    'type' => 'submit',
+                                                    'style' => 'secondary',
+                                                    'action' => route_to('disposal.complete', $record['disposal_id']),
+                                                    'confirm' => 'Mark this archive disposal as completed?'
+                                                ]) ?>
+                                            <?php endif; ?>
 
-                                        <?php if ($status !== 'Disposed' && can('request_restore')): ?>
-                                            <form action="<?= route_to('archive.restore', $folderId) ?>" method="POST" class="inline" data-bulk-action="restore" data-confirm-message="Submit a restoration request for this folder?">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" class="archive-action-text action-primary">
-                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                                    Restore
-                                                </button>
-                                            </form>
+                                            <?php if ($status !== 'Disposed' && can('request_restore')): ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Restore',
+                                                    'type' => 'submit',
+                                                    'style' => 'primary',
+                                                    'action' => route_to('archive.restore', $folderId),
+                                                    'confirm' => 'Submit a restoration request for this folder?'
+                                                ]) ?>
+                                            <?php endif; ?>
                                         <?php endif; ?>
-                                    <?php endif; ?>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
