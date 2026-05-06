@@ -1,0 +1,839 @@
+/* ============================================================================
+   DARK MODE STYLESHEET - System-wide Dark Theme Support
+   Provides dark mode overrides for all Tailwind CSS classes and components
+   Applied when .dark class is present on document element (via Alpine.js)
+   ============================================================================ */
+
+/* ========================================================================
+   DARK MODE CSS VARIABLES
+   ======================================================================== */
+
+.dark {
+    --color-bg: #0f1419;
+    --color-bg-secondary: #1a1f2e;
+    --color-bg-tertiary: #242b3c;
+    --color-text: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    --color-border: #334155;
+    --color-border-light: #475569;
+
+    /* ========================================================================
+       GLOBAL DARK MODE
+       ======================================================================== */
+
+    body {
+        background-color: var(--color-bg);
+        color: var(--color-text);
+    }
+
+    html {
+        background-color: var(--color-bg);
+    }
+
+    /* ========================================================================
+       TAILWIND COLOR OVERRIDES
+       ======================================================================== */
+
+    /* White backgrounds → Dark backgrounds */
+    .bg-white {
+        background-color: var(--color-bg-secondary) !important;
+    }
+
+    .bg-gray-50 {
+        background-color: #1a1f2e !important;
+    }
+
+    .bg-gray-100 {
+        background-color: #242b3c !important;
+    }
+
+    .bg-gray-200 {
+        background-color: #334155 !important;
+    }
+
+    .bg-gray-300 {
+        background-color: #475569 !important;
+    }
+
+    .bg-gray-400 {
+        background-color: #64748b !important;
+    }
+
+    .bg-gray-500 {
+        background-color: #71828c !important;
+    }
+
+    .bg-gray-600 {
+        background-color: #4b5563 !important;
+    }
+
+    .bg-gray-700 {
+        background-color: #2d3748 !important;
+    }
+
+    .bg-gray-800 {
+        background-color: #1a202c !important;
+    }
+
+    .bg-gray-900 {
+        background-color: #0f172a !important;
+    }
+
+    /* Text colors → Light for readability */
+    .text-gray-900 {
+        color: var(--color-text) !important;
+    }
+
+    .text-gray-800 {
+        color: #e2e8f0 !important;
+    }
+
+    .text-gray-700 {
+        color: #cbd5e1 !important;
+    }
+
+    .text-gray-600 {
+        color: #94a3b8 !important;
+    }
+
+    .text-gray-500 {
+        color: #64748b !important;
+    }
+
+    .text-gray-400 {
+        color: #475569 !important;
+    }
+
+    .text-gray-300 {
+        color: #334155 !important;
+    }
+
+    /* Black text → Light text */
+    .text-black {
+        color: var(--color-text) !important;
+    }
+
+    /* Specific table cell styling in dark mode */
+    table td.text-gray-900 {
+        color: var(--color-text) !important;
+    }
+
+    table th.text-gray-500 {
+        color: var(--color-text-muted) !important;
+    }
+
+    table tbody tr:hover td {
+        color: var(--color-text-secondary) !important;
+    }
+
+    /* Border colors */
+    .border-gray-200 {
+        border-color: var(--color-border) !important;
+    }
+
+    .border-gray-300 {
+        border-color: var(--color-border-light) !important;
+    }
+
+    .border-gray-400 {
+        border-color: #64748b !important;
+    }
+
+    .border-gray-500 {
+        border-color: #475569 !important;
+    }
+
+    .divide-gray-200 > * {
+        border-color: var(--color-border) !important;
+    }
+
+    /* ========================================================================
+       ARCHIVE & DISPOSAL SPECIFIC DARK MODE
+       ======================================================================== */
+
+    /* ========================================================================
+       COMPREHENSIVE TABLE STYLING FOR DARK MODE
+       ======================================================================== */
+
+    /* All table elements */
+    table {
+        background-color: var(--color-bg-secondary) !important;
+        color: var(--color-text-secondary) !important;
+    }
+
+    table thead {
+        background-color: var(--color-bg-tertiary) !important;
+    }
+
+    table thead tr {
+        background-color: var(--color-bg-tertiary) !important;
+        border-bottom: 2px solid var(--color-border) !important;
+    }
+
+    table thead th {
+        background-color: var(--color-bg-tertiary) !important;
+        color: var(--color-text-muted) !important;
+        border-color: var(--color-border) !important;
+        font-weight: 600;
+        padding: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.75rem;
+    }
+
+    table tbody {
+        background-color: var(--color-bg-secondary) !important;
+    }
+
+    table tbody tr {
+        background-color: var(--color-bg-secondary) !important;
+        border-bottom: 1px solid var(--color-border) !important;
+        transition: background-color 0.2s ease;
+    }
+
+    table tbody tr:hover {
+        background-color: var(--color-bg-tertiary) !important;
+    }
+
+    table tbody td {
+        color: var(--color-text-secondary) !important;
+        border-color: var(--color-border) !important;
+        padding: 1rem;
+    }
+
+    /* Text utility classes in tables */
+    table td.font-medium {
+        color: var(--color-text) !important;
+        font-weight: 500;
+    }
+
+    table td.font-semibold {
+        color: var(--color-text) !important;
+        font-weight: 600;
+    }
+
+    table td.font-bold {
+        color: var(--color-text) !important;
+        font-weight: 700;
+    }
+
+    table td.text-left {
+        text-align: left;
+    }
+
+    table td.whitespace-nowrap {
+        white-space: nowrap;
+    }
+
+    table td a {
+        color: #60a5fa !important;
+        text-decoration: underline;
+    }
+
+    table td a:hover {
+        color: #93c5fd !important;
+    }
+
+    /* ========================================================================
+       ARCHIVE RECORD TABLE SPECIFIC
+       ======================================================================== */
+
+    .archive-table-wrap {
+        background-color: var(--color-bg-secondary) !important;
+        border-color: var(--color-border) !important;
+    }
+
+    .archive-table-wrap table {
+        background-color: var(--color-bg-secondary) !important;
+    }
+
+    .archive-table-wrap thead {
+        background-color: var(--color-bg-tertiary) !important;
+    }
+
+    .archive-table-wrap thead th {
+        background-color: var(--color-bg-tertiary) !important;
+        color: var(--color-text-muted) !important;
+        border-color: var(--color-border) !important;
+    }
+
+    .archive-table-wrap tbody {
+        background-color: var(--color-bg-secondary) !important;
+    }
+
+    .archive-table-wrap tbody tr {
+        background-color: var(--color-bg-secondary) !important;
+        border-color: var(--color-border) !important;
+    }
+
+    .archive-table-wrap tbody tr:hover {
+        background-color: var(--color-bg-tertiary) !important;
+    }
+
+    .archive-table-wrap tbody td {
+        color: var(--color-text-secondary) !important;
+        border-color: var(--color-border) !important;
+    }
+
+    /* Specific column styling */
+    .archive-table-wrap .archive-folder-col {
+        color: var(--color-text) !important;
+        font-weight: 500;
+    }
+
+    .archive-table-wrap .archive-date-col {
+        color: var(--color-text-secondary) !important;
+    }
+
+    .archive-table-wrap .archive-retention-col {
+        color: var(--color-text-secondary) !important;
+    }
+
+    .archive-table-wrap .archive-status-col {
+        color: var(--color-text-secondary) !important;
+    }
+
+    .archive-table-wrap .archive-workflow-col {
+        color: var(--color-text-secondary) !important;
+    }
+
+    .archive-table-wrap .archive-requester-col {
+        color: var(--color-text-secondary) !important;
+    }
+
+    .archive-table-wrap .archive-approver-col {
+        color: var(--color-text-secondary) !important;
+    }
+
+    .archive-table-wrap .archive-actions-col {
+        color: var(--color-text-secondary) !important;
+    }
+
+    /* Archive row styling */
+    .archive-row {
+        background-color: var(--color-bg-secondary) !important;
+        border-color: var(--color-border) !important;
+    }
+
+    .archive-row:hover {
+        background-color: var(--color-bg-tertiary) !important;
+    }
+
+    /* Archive status badge styling */
+    .archive-status-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        display: inline-block;
+        border: 1.5px solid;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Archive status badge - pending */
+    .archive-status-badge.bg-yellow-100 {
+        background-color: rgba(251, 191, 36, 0.2) !important;
+        color: #fcd34d !important;
+        border-color: rgba(251, 191, 36, 0.5) !important;
+    }
+
+    .archive-status-badge.text-yellow-700 {
+        color: #fcd34d !important;
+    }
+
+    /* Archive status badge - archived */
+    .archive-status-badge.bg-blue-100 {
+        background-color: rgba(59, 130, 246, 0.2) !important;
+        color: #93c5fd !important;
+        border-color: rgba(59, 130, 246, 0.5) !important;
+    }
+
+    .archive-status-badge.text-blue-700 {
+        color: #93c5fd !important;
+    }
+
+    /* Archive status badge - approved */
+    .archive-status-badge.bg-green-100 {
+        background-color: rgba(34, 197, 94, 0.2) !important;
+        color: #86efac !important;
+        border-color: rgba(34, 197, 94, 0.5) !important;
+    }
+
+    .archive-status-badge.text-green-700 {
+        color: #86efac !important;
+    }
+
+    /* Archive status badge - disposed */
+    .archive-status-badge.bg-gray-200 {
+        background-color: rgba(107, 114, 128, 0.2) !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(107, 114, 128, 0.5) !important;
+    }
+
+    .archive-status-badge.text-gray-700 {
+        color: #cbd5e1 !important;
+    }
+
+    /* Archive checkbox styling */
+    .archive-checkbox-cell {
+        background-color: var(--color-bg-secondary) !important;
+        border-color: var(--color-border) !important;
+    }
+
+    .archive-checkbox-cell input[type="checkbox"] {
+        border-color: var(--color-border-light) !important;
+        background-color: var(--color-bg-tertiary) !important;
+    }
+
+    .archive-checkbox-cell input[type="checkbox"]:checked {
+        background-color: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+    }
+
+    .archive-checkbox-cell input[type="checkbox"]:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+    }
+
+    /* Archive actions column */
+    .archive-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .archive-actions a,
+    .archive-actions button {
+        color: #60a5fa !important;
+        text-decoration: underline;
+    }
+
+    .archive-actions a:hover,
+    .archive-actions button:hover {
+        color: #93c5fd !important;
+    }
+
+    /* Disposal action buttons */
+    .disposal-action {
+        transition: all 0.15s ease;
+    }
+
+    .disposal-action--primary {
+        background-color: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+        color: #ffffff !important;
+    }
+
+    .disposal-action--primary:hover {
+        background-color: #2563eb !important;
+        border-color: #2563eb !important;
+    }
+
+    .disposal-action--secondary {
+        background-color: var(--color-bg-tertiary) !important;
+        border-color: var(--color-border) !important;
+        color: var(--color-text-secondary) !important;
+    }
+
+    .disposal-action--secondary:hover {
+        background-color: var(--color-border) !important;
+        color: var(--color-text) !important;
+    }
+
+    /* Status badges */
+    .status-badge {
+        color: var(--color-text) !important;
+    }
+
+    .status-badge--pending {
+        background-color: rgba(251, 146, 60, 0.2) !important;
+        color: #fed7aa !important;
+        border-color: rgba(251, 146, 60, 0.5) !important;
+    }
+
+    .status-badge--approved {
+        background-color: rgba(34, 197, 94, 0.2) !important;
+        color: #86efac !important;
+        border-color: rgba(34, 197, 94, 0.5) !important;
+    }
+
+    .status-badge--disposed {
+        background-color: rgba(107, 114, 128, 0.2) !important;
+        color: #d1d5db !important;
+        border-color: rgba(107, 114, 128, 0.5) !important;
+    }
+
+    .status-badge--other {
+        background-color: rgba(107, 114, 128, 0.2) !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(107, 114, 128, 0.5) !important;
+    }
+
+    /* Archive workflow status badges */
+    .bg-blue-100 {
+        background-color: rgba(59, 130, 246, 0.2) !important;
+        color: #93c5fd !important;
+    }
+
+    .text-blue-700 {
+        color: #93c5fd !important;
+    }
+
+    .bg-yellow-100 {
+        background-color: rgba(251, 191, 36, 0.2) !important;
+        color: #fcd34d !important;
+    }
+
+    .text-yellow-700 {
+        color: #fcd34d !important;
+    }
+
+    .bg-orange-100 {
+        background-color: rgba(251, 146, 60, 0.2) !important;
+        color: #fed7aa !important;
+    }
+
+    .text-orange-700 {
+        color: #fed7aa !important;
+    }
+
+    .bg-green-100 {
+        background-color: rgba(34, 197, 94, 0.2) !important;
+        color: #86efac !important;
+    }
+
+    .text-green-700 {
+        color: #86efac !important;
+    }
+
+    .bg-purple-100 {
+        background-color: rgba(168, 85, 247, 0.2) !important;
+        color: #d8b4fe !important;
+    }
+
+    .text-purple-700 {
+        color: #d8b4fe !important;
+    }
+
+    /* ========================================================================
+       INPUT & FORM ELEMENTS DARK MODE
+       ======================================================================== */
+
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    input[type="search"],
+    select,
+    textarea {
+        background-color: var(--color-bg-tertiary) !important;
+        border-color: var(--color-border) !important;
+        color: var(--color-text) !important;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="email"]::placeholder,
+    input[type="search"]::placeholder,
+    textarea::placeholder {
+        color: var(--color-text-muted) !important;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="search"]:focus,
+    select:focus,
+    textarea:focus {
+        border-color: #3b82f6 !important;
+        background-color: var(--color-bg-tertiary) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+    }
+
+    /* ========================================================================
+       BUTTON DARK MODE
+       ======================================================================== */
+
+    .btn,
+    button {
+        transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+        color: #ffffff !important;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb !important;
+        border-color: #2563eb !important;
+    }
+
+    .btn-secondary {
+        background-color: var(--color-bg-tertiary) !important;
+        border-color: var(--color-border) !important;
+        color: var(--color-text-secondary) !important;
+    }
+
+    .btn-secondary:hover {
+        background-color: var(--color-border) !important;
+        color: var(--color-text) !important;
+    }
+
+    .btn-danger {
+        background-color: #ef4444 !important;
+        border-color: #ef4444 !important;
+        color: #ffffff !important;
+    }
+
+    .btn-danger:hover {
+        background-color: #dc2626 !important;
+        border-color: #dc2626 !important;
+    }
+
+    /* ========================================================================
+       MODAL DARK MODE (Enhanced)
+       ======================================================================== */
+
+    .modal-content {
+        background-color: var(--color-bg-secondary) !important;
+        border-color: var(--color-border) !important;
+        color: var(--color-text) !important;
+    }
+
+    .modal-header {
+        background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%) !important;
+        border-color: var(--color-border) !important;
+    }
+
+    .modal-title {
+        color: var(--color-text) !important;
+    }
+
+    .modal-title-icon {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%) !important;
+        color: #93c5fd !important;
+        border-color: rgba(59, 130, 246, 0.5) !important;
+    }
+
+    .modal-title.danger .modal-title-icon {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%) !important;
+        color: #fca5a5 !important;
+        border-color: rgba(239, 68, 68, 0.5) !important;
+    }
+
+    .modal-title.success .modal-title-icon {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%) !important;
+        color: #86efac !important;
+        border-color: rgba(34, 197, 94, 0.5) !important;
+    }
+
+    .modal-title.warning .modal-title-icon {
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0.1) 100%) !important;
+        color: #fcd34d !important;
+        border-color: rgba(251, 191, 36, 0.5) !important;
+    }
+
+    .modal-close-btn {
+        color: var(--color-text-secondary) !important;
+    }
+
+    .modal-close-btn:hover {
+        background-color: var(--color-bg-tertiary) !important;
+        color: var(--color-text) !important;
+        border-color: var(--color-border-light) !important;
+    }
+
+    .modal-body {
+        color: var(--color-text) !important;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb {
+        background-color: var(--color-border-light) !important;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb:hover {
+        background-color: var(--color-text-muted) !important;
+    }
+
+    .modal-message {
+        background: linear-gradient(180deg, var(--color-bg-tertiary) 0%, var(--color-bg-secondary) 100%) !important;
+        border-color: var(--color-border) !important;
+        color: var(--color-text-secondary) !important;
+        border-left-color: #3b82f6 !important;
+    }
+
+    .detail-label {
+        color: var(--color-text-muted) !important;
+    }
+
+    .detail-value {
+        color: var(--color-text-secondary) !important;
+    }
+
+    .detail-value.highlight {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+        border-left-color: #60a5fa !important;
+    }
+
+    .modal-footer {
+        background: linear-gradient(180deg, var(--color-bg-tertiary) 0%, var(--color-bg-secondary) 100%) !important;
+        border-color: var(--color-border) !important;
+    }
+
+    .modal-btn.cancel {
+        background-color: var(--color-bg-tertiary) !important;
+        border-color: var(--color-border) !important;
+        color: var(--color-text-secondary) !important;
+    }
+
+    .modal-btn.cancel:hover {
+        background-color: var(--color-border) !important;
+        border-color: var(--color-border-light) !important;
+        color: var(--color-text) !important;
+    }
+
+    .modal-message.alert-success {
+        background-color: rgba(34, 197, 94, 0.1) !important;
+        border-color: rgba(34, 197, 94, 0.3) !important;
+        color: #86efac !important;
+    }
+
+    .modal-message.alert-error {
+        background-color: rgba(239, 68, 68, 0.1) !important;
+        border-color: rgba(239, 68, 68, 0.3) !important;
+        color: #fca5a5 !important;
+    }
+
+    .modal-message.alert-warning {
+        background-color: rgba(251, 191, 36, 0.1) !important;
+        border-color: rgba(251, 191, 36, 0.3) !important;
+        color: #fcd34d !important;
+    }
+
+    .modal-message.alert-info {
+        background-color: rgba(59, 130, 246, 0.1) !important;
+        border-color: rgba(59, 130, 246, 0.3) !important;
+        color: #93c5fd !important;
+    }
+
+    /* ========================================================================
+       SCROLLBAR STYLING
+       ======================================================================== */
+
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--color-bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--color-border);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--color-border-light);
+    }
+
+    /* ========================================================================
+       SELECTION & HIGHLIGHT
+       ======================================================================== */
+
+    ::selection {
+        background-color: rgba(59, 130, 246, 0.3) !important;
+        color: var(--color-text) !important;
+    }
+
+    ::-moz-selection {
+        background-color: rgba(59, 130, 246, 0.3) !important;
+        color: var(--color-text) !important;
+    }
+
+    /* ========================================================================
+       SHADOW & DEPTH DARK MODE
+       ======================================================================== */
+
+    .shadow-sm {
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .shadow-md {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .shadow-lg {
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .shadow-xl {
+        box-shadow: 0 20px 25px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* ========================================================================
+       PLACEHOLDER STYLING
+       ======================================================================== */
+
+    .placeholder-gray-500::placeholder {
+        color: var(--color-text-muted) !important;
+    }
+
+    .placeholder-gray-600::placeholder {
+        color: #64748b !important;
+    }
+
+    /* ========================================================================
+       HOVER & FOCUS STATES
+       ======================================================================== */
+
+    .hover\:bg-gray-50:hover {
+        background-color: var(--color-bg-tertiary) !important;
+    }
+
+    .hover\:bg-gray-100:hover {
+        background-color: var(--color-border) !important;
+    }
+
+    .hover\:text-gray-900:hover {
+        color: var(--color-text) !important;
+    }
+
+    .focus\:outline-blue-500:focus {
+        outline-color: #3b82f6 !important;
+    }
+
+    .focus\:ring-2:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+    }
+
+    /* ========================================================================
+       RESPONSIVE DARK MODE
+       ======================================================================== */
+
+    @media (max-width: 640px) {
+        .bg-white {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        .modal-content {
+            background-color: var(--color-bg-secondary) !important;
+        }
+    }
+
+    /* ========================================================================
+       UTILITY CLASSES DARK MODE
+       ======================================================================== */
+
+    .text-opacity-50 {
+        opacity: 0.5;
+    }
+
+    .bg-opacity-10 {
+        opacity: 0.1;
+    }
+
+    .ring-offset-0 {
+        --tw-ring-offset-width: 0px;
+    }
+}

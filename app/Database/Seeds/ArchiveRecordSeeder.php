@@ -1,0 +1,82 @@
+<?php
+
+namespace App\Database\Seeds;
+
+use CodeIgniter\Database\Seeder;
+
+class ArchiveRecordSeeder extends Seeder
+{
+    public function run()
+    {
+        // Get sample users, folders, and locations
+        $users = $this->db->table('users')->get()->getResultArray();
+        $folders = $this->db->table('folders')->orderBy('folder_id', 'ASC')->limit(5)->get()->getResultArray();
+        $locations = $this->db->table('locations')->orderBy('location_id', 'ASC')->limit(3)->get()->getResultArray();
+
+        if (empty($users) || empty($folders) || empty($locations)) {
+            echo "⚠️  Skipping ArchiveRecordSeeder: Requires users, folders, and locations to be seeded first.\n";
+            return;
+        }
+
+        $archivist = $users[2] ?? $users[0]; // Records officer
+        $admin = $users[1] ?? $users[0]; // Admin
+
+        $archives = [];
+        
+        // Active archive record
+        $archives[] = [
+            'folder_id' => $folders[0]['folder_id'],
+            'archived_date' => date('Y-m-d', strtotime('-90 days')),
+            'archive_location_id' => $locations[0]['location_id'],
+            'archived_by' => $archivist['user_id'],
+            'created_at' => date('Y-m-d H:i:s', strtotime('-90 days')),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+
+        // Active archive record with longer retention
+        $archives[] = [
+            'folder_id' => $folders[1]['folder_id'],
+            'archived_date' => date('Y-m-d', strtotime('-60 days')),
+            'archive_location_id' => $locations[1]['location_id'],
+            'archived_by' => $admin['user_id'],
+            'created_at' => date('Y-m-d H:i:s', strtotime('-60 days')),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+
+        // Archive record eligible for disposal (retention expired)
+        $archives[] = [
+            'folder_id' => $folders[2]['folder_id'],
+            'archived_date' => date('Y-m-d', strtotime('-2000 days')), // 5+ years old
+            'archive_location_id' => $locations[2]['location_id'],
+            'archived_by' => $archivist['user_id'],
+            'created_at' => date('Y-m-d H:i:s', strtotime('-2000 days')),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+
+        // Inactive archive record (disposal already approved/executed)
+        $archives[] = [
+            'folder_id' => $folders[3]['folder_id'],
+            'archived_date' => date('Y-m-d', strtotime('-2100 days')),
+            'archive_location_id' => $locations[0]['location_id'],
+            'archived_by' => $admin['user_id'],
+            'created_at' => date('Y-m-d H:i:s', strtotime('-2100 days')),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+
+        foreach ($archives as $archive) {
+            $existing = $this->db->table('archive_records')
+                ->where('folder_id', $archive['folder_id'])
+                ->get()
+                ->getRowArray();
+
+            if ($existing) {
+                $this->db->table('archive_records')
+                    ->where('archive_id', $existing['archive_id'])
+                    ->update($archive);
+                continue;
+            }
+
+            $this->db->table('archive_records')->insert($archive);
+        }
+    }
+}
