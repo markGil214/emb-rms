@@ -438,8 +438,10 @@
                         (function(){
                             function initExpirationFields() {
                                 const retentionSelect = document.getElementById('retention_type_modal');
-                                const yearsWrapper = document.getElementById('expirationYearsWrapper_modal');
+                                const fieldsWrapper = document.getElementById('expirationFieldsWrapper_modal');
                                 const yearsInput = document.getElementById('expiration_years_modal');
+                                const monthsInput = document.getElementById('expiration_months_modal');
+                                const daysInput = document.getElementById('expiration_days_modal');
                                 const preview = document.getElementById('expirationPreview_modal');
                                 const hidden = document.getElementById('expiration_date_modal');
 
@@ -451,28 +453,36 @@
                                 }
 
                                 function updateExpirationPreview(){
-                                    if (!retentionSelect || !yearsWrapper || !yearsInput || !preview || !hidden) return;
+                                    if (!retentionSelect || !fieldsWrapper || !yearsInput || !monthsInput || !daysInput || !preview || !hidden) return;
                                     if (retentionSelect.value === 'expiration'){
-                                        yearsWrapper.style.display = 'block';
+                                        fieldsWrapper.style.display = 'block';
                                         yearsInput.disabled = false;
-                                        yearsInput.required = true;
-                                        const years = parseInt(yearsInput.value, 10);
-                                        if (!Number.isInteger(years) || years < 1) {
+                                        monthsInput.disabled = false;
+                                        daysInput.disabled = false;
+                                        const years = parseInt(yearsInput.value, 10) || 0;
+                                        const months = parseInt(monthsInput.value, 10) || 0;
+                                        const days = parseInt(daysInput.value, 10) || 0;
+                                        if (years === 0 && months === 0 && days === 0) {
                                             hidden.value = '';
-                                            preview.textContent = 'Enter a valid number of years to preview expiration date.';
+                                            preview.textContent = 'Enter at least one value (years, months, or days) to preview expiration date.';
                                             preview.style.display = 'block';
                                             return;
                                         }
 
                                         const now = new Date();
-                                        const expires = new Date(now.getFullYear() + years, now.getMonth(), now.getDate());
+                                        const expires = new Date(now.getFullYear() + years, now.getMonth() + months, now.getDate() + days);
                                         hidden.value = formatDateYmd(expires);
-                                        preview.textContent = `Expires on: ${expires.toLocaleDateString()} (${years} year${years === 1 ? '' : 's'})`;
+                                        const parts = [];
+                                        if (years > 0) parts.push(years + ' year' + (years === 1 ? '' : 's'));
+                                        if (months > 0) parts.push(months + ' month' + (months === 1 ? '' : 's'));
+                                        if (days > 0) parts.push(days + ' day' + (days === 1 ? '' : 's'));
+                                        preview.textContent = `Expires on: ${expires.toLocaleDateString()} (${parts.join(', ')})`;
                                         preview.style.display = 'block';
                                     } else {
-                                        yearsWrapper.style.display = 'none';
-                                        yearsInput.required = false;
+                                        fieldsWrapper.style.display = 'none';
                                         yearsInput.disabled = true;
+                                        monthsInput.disabled = true;
+                                        daysInput.disabled = true;
                                         hidden.value = '';
                                         preview.textContent = '';
                                         preview.style.display = 'none';
@@ -485,6 +495,8 @@
 
                                 retentionSelect.addEventListener('change', updateExpirationPreview);
                                 yearsInput.addEventListener('input', updateExpirationPreview);
+                                monthsInput.addEventListener('input', updateExpirationPreview);
+                                daysInput.addEventListener('input', updateExpirationPreview);
                                 updateExpirationPreview();
                             }
 
@@ -532,24 +544,59 @@
                             <?php if (!empty($uploadErrors['retention_type'])): ?>
                                 <p class="mt-1 text-sm text-red-600"><?= esc($uploadErrors['retention_type']) ?></p>
                             <?php endif; ?>
-                            <div id="expirationYearsWrapper_modal" class="mt-3" style="display: <?= old('retention_type') === 'expiration' ? 'block' : 'none' ?>;">
-                                <label for="expiration_years_modal" class="block text-sm font-semibold text-gray-700 mb-1">
-                                    Expiration Years <span class="text-red-500">*</span>
+                            <div id="expirationFieldsWrapper_modal" class="mt-3" style="display: <?= old('retention_type') === 'expiration' ? 'block' : 'none' ?>;">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Expiration Duration <span class="text-red-500">*</span>
                                 </label>
-                                <input type="number"
-                                       id="expiration_years_modal"
-                                       name="expiration_years"
-                                       min="1"
-                                        max="30"
-                                       step="1"
-                                       value="<?= esc(old('expiration_years', '5')) ?>"
-                                       class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
-                                       <?= old('retention_type') === 'expiration' ? 'required' : 'disabled' ?>>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label for="expiration_years_modal" class="block text-xs font-medium text-gray-500 mb-1">Years</label>
+                                        <input type="number"
+                                               id="expiration_years_modal"
+                                               name="expiration_years"
+                                               min="0"
+                                               max="30"
+                                               step="1"
+                                               value="<?= esc(old('expiration_years', '0')) ?>"
+                                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
+                                               <?= old('retention_type') === 'expiration' ? '' : 'disabled' ?>>
+                                    </div>
+                                    <div>
+                                        <label for="expiration_months_modal" class="block text-xs font-medium text-gray-500 mb-1">Months</label>
+                                        <input type="number"
+                                               id="expiration_months_modal"
+                                               name="expiration_months"
+                                               min="0"
+                                               max="11"
+                                               step="1"
+                                               value="<?= esc(old('expiration_months', '0')) ?>"
+                                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
+                                               <?= old('retention_type') === 'expiration' ? '' : 'disabled' ?>>
+                                    </div>
+                                    <div>
+                                        <label for="expiration_days_modal" class="block text-xs font-medium text-gray-500 mb-1">Days</label>
+                                        <input type="number"
+                                               id="expiration_days_modal"
+                                               name="expiration_days"
+                                               min="0"
+                                               max="30"
+                                               step="1"
+                                               value="<?= esc(old('expiration_days', '0')) ?>"
+                                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
+                                               <?= old('retention_type') === 'expiration' ? '' : 'disabled' ?>>
+                                    </div>
+                                </div>
                                 <?php if (!empty($uploadErrors['expiration_years'])): ?>
                                     <p class="mt-1 text-sm text-red-600"><?= esc($uploadErrors['expiration_years']) ?></p>
                                 <?php endif; ?>
+                                <?php if (!empty($uploadErrors['expiration_months'])): ?>
+                                    <p class="mt-1 text-sm text-red-600"><?= esc($uploadErrors['expiration_months']) ?></p>
+                                <?php endif; ?>
+                                <?php if (!empty($uploadErrors['expiration_days'])): ?>
+                                    <p class="mt-1 text-sm text-red-600"><?= esc($uploadErrors['expiration_days']) ?></p>
+                                <?php endif; ?>
                             </div>
-                            <p class="mt-1 text-sm text-gray-600">If you choose expiration, enter 1 to 30 years from today for expiry.</p>
+                            <p class="mt-1 text-sm text-gray-600">If you choose expiration, set how long from today the document should expire (at least one field must be greater than 0).</p>
                             <p id="expirationPreview_modal" class="mt-2 text-sm text-gray-700" style="display:none;"></p>
                             <input type="hidden" name="expiration_date" id="expiration_date_modal" value="<?= esc(old('expiration_date')) ?>">
                         </div>

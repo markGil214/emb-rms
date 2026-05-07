@@ -67,11 +67,27 @@ class FileUploadController extends BaseController
 
         if ($retentionType === 'expiration') {
             $validationRules['expiration_years'] = [
-                'rules' => 'required|is_natural_no_zero|less_than_equal_to[30]',
+                'rules' => 'required|is_natural|less_than_equal_to[30]',
                 'errors' => [
-                    'required' => 'Please enter how many years the file should expire in.',
-                    'is_natural_no_zero' => 'Expiration years must be a whole number greater than zero.',
+                    'required' => 'Please enter the number of years.',
+                    'is_natural' => 'Expiration years must be a whole number (0 or more).',
                     'less_than_equal_to' => 'Expiration years must not be greater than 30.',
+                ],
+            ];
+            $validationRules['expiration_months'] = [
+                'rules' => 'required|is_natural|less_than_equal_to[11]',
+                'errors' => [
+                    'required' => 'Please enter the number of months.',
+                    'is_natural' => 'Expiration months must be a whole number (0 or more).',
+                    'less_than_equal_to' => 'Expiration months must not be greater than 11.',
+                ],
+            ];
+            $validationRules['expiration_days'] = [
+                'rules' => 'required|is_natural|less_than_equal_to[30]',
+                'errors' => [
+                    'required' => 'Please enter the number of days.',
+                    'is_natural' => 'Expiration days must be a whole number (0 or more).',
+                    'less_than_equal_to' => 'Expiration days must not be greater than 30.',
                 ],
             ];
         }
@@ -110,12 +126,20 @@ class FileUploadController extends BaseController
 
         // Save file info to database
         $filePath = 'uploads/folders/' . $newName;
-        $expirationYears = (int) $this->request->getPost('expiration_years');
+        $expirationYears  = (int) $this->request->getPost('expiration_years');
+        $expirationMonths = (int) $this->request->getPost('expiration_months');
+        $expirationDays   = (int) $this->request->getPost('expiration_days');
 
         $expirationDate = null;
         if ($retentionType === 'expiration') {
+            if ($expirationYears === 0 && $expirationMonths === 0 && $expirationDays === 0) {
+                return redirect()->back()->withInput()->with('errors', [
+                    'expiration_years' => 'At least one of years, months, or days must be greater than zero.',
+                ]);
+            }
             $today = new \DateTimeImmutable('today');
-            $expirationDate = $today->modify('+' . $expirationYears . ' years')->format('Y-m-d');
+            $interval = new \DateInterval('P' . $expirationYears . 'Y' . $expirationMonths . 'M' . $expirationDays . 'D');
+            $expirationDate = $today->add($interval)->format('Y-m-d');
         }
         $data = [
             'folder_id' => $folderId,
