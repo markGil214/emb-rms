@@ -156,9 +156,10 @@ class FolderController extends BaseController
             ->get()
             ->getRowArray();
 
-        // Keep the current view contract: expose cabinet and rack in $folder.
-        $folder['cabinet'] = $location['cabinet'] ?? ($location['rack'] ?? null);
-        $folder['rack'] = $location['rack'] ?? ($location['shelf'] ?? null);
+        // Map location columns to folder fields with correct labels
+        $folder['cabinet'] = $location['cabinet'] ?? null;
+        $folder['rack']    = $location['rack'] ?? null;
+        $folder['shelf']   = $location['shelf'] ?? null;
         $files = $this->folderFileModel->getByFolder($folderId);
 
         return view('document-records/show', [
