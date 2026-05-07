@@ -475,7 +475,7 @@
                                         $borrowedDate = !empty($row['borrowed_at']) ? date('M d, Y H:i', strtotime($row['borrowed_at'])) : '--';
                                         $dueDate = !empty($row['expected_return_date']) ? date('M d, Y', strtotime($row['expected_return_date'])) : '--';
                                         $returnedDate = !empty($row['actual_return_date']) ? date('M d, Y H:i', strtotime($row['actual_return_date'])) : 'Not returned';
-                                        $purposeText = (string) ($row['purpose'] ?? '--');
+                                        $purposeText = (!empty($row['notes'])) ? $row['notes'] : ($row['purpose'] ?? '--');
                                         $borrowerValue = (string) ($row['borrower_name'] ?? 'Unknown');
 
                                         if (strlen($purposeText) > 80) {

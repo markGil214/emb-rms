@@ -314,4 +314,61 @@ class UserController extends BaseController
 
 		return redirect()->to('/users')->with('success', 'User status updated successfully');
 	}
+	public function updateInfo(int $userId)
+	{
+		if (!can('manage_users')) {
+			return redirect()->back()->with('error', 'Permission denied');
+		}
+
+		$user = $this->userModel->find($userId);
+		if (!$user) {
+			return redirect()->back()->with('error', 'User not found');
+		}
+
+		$firstName = trim((string) $this->request->getPost('first_name'));
+		$lastName  = trim((string) $this->request->getPost('last_name'));
+		$email     = trim((string) $this->request->getPost('email'));
+		$status    = trim((string) $this->request->getPost('status'));
+
+		// Validate email
+		if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			return redirect()->back()->with('error', 'Please provide a valid email address.');
+		}
+
+		// Check email uniqueness (exclude current user)
+		$existing = $this->userModel->where('email', $email)->where('user_id !=', $userId)->first();
+		if ($existing) {
+			return redirect()->back()->with('error', 'This email address is already used by another account.');
+		}
+
+		if (!in_array($status, ['Active', 'Inactive'], true)) {
+			return redirect()->back()->with('error', 'Invalid status value.');
+		}
+
+		$updateData = [
+			'first_name' => $firstName ?: null,
+			'last_name'  => $lastName ?: null,
+			'email'      => $email,
+			'status'     => $status,
+		];
+
+		if ($status === 'Inactive') {
+			$updateData['inactive_at'] = trim((string) ($user['inactive_at'] ?? '')) ?: date('Y-m-d H:i:s');
+		} else {
+			$updateData['inactive_at'] = null;
+		}
+
+		if (!$this->userModel->skipValidation()->update($userId, $updateData)) {
+			return redirect()->back()->with('error', 'Failed to update user information.');
+		}
+
+		// If admin deactivated themselves
+		if ((int) $user['user_id'] === (int) (auth_user()['user_id'] ?? 0) && $status === 'Inactive') {
+			service('authentication')->logout();
+			return redirect()->to('/')->with('success', 'Your account was set to inactive.');
+		}
+
+		return redirect()->to('/users')->with('success', 'User information updated successfully.');
+	}
+
 }

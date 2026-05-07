@@ -82,8 +82,18 @@
         </a>
 
         <div class="flex flex-wrap items-start justify-between gap-4">
-            <div>
+            <div class="flex flex-col gap-2">
                 <h1 class="text-2xl font-bold text-gray-900"><?= esc($folder['file_code']) ?> - <?= esc($folder['company_name']) ?></h1>
+                
+                <?php if (in_array($statusValue, ['Pending', 'Pending Update'], true)): ?>
+                    <div class="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 border border-blue-200 text-blue-800">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">This folder is currently awaiting approval. Some actions may be restricted.</span>
+                    </div>
+                <?php endif; ?>
+
                 <div class="mt-2 flex flex-wrap items-center gap-3">
                     <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold <?= $statusColor ?>">Status: <?= esc($statusValue) ?></span>
 
@@ -226,7 +236,7 @@
         </div>
     </div>
 
-    <?php if (!in_array($folder['status'] ?? '', ['Pending', 'Pending Update'], true)): ?>
+    <?php if (true): // Always show documents section if there are files or if we want to show the 'No documents' message ?>
 
     <!-- Uploaded Files List -->
 
@@ -408,12 +418,6 @@
 
     </div>
 
-    <?php else: ?>
-    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-        <div class="p-6 text-center text-gray-600">
-            Documents and history will be available after approval.
-        </div>
-    </div>
     <?php endif; ?>
 
 

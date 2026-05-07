@@ -75,10 +75,10 @@
                 </div>
 
                 <div>
-                    <label for="notes" class="block text-sm font-medium text-gray-700">Notes (Optional)</label>
+                    <label for="notes" class="block text-sm font-medium text-gray-700">Notes / Purpose <span class="text-red-500">*</span></label>
                     <textarea name="notes" id="notes" rows="4"
-                              maxlength="1000"
-                              placeholder="Add context for this borrow request..."
+                              maxlength="1000" required
+                              placeholder="Add the purpose or context for this borrow request..."
                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"><?= esc(old('notes')) ?></textarea>
                 </div>
 
@@ -111,11 +111,9 @@
         const daysSelect = document.getElementById('expected_return_days');
         const hiddenDateInput = document.getElementById('expected_return_date');
         const preview = document.getElementById('expectedReturnPreview');
-
         const selectedDays = parseInt(daysSelect.value, 10);
         const target = new Date();
         target.setDate(target.getDate() + selectedDays);
-
         hiddenDateInput.value = formatDateYmd(target);
         preview.textContent = `Return date: ${target.toLocaleDateString()}`;
     }
@@ -124,7 +122,6 @@
         const daysSelect = document.getElementById('expected_return_days');
         const hiddenDateInput = document.getElementById('expected_return_date');
         const oldDateValue = hiddenDateInput.value;
-
         if (oldDateValue) {
             const today = new Date();
             const oldDate = new Date(`${oldDateValue}T00:00:00`);
@@ -134,7 +131,6 @@
                 daysSelect.value = String(diffDays);
             }
         }
-
         updateExpectedReturnDate();
     }
 
@@ -144,14 +140,14 @@
     document.getElementById('folderSearch').addEventListener('input', function(e) {
         const query = e.target.value.toLowerCase();
         const results = document.getElementById('searchResults');
-        
+
         if (query.length === 0) {
             results.classList.add('hidden');
             return;
         }
 
-        const filtered = folders.filter(f => 
-            f.file_code.toLowerCase().includes(query) || 
+        const filtered = folders.filter(f =>
+            f.file_code.toLowerCase().includes(query) ||
             f.company_name.toLowerCase().includes(query)
         );
 
@@ -161,14 +157,28 @@
             return;
         }
 
-        results.innerHTML = filtered.map(f => 
-            `<div onclick="selectFolder(${f.folder_id}, '${f.file_code}', '${f.company_name}')" 
-                  class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-200 last:border-b-0">
-                <div class="font-medium text-gray-900">${f.file_code}</div>
-                <div class="text-sm text-gray-600">${f.company_name}</div>
-            </div>`
-        ).join('');
-        
+        results.innerHTML = filtered.map(f => {
+            const isAvailable = f.status === 'Available';
+            const statusBadge = isAvailable
+                ? ''
+                : `<span style="font-size:10px;padding:1px 8px;border-radius:999px;background:#fef3c7;color:#92400e;font-weight:700;margin-left:8px;">${f.status}</span>`;
+
+            if (isAvailable) {
+                return `<div onclick="selectFolder(${f.folder_id}, '${f.file_code}', '${f.company_name}')"
+                              class="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-200 last:border-b-0">
+                            <div class="font-medium text-gray-900 flex items-center">${f.file_code}${statusBadge}</div>
+                            <div class="text-sm text-gray-600">${f.company_name}</div>
+                        </div>`;
+            } else {
+                return `<div class="p-3 border-b border-gray-200 last:border-b-0"
+                              style="background:#f9fafb;cursor:not-allowed;"
+                              title="Not available for borrowing — Status: ${f.status}">
+                            <div class="font-medium flex items-center" style="color:#9ca3af;">${f.file_code}${statusBadge}</div>
+                            <div class="text-sm" style="color:#d1d5db;">${f.company_name}</div>
+                        </div>`;
+            }
+        }).join('');
+
         results.classList.remove('hidden');
     });
 
@@ -187,7 +197,6 @@
         document.getElementById('folderSearch').focus();
     }
 
-    // Close search results when clicking outside
     document.addEventListener('click', function(e) {
         if (!e.target.closest('#folderSearch') && !e.target.closest('#searchResults')) {
             document.getElementById('searchResults').classList.add('hidden');

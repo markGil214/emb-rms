@@ -177,7 +177,7 @@ class FolderController extends BaseController
 
         $db = \Config\Database::connect();
         $history = $db->table('borrow_transactions')
-            ->select('transaction_id, borrower_name, borrower_email, purpose, status, borrowed_at, expected_return_date, actual_return_date, approved_at, created_at')
+            ->select('transaction_id, borrower_name, borrower_email, purpose, notes, status, borrowed_at, expected_return_date, actual_return_date, approved_at, created_at')
             ->where('folder_id', $folderId)
             ->orderBy('created_at', 'DESC')
             ->get()

@@ -73,7 +73,11 @@ class BorrowRequestController extends BaseController
             return redirect()->to('/dashboard')->with('error', 'You do not have permission to request borrows');
         }
 
-        $folders = $this->folderModel->where('status', 'Available')->findAll();
+        $folders = $this->folderModel
+            ->whereNotIn('status', ['Archived', 'Declined'])
+            ->orderBy('status', 'ASC')
+            ->orderBy('company_name', 'ASC')
+            ->findAll();
 
         return view('borrow/create', [
             'title' => 'Request Borrow',
@@ -107,14 +111,15 @@ class BorrowRequestController extends BaseController
             ]);
         }
 
+        $notes = $this->request->getPost('notes');
         $data = [
             'folder_id' => $this->request->getPost('folder_id'),
             'borrower_name' => $this->request->getPost('borrower_name'),
             'borrower_email' => $this->request->getPost('borrower_email'),
-            'purpose' => $this->request->getPost('purpose') ?? 'General request',
+            'purpose' => $notes ?: 'General request',
             'expected_return_date' => $this->request->getPost('expected_return_date'),
             'status' => 'Pending',  // ✅ Status is Pending, not Borrowed
-            'notes' => $this->request->getPost('notes') ?: null,
+            'notes' => $notes ?: null,
             'created_by' => auth_user()['user_id'],
         ];
 

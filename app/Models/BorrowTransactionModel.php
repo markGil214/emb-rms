@@ -77,7 +77,7 @@ class BorrowTransactionModel extends Model
         'expected_return_date'  => 'required|valid_date[Y-m-d]',
         'borrower_name'         => 'required|string|min_length[2]|max_length[255]',
         'borrower_email'        => 'required|valid_email',
-        'notes'                 => 'permit_empty|max_length[1000]',
+        'notes'                 => 'required|max_length[1000]',
         // Status is NOT in creation validation—auto-set to 'Pending'
     ];
 
@@ -104,6 +104,10 @@ class BorrowTransactionModel extends Model
             'string' => 'Borrower name must be text',
             'min_length' => 'Borrower name must be at least 2 characters',
             'max_length' => 'Borrower name must not exceed 255 characters',
+        ],
+        'notes' => [
+            'required' => 'Please provide a purpose or notes for this borrow request',
+            'max_length' => 'Notes must not exceed 1000 characters',
         ],
     ];
 

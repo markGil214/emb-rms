@@ -377,17 +377,23 @@ ksort($locationOptions);
                                         <div class="flex items-center gap-2 whitespace-nowrap">
                                             <?= view('components/button', [
                                                 'label' => 'View',
+                                                'type' => 'link',
                                                 'url' => route_to('records.show', $folder['folder_id']),
                                                 'style' => 'info',
-                                                'title' => 'View Details'
+                                                'title' => 'View Details',
+                                                'confirm' => null,
+                                                'class' => 'px-3 py-2'
                                             ]) ?>
 
                                             <?php if ($folderStatus !== 'Pending Archive'): ?>
                                                 <?= view('components/button', [
                                                     'label' => 'Edit',
+                                                    'type' => 'link',
                                                     'url' => route_to('records.edit', $folder['folder_id']),
                                                     'style' => 'info',
-                                                    'title' => 'Edit Folder'
+                                                    'title' => 'Edit Folder',
+                                                    'confirm' => null,
+                                                    'class' => 'px-3 py-2'
                                                 ]) ?>
                                             <?php endif; ?>
 
@@ -397,14 +403,16 @@ ksort($locationOptions);
                                                     'type' => 'submit',
                                                     'style' => 'primary',
                                                     'action' => route_to('records.approve', $folder['folder_id']),
-                                                    'confirm' => 'Are you sure you want to approve this folder?'
+                                                    'confirm' => 'Are you sure you want to approve this folder?',
+                                                    'class' => 'px-3 py-2'
                                                 ]) ?>
                                                 <?= view('components/button', [
                                                     'label' => 'Decline',
                                                     'type' => 'submit',
                                                     'style' => 'danger',
                                                     'action' => route_to('records.decline', $folder['folder_id']),
-                                                    'confirm' => 'Are you sure you want to decline this folder?'
+                                                    'confirm' => 'Are you sure you want to decline this folder?',
+                                                    'class' => 'px-3 py-2'
                                                 ]) ?>
                                             <?php endif; ?>
 
@@ -413,7 +421,7 @@ ksort($locationOptions);
                                                     'label' => 'Archive',
                                                     'type' => 'submit',
                                                     'style' => 'secondary',
-                                                    'class' => 'text-green-700',
+                                                    'class' => 'text-green-700 px-3 py-2',
                                                     'action' => route_to('records.archive', $folder['folder_id']),
                                                     'confirm' => 'Submit this folder for archive approval?'
                                                 ]) ?>

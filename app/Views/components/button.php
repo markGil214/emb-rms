@@ -16,6 +16,10 @@ $style = $style ?? 'secondary';
 $type = $type ?? 'link';
 $class = $class ?? '';
 $title = $title ?? '';
+$label = $label ?? 'Button';
+$url = $url ?? '#';
+$action = $action ?? '#';
+$confirm = $confirm ?? null;
 
 $baseClass = "disposal-action disposal-action--{$style} {$class}";
 $confirmAttr = !empty($confirm) ? 'data-confirm-message="' . esc($confirm, 'attr') . '"' : '';

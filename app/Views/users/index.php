@@ -273,6 +273,33 @@
         border: 1px solid #fde68a;
         color: #92400e;
     }
+
+    /* Update Modal */
+    .modal-overlay { position:fixed;inset:0;background:rgba(15,23,42,0.5);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center; }
+    .modal-overlay.active { display:flex; }
+    .modal-card { background:#fff;border-radius:16px;width:100%;max-width:520px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;animation:modalIn 0.25s ease; }
+    @keyframes modalIn { from{opacity:0;transform:scale(0.95) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
+    .modal-header { padding:24px 28px;background:#f8fafc;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between; }
+    .modal-header h2 { font-size:18px;font-weight:900;color:#0f172a; }
+    .modal-close { width:32px;height:32px;border:none;background:#e2e8f0;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;transition:all 0.2s; }
+    .modal-close:hover { background:#cbd5e1;color:#1e293b; }
+    .modal-body { padding:28px; }
+    .modal-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+    .modal-group { display:flex;flex-direction:column;gap:6px; }
+    .modal-group.full { grid-column:span 2; }
+    .modal-label { font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.05em; }
+    .modal-input { height:42px;padding:0 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;color:#1e293b;outline:none;transition:all 0.2s;background:#fff; }
+    .modal-input:focus { border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
+    .modal-select { height:42px;padding:0 32px 0 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;color:#1e293b;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 10px center/14px;appearance:none;outline:none;cursor:pointer; }
+    .modal-select:focus { border-color:#3b82f6; }
+    .modal-actions { display:flex;justify-content:flex-end;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid #f1f5f9; }
+    .modal-btn { height:42px;padding:0 24px;font-size:13px;font-weight:700;border-radius:10px;cursor:pointer;transition:all 0.2s;border:none; }
+    .modal-btn-cancel { background:#f1f5f9;color:#64748b; }
+    .modal-btn-cancel:hover { background:#e2e8f0;color:#1e293b; }
+    .modal-btn-save { background:#2563eb;color:#fff;box-shadow:0 2px 8px rgba(37,99,235,0.25); }
+    .modal-btn-save:hover { background:#1d4ed8;transform:translateY(-1px); }
+    .update-btn { height:34px;padding:0 16px;background:#3b82f6;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;border:none;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 4px rgba(59,130,246,0.2); }
+    .update-btn:hover { background:#2563eb;transform:translateY(-1px); }
 </style>
 
 <div class="max-w-8xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
@@ -383,7 +410,7 @@
                         <th class="px-6 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-widest">Role</th>
                         <th class="px-6 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-widest">Status</th>
                         <th class="px-6 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-widest">Activity</th>
-                        <th class="px-6 py-4 text-right text-[11px] font-bold text-gray-500 uppercase tracking-widest">Quick Actions</th>
+                        <th class="px-6 py-4 text-right text-[11px] font-bold text-gray-500 uppercase tracking-widest">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
@@ -425,17 +452,9 @@
                                     Joined: <?= !empty($user['created_at']) ? esc(date('M d, Y', strtotime($user['created_at']))) : '--' ?>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
-                                    <div class="flex justify-end">
-                                        <form method="GET" action="<?= route_to('users.status-confirm', $user['user_id']) ?>" class="action-select-wrapper">
-                                            <select name="status" class="quick-select" <?= $isSelf ? 'disabled' : '' ?> title="<?= $isSelf ? 'You cannot deactivate yourself' : '' ?>">
-                                                <option value="Active" <?= $status === 'Active' ? 'selected' : '' ?>>Active</option>
-                                                <option value="Inactive" <?= $status === 'Inactive' ? 'selected' : '' ?>>Inactive</option>
-                                            </select>
-                                            <button type="submit" class="save-action-btn" <?= $isSelf ? 'disabled' : '' ?>>
-                                                Update
-                                            </button>
-                                        </form>
-                                    </div>
+                                    <button type="button" class="update-btn" onclick="openUpdateModal(<?= esc($user['user_id']) ?>, '<?= esc($user['first_name'] ?? '', 'js') ?>', '<?= esc($user['last_name'] ?? '', 'js') ?>', '<?= esc($user['email'] ?? '', 'js') ?>', '<?= esc($status, 'js') ?>')" <?= $isSelf ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '' ?>>
+                                        Update
+                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -445,4 +464,63 @@
         </div>
     </div>
 </div>
+
+<!-- Update User Modal -->
+<div class="modal-overlay" id="updateModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2>Update User Information</h2>
+            <button class="modal-close" onclick="closeUpdateModal()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="updateUserForm" method="POST">
+                <?= csrf_field() ?>
+                <div class="modal-grid">
+                    <div class="modal-group">
+                        <label class="modal-label">First Name</label>
+                        <input type="text" name="first_name" id="modal_first_name" class="modal-input" placeholder="First name">
+                    </div>
+                    <div class="modal-group">
+                        <label class="modal-label">Last Name</label>
+                        <input type="text" name="last_name" id="modal_last_name" class="modal-input" placeholder="Last name">
+                    </div>
+                    <div class="modal-group full">
+                        <label class="modal-label">Email Address</label>
+                        <input type="email" name="email" id="modal_email" class="modal-input" placeholder="user@example.com" required>
+                    </div>
+                    <div class="modal-group full">
+                        <label class="modal-label">Account Status</label>
+                        <select name="status" id="modal_status" class="modal-select">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn modal-btn-cancel" onclick="closeUpdateModal()">Cancel</button>
+                    <button type="submit" class="modal-btn modal-btn-save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openUpdateModal(userId, firstName, lastName, email, status) {
+    document.getElementById('updateUserForm').action = '/users/' + userId + '/update-info';
+    document.getElementById('modal_first_name').value = firstName;
+    document.getElementById('modal_last_name').value = lastName;
+    document.getElementById('modal_email').value = email;
+    document.getElementById('modal_status').value = status;
+    document.getElementById('updateModal').classList.add('active');
+}
+function closeUpdateModal() {
+    document.getElementById('updateModal').classList.remove('active');
+}
+document.getElementById('updateModal').addEventListener('click', function(e) {
+    if (e.target === this) closeUpdateModal();
+});
+</script>
 <?= $this->endSection() ?>

@@ -78,7 +78,7 @@
                             </tr>
                             <?php if (isset($borrow['notes']) && $borrow['notes']): ?>
                                 <tr>
-                                    <th class="px-6 py-4 text-left text-sm font-medium text-gray-500">Notes</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium text-gray-500">Notes / Purpose</th>
                                     <td class="px-6 py-4 text-sm text-gray-900"><?= nl2br(htmlspecialchars($borrow['notes'])) ?></td>
                                 </tr>
                             <?php endif; ?>
