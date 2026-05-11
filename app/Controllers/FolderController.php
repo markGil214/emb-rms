@@ -160,6 +160,14 @@ class FolderController extends BaseController
         $folder['cabinet'] = $location['cabinet'] ?? null;
         $folder['rack']    = $location['rack'] ?? null;
         $folder['shelf']   = $location['shelf'] ?? null;
+
+        // SELF-HEALING: If location_code is out of sync or in old format, fix it now
+        $correctCode = FileCodeGenerator::generateLocationCode($location['rack'] ?? '', $location['shelf'] ?? '');
+        if (($folder['location_code'] ?? '') !== $correctCode) {
+            $this->folderModel->update($folderId, ['location_code' => $correctCode]);
+            $folder['location_code'] = $correctCode; // Update local copy for immediate display
+        }
+
         $files = $this->folderFileModel->getByFolder($folderId);
 
         return view('document-records/show', [

@@ -55,18 +55,10 @@ class RelocationController extends BaseController
     private function formatLocation($rack, $shelf = null)
     {
         if (!$rack && !$shelf) {
-            return 'Unknown Location';
+            return 'Unknown';
         }
-
-        if ($rack && $shelf) {
-            return "Rack {$rack} - Shelf {$shelf}";
-        }
-
-        if ($rack) {
-            return "Rack {$rack}";
-        }
-
-        return "Shelf {$shelf}";
+        
+        return \App\Libraries\FileCodeGenerator::generateLocationCode($rack, $shelf);
     }
 
     /**

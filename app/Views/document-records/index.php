@@ -41,25 +41,6 @@ foreach ($categories as $category) {
 ksort($categoryOptions);
 
 $formatLocation = static function (array $folder): string {
-    $cabinet = trim((string) ($folder['cabinet'] ?? ''));
-    $rack = trim((string) ($folder['rack'] ?? ''));
-    $shelf = trim((string) ($folder['shelf'] ?? ''));
-
-    $parts = [];
-    if ($cabinet !== '') {
-        $parts[] = 'Cabinets/Racks ' . $cabinet;
-    }
-    if ($rack !== '' && $rack !== $cabinet) {
-        $parts[] = 'Rack ' . $rack;
-    }
-    if ($shelf !== '') {
-        $parts[] = $shelf;
-    }
-
-    if (!empty($parts)) {
-        return implode(' | ', $parts);
-    }
-
     return (string) ($folder['location_code'] ?? '--');
 };
 
@@ -286,6 +267,7 @@ ksort($locationOptions);
                             <tr>
                                 <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">File Code</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Location</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Company</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Category</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Type</th>
@@ -296,7 +278,7 @@ ksort($locationOptions);
                         </thead>
                         <tbody id="folderTableBody" class="divide-y divide-gray-200 bg-white">
                             <tr id="folderNoResultsRow" class="hidden">
-                                <td colspan="8" class="px-6 py-12 text-center text-gray-500">No matching folders found</td>
+                                <td colspan="9" class="px-6 py-12 text-center text-gray-500">No matching folders found</td>
                             </tr>
                             <?php foreach ($folders as $folder): ?>
                                 <?php
@@ -357,6 +339,7 @@ ksort($locationOptions);
                                         </span>
                                     </td>
                                     <td class="whitespace-nowrap px-4 py-2 text-sm font-semibold text-gray-900"><?= esc($folder['file_code'] ?? '--') ?></td>
+                                    <td class="whitespace-nowrap px-4 py-2 text-sm font-medium text-blue-600"><?= esc($folder['location_code'] ?? '--') ?></td>
                                     <td class="px-4 py-2 text-sm text-gray-900"><?= esc($folder['company_name'] ?? 'Unknown Folder') ?></td>
                                     <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-700"><?= esc($categoryLabel) ?></td>
                                     <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-900"><?= esc($folder['folder_type'] ?? '--') ?></td>

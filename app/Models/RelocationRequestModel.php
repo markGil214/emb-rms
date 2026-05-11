@@ -122,8 +122,21 @@ class RelocationRequestModel extends Model
         // Update the folder's location to the new location
         if ($result) {
             $db = \Config\Database::connect();
+            
+            // Get new location details to generate new location_code
+            $toLocation = $db->table('locations')
+                ->where('location_id', $relocation['to_location_id'])
+                ->get()
+                ->getRowArray();
+
+            $locationCode = \App\Libraries\FileCodeGenerator::generateLocationCode(
+                $toLocation['rack'] ?? '',
+                $toLocation['shelf'] ?? ''
+            );
+
             $db->table('folders')->where('folder_id', $relocation['folder_id'])->update([
                 'location_id' => $relocation['to_location_id'],
+                'location_code' => $locationCode,
             ]);
         }
 

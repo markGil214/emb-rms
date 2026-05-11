@@ -54,12 +54,16 @@ class FileCodeGenerator
     }
 
     /**
-     * Generate location code: [Cabinet][Rack]
+     * Generate location code: [Rack][Shelf]
      * Example: 1A, 2B, 3C
      */
-    public static function generateLocationCode($cabinet, $rack): string
+    public static function generateLocationCode($rack, $shelf): string
     {
-        return strtoupper(trim($cabinet)) . strtoupper(trim($rack));
+        // Ensure we only take the core identifiers (e.g., "3" from "Rack 3", "A" from "Shelf A")
+        $rack = preg_replace('/[^0-9A-Z]/i', '', (string)$rack);
+        $shelf = preg_replace('/[^0-9A-Z]/i', '', (string)$shelf);
+        
+        return strtoupper(trim((string)$rack)) . strtoupper(trim((string)$shelf));
     }
 
     /**
