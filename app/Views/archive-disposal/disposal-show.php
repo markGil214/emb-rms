@@ -60,7 +60,7 @@
                 </div>
 
                 <div>
-                    <h3 class="text-sm font-medium text-gray-700 mb-2">Disposal Method</h3>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Disposition</h3>
                     <p class="text-gray-900"><?= esc($disposal['disposal_method'] ?? '-') ?></p>
                 </div>
 

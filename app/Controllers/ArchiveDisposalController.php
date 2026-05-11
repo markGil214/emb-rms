@@ -4,7 +4,7 @@ namespace App\Controllers;
 
 use App\Models\ArchiveRecordModel;
 use App\Models\DisposalRecordModel;
-// use App\Models\FileDisposalRequestModel;
+use App\Models\FileDisposalRequestModel;
 use App\Models\FolderModel;
 use App\Models\RestorationRequestModel;
 
@@ -12,7 +12,7 @@ class ArchiveDisposalController extends BaseController
 {
     protected $archiveModel;
     protected $disposalModel;
-//    protected $fileDisposalRequestModel;
+    protected $fileDisposalRequestModel;
     protected $folderModel;
     protected $restorationRequestModel;
 
@@ -20,7 +20,7 @@ class ArchiveDisposalController extends BaseController
     {
         $this->archiveModel = new ArchiveRecordModel();
         $this->disposalModel = new DisposalRecordModel();
-//        $this->fileDisposalRequestModel = new FileDisposalRequestModel();
+        $this->fileDisposalRequestModel = new FileDisposalRequestModel();
         $this->folderModel = new FolderModel();
         $this->restorationRequestModel = new RestorationRequestModel();
     }
@@ -485,7 +485,7 @@ class ArchiveDisposalController extends BaseController
                 'request_type' => 'File Disposal',
                 'request_id' => $request['disposal_request_id'],
                 'subject' => $folderLabel ? $fileLabel . ' (' . $folderLabel . ')' : $fileLabel,
-                'method' => 'File Disposal',
+                'method' => 'File Disposed',
                 'status' => $status,
                 'requested_at' => $request['requested_at'] ?? null,
                 'requested_by' => $request['requested_by_name'] ?? $request['requested_by'] ?? '-',
@@ -646,7 +646,7 @@ class ArchiveDisposalController extends BaseController
                     'request_type' => 'File',
                     'request_id' => $disposal['disposal_request_id'],
                     'subject' => $folderLabel ? $fileLabel . ' (' . $folderLabel . ')' : $fileLabel,
-                    'method' => 'File Disposal',
+                    'method' => 'File Disposed',
                     'status' => $disposal['status'] ?? 'Disposed',
                     'requested_at' => $disposal['requested_at'] ?? $disposal['created_at'] ?? null,
                     'completed_at' => $disposal['disposed_at'] ?? $disposal['approved_at'] ?? null,
@@ -1274,7 +1274,7 @@ class ArchiveDisposalController extends BaseController
                     'folder_type' => $request['folder_type'] ?? '-',
                     'location' => $location,
                     'status' => $status,
-                    'method' => 'File Disposal',
+                    'method' => 'File Disposed',
                     'requested_at' => $request['requested_at'] ?? $request['created_at'] ?? null,
                     'disposed_at' => $request['disposed_at'] ?? null,
                     'requested_by' => $request['requested_by_name'] ?? $request['requested_by'] ?? '-',
