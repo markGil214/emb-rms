@@ -98,19 +98,34 @@ class DashboardController extends BaseController
         $archivedCount = $db->table('folders')
             ->where('status', 'Archived')
             ->countAllResults();
+
+        $disposedCount = $db->table('folders')
+            ->where('status', 'Disposed')
+            ->countAllResults();
             
         // Get other statuses if they exist
         $otherStatuses = $db->table('folders')
-            ->whereNotIn('status', ['Available', 'Borrowed', 'Archived'])
+            ->whereNotIn('status', ['Available', 'Borrowed', 'Archived', 'Disposed'])
             ->select('status, COUNT(*) as count')
             ->groupBy('status')
-            ->get()
+            ->get() 
             ->getResultArray();
+            
+        $disposedFolders = $db->table('folders')
+            ->where('status', 'Disposed')
+            ->countAllResults();
+            
+$disposedFiles = (int) $db->table('file_disposal_requests')
+    ->whereIn('status', ['Approved', 'Disposed']) // Now counts both
+    ->countAllResults();
+        
+        $disposedCount = $disposedFolders + $disposedFiles;
             
         $stats = [
             'availableCount' => $availableCount,
             'borrowedCount' => $borrowedCount,
             'archivedCount' => $archivedCount,
+            'disposedCount' => $disposedCount,
         ];
         
         // Add other statuses dynamically

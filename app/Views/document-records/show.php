@@ -324,7 +324,7 @@
 
                                             </svg>
 
-                                            <a href="<?= route_to('file.download', $file['file_id']) ?>" target="_blank" class="font-medium text-blue-600 hover:text-blue-800 text-sm hover:underline"><?= esc($file['file_name']) ?></a>
+                                            <a href="<?= route_to('file.view', $file['file_id']) ?>" target="_blank" class="font-medium text-blue-600 hover:text-blue-800 text-sm hover:underline"><?= esc($file['file_name']) ?></a>
 
                                         </div>
 

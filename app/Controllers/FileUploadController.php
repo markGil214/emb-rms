@@ -175,45 +175,59 @@ class FileUploadController extends BaseController
     }
 
     /**
-     * Download file
+     * Download file (forces attachment)
      */
     public function download(int $fileId)
+    {
+        return $this->serveFile($fileId, 'attachment');
+    }
+
+    /**
+     * View file in browser (inline if supported)
+     */
+    public function view(int $fileId)
+    {
+        return $this->serveFile($fileId, 'inline');
+    }
+
+    /**
+     * Helper to serve files with specific disposition
+     */
+    private function serveFile(int $fileId, string $dispositionType)
     {
         $file = $this->folderFileModel->find($fileId);
         if (!$file) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
 
-        // Construct proper file path - file_path already includes 'uploads/folders/'
         $fullPath = WRITEPATH . $file['file_path'];
-        
-        log_message('debug', "Attempting to download file ID: " . $fileId);
-        log_message('debug', "Stored path: " . $file['file_path']);
-        log_message('debug', "Full path: " . $fullPath);
-        log_message('debug', "File exists: " . (file_exists($fullPath) ? 'yes' : 'no'));
         
         if (!file_exists($fullPath)) {
             log_message('error', "File not found: " . $fullPath);
-            return redirect()->back()->with('error', 'File not found at: ' . $fullPath);
+            return redirect()->back()->with('error', 'File not found');
         }
 
-        // Check if file is readable
         if (!is_readable($fullPath)) {
             log_message('error', "File not readable: " . $fullPath);
             return redirect()->back()->with('error', 'File is not readable');
         }
 
-        // Get file info
         $fileSize = filesize($fullPath);
         $mimeType = mime_content_type($fullPath) ?: 'application/octet-stream';
-        
-        log_message('debug', "File size: " . $fileSize . " bytes");
-        log_message('debug', "Download as: " . $file['file_name']);
+        $fileName = $file['file_name'];
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-        // Stream the file for download
+        // Define which extensions can be shown inline
+        $inlineExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+        
+        // If requesting inline but extension not supported, fallback to attachment
+        if ($dispositionType === 'inline' && !in_array($extension, $inlineExtensions)) {
+            $dispositionType = 'attachment';
+        }
+
         return $this->response
             ->setHeader('Content-Type', $mimeType)
-            ->setHeader('Content-Disposition', 'attachment; filename="' . $file['file_name'] . '"')
+            ->setHeader('Content-Disposition', $dispositionType . '; filename="' . $fileName . '"')
             ->setHeader('Content-Length', $fileSize)
             ->setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->setHeader('Pragma', 'no-cache')

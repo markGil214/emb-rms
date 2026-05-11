@@ -15,7 +15,8 @@
         ['label' => 'Approved for Disposal', 'count' => (int) ($statusCounts['Approved for Disposal'] ?? 0), 'color' => 'green'],
         ['label' => 'Disposed', 'count' => (int) ($statusCounts['Disposed'] ?? 0), 'color' => 'gray'],
         ['label' => 'Rejected', 'count' => (int) ($statusCounts['Rejected'] ?? 0), 'color' => 'red'],
-        ['label' => 'Pending Disposal Requests', 'count' => $fileDisposalPendingCount, 'color' => 'amber'],
+        ['label' => 'Pending Disposal Requests', 'count' => (int) ($fileDisposalPendingCount ?? 0), 'color' => 'amber'],
+        ['label' => 'Approved File Disposals', 'count' => (int) ($fileDisposalApprovedCount ?? 0), 'color' => 'green'],
     ];
 
     $summaryCards = array_values(array_filter($summaryCards, static function (array $card): bool {
@@ -409,6 +410,16 @@
                                             ]) ?>
                                         <?php endif; ?>
 
+                                        <?php if (can('approve_disposal') && !empty($record['complete_route']) && !empty($record['complete_id'])): ?>
+                                            <?= view('components/button', [
+                                                'label' => 'Complete',
+                                                'type' => 'submit',
+                                                'style' => 'success',
+                                                'action' => route_to($record['complete_route'], (int) $record['complete_id']),
+                                                'confirm' => $record['confirm_message'] ?? 'Mark this file as disposed?'
+                                            ]) ?>
+                                        <?php endif; ?>
+
                                         <?php if (($record['status'] ?? '') === 'Ready to Dispose' && !empty($record['file_id']) && can('request_disposal')): ?>
                                             <?= view('components/button', [
                                                 'label' => 'Request Disposal',
@@ -423,7 +434,8 @@
                                             ($record['status'] ?? '') !== 'Ready to Dispose' &&
                                             (empty($record['view_route']) || empty($record['view_id'])) && 
                                             (empty($record['approve_route']) || empty($record['approve_id'])) &&
-                                            (empty($record['decline_route']) || empty($record['decline_id']))
+                                            (empty($record['decline_route']) || empty($record['decline_id'])) &&
+                                            (empty($record['complete_route']) || empty($record['complete_id']))
                                         ): ?>
                                             <span class="text-gray-400">-</span>
                                         <?php endif; ?>

@@ -139,6 +139,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->post('/document-records/(:num)/upload', 'FileUploadController::upload/$1', ['as' => 'file.upload', 'filter' => 'permission:create_document_record']);
 
     $routes->get('/files/(:num)/download',  'FileUploadController::download/$1', ['as' => 'file.download', 'filter' => 'permission:search_documents']);
+    $routes->get('/files/(:num)/view',      'FileUploadController::view/$1',     ['as' => 'file.view',     'filter' => 'permission:search_documents']);
 
     $routes->post('/files/(:num)/request-disposal', 'FileUploadController::requestDisposal/$1', ['as' => 'file.request-disposal', 'filter' => 'permission:request_disposal']);
 
@@ -307,6 +308,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->post('/disposal/file/(:num)/approve',      'ArchiveDisposalController::approveFileDisposal/$1', ['as' => 'file-disposal.approve', 'filter' => 'permission:approve_disposal']);
 
     $routes->post('/disposal/file/(:num)/reject',       'ArchiveDisposalController::rejectFileDisposal/$1', ['as' => 'file-disposal.reject', 'filter' => 'permission:approve_disposal']);
+
+    $routes->post('/disposal/file/(:num)/complete',     'ArchiveDisposalController::completeFileDisposal/$1', ['as' => 'file-disposal.complete', 'filter' => 'permission:approve_disposal']);
 
     $routes->post('/disposal/(:num)/complete',          'ArchiveDisposalController::completeDisposal/$1', ['as' => 'disposal.complete', 'filter' => 'permission:approve_disposal']);
 

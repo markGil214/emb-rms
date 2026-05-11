@@ -107,11 +107,19 @@
                                     <?php endif; ?>
                                     <?php if (!empty($disposal['approve_route']) && !empty($disposal['route_id'])): ?>
                                         <?= view('components/button', [
-                                            'label' => 'Approve',
+                                            'label' => $disposal['action_label'] ?? 'Approve',
                                             'type' => 'submit',
                                             'style' => 'primary',
                                             'action' => route_to($disposal['approve_route'], $disposal['route_id']),
                                             'confirm' => $disposal['confirm_message'] ?? 'Approve this request?'
+                                        ]) ?>
+                                    <?php elseif (!empty($disposal['complete_route']) && !empty($disposal['route_id'])): ?>
+                                        <?= view('components/button', [
+                                            'label' => $disposal['action_label'] ?? 'Complete',
+                                            'type' => 'submit',
+                                            'style' => 'success',
+                                            'action' => route_to($disposal['complete_route'], $disposal['route_id']),
+                                            'confirm' => $disposal['confirm_message'] ?? 'Mark as disposed?'
                                         ]) ?>
                                     <?php else: ?>
                                         <span class="text-gray-500 text-sm"><?= esc($disposal['fallback_action_label'] ?? 'Pending review') ?></span>
@@ -140,7 +148,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Find all disposal approval forms in the pending list
-    const disposalForms = document.querySelectorAll('form[data-confirm-message][action*="disposal.approve"]');
+    const disposalForms = document.querySelectorAll('form[data-confirm-message][action*=".approve"], form[data-confirm-message][action*=".complete"]');
     
     disposalForms.forEach(function (form) {
         // Find the submit button

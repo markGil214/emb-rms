@@ -97,11 +97,11 @@
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
                             <p class="text-sm font-semibold text-gray-600 mb-2">Available</p>
-                            <p class="text-2xl font-bold text-yellow-600 mb-1"><?= $documentStats['availableCount'] ?? 0 ?></p>
+                            <p class="text-2xl font-bold text-green-600 mb-1"><?= $documentStats['availableCount'] ?? 0 ?></p>
                             <p class="text-sm text-gray-500">Documents</p>
                         </div>
-                        <div class="p-3 bg-yellow-100 rounded-full ml-4">
-                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="p-3 bg-green-100 rounded-full ml-4">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
@@ -231,10 +231,17 @@
                             </div>
                             <div class="flex items-center justify-between text-xs">
                                 <div class="flex items-center">
-                                    <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                    <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
                                     <span class="text-gray-700">Archived</span>
                                 </div>
                                 <span class="font-semibold text-gray-900"><?= $documentStats['archivedCount'] ?? 0 ?></span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                    <span class="text-gray-700">Disposed</span>
+                                </div>
+                                <span class="font-semibold text-gray-900"><?= $documentStats['disposedCount'] ?? 0 ?></span>
                             </div>
                         </div>
                     </div>
@@ -253,17 +260,19 @@
                     var myChart = new Chart(ctx, {
                         type: 'pie',
                         data: {
-                            labels: ['Available', 'Borrowed', 'Archived'],
+                            labels: ['Available', 'Borrowed', 'Archived', 'Disposed'],
                             datasets: [{
-                                data: [<?= $documentStats['availableCount'] ?? 0 ?>, <?= $documentStats['borrowedCount'] ?? 0 ?>, <?= $documentStats['archivedCount'] ?? 0 ?>],
+                                data: [<?= $documentStats['availableCount'] ?? 0 ?>, <?= $documentStats['borrowedCount'] ?? 0 ?>, <?= $documentStats['archivedCount'] ?? 0 ?>, <?= $documentStats['disposedCount'] ?? 0 ?>],
                                 backgroundColor: [
                                     'rgba(34, 197, 94, 0.8)',
                                     'rgba(59, 130, 246, 0.8)',
+                                    'rgba(234, 179, 8, 0.8)',
                                     'rgba(220, 38, 38, 0.8)'
                                 ],
                                 borderColor: [
                                     'rgba(34, 197, 94, 1)',
                                     'rgba(59, 130, 246, 1)',
+                                    'rgba(234, 179, 8, 1)',
                                     'rgba(220, 38, 38, 1)'
                                 ],
                                 borderWidth: 2

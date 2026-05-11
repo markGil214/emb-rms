@@ -45,9 +45,13 @@ class ArchiveDisposalController extends BaseController
         $statusCounts = $this->getArchiveDisposalStatusCounts($archiveDisposalRecords);
 
         $fileDisposalPendingCount = 0;
+        $fileDisposalApprovedCount = 0;
         if ($db->tableExists('file_disposal_requests')) {
             $fileDisposalPendingCount = (int) $db->table('file_disposal_requests')
-                ->whereIn('status', ['Pending', 'Approved'])
+                ->where('status', 'Pending')
+                ->countAllResults();
+            $fileDisposalApprovedCount = (int) $db->table('file_disposal_requests')
+                ->where('status', 'Approved')
                 ->countAllResults();
         }
 
@@ -60,6 +64,7 @@ class ArchiveDisposalController extends BaseController
             'title' => 'Disposal Management',
             'statusCounts' => $statusCounts,
             'fileDisposalPendingCount' => $fileDisposalPendingCount,
+            'fileDisposalApprovedCount' => $fileDisposalApprovedCount,
             'readyToDisposeCount' => $readyToDisposeCount,
             'disposalRows' => $disposalRows,
         ]);
@@ -494,12 +499,13 @@ class ArchiveDisposalController extends BaseController
                 'view_id' => $request['folder_id'] ?? null,
                 'approve_route' => ($request['status'] ?? '') === 'Pending' ? 'file-disposal.approve' : null,
                 'decline_route' => ($request['status'] ?? '') === 'Pending' ? 'file-disposal.reject' : null,
+                'complete_route' => ($request['status'] ?? '') === 'Approved' ? 'file-disposal.complete' : null,
                 'route_id' => $request['disposal_request_id'],
-                'action_label' => ($request['status'] ?? '') === 'Pending' ? 'Approve' : null,
+                'action_label' => ($request['status'] ?? '') === 'Pending' ? 'Approve' : (($request['status'] ?? '') === 'Approved' ? 'Complete' : null),
                 'decline_label' => ($request['status'] ?? '') === 'Pending' ? 'Decline' : null,
-                'confirm_message' => 'Approve this disposal request?',
+                'confirm_message' => ($request['status'] ?? '') === 'Approved' ? 'Mark this file as disposed?' : 'Approve this disposal request?',
                 'decline_confirm_message' => 'Reject this disposal request?',
-                'fallback_action_label' => ($request['status'] ?? '') === 'Approved' ? 'Pending final disposal' : null,
+                'fallback_action_label' => null,
             ];
         }
 
@@ -599,6 +605,52 @@ class ArchiveDisposalController extends BaseController
         }
 
         return redirect()->back()->with('success', 'File Disposal request rejected');
+    }
+
+    /**
+     * Complete an approved file disposal request.
+     */
+    public function completeFileDisposal(int $requestId)
+    {
+        if (!can('approve_disposal')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $db = \Config\Database::connect();
+        if (!$db->tableExists('file_disposal_requests')) {
+            return redirect()->back()->with('error', 'File Disposal workflow table is not ready yet.');
+        }
+
+        $request = $this->fileDisposalRequestModel->find($requestId);
+        if (!$request) {
+            return redirect()->back()->with('error', 'File Disposal request not found.');
+        }
+
+        if (($request['status'] ?? '') !== 'Approved') {
+            return redirect()->back()->with('error', 'Only approved file disposal requests can be completed.');
+        }
+
+        $updated = $db->table('file_disposal_requests')
+            ->where('disposal_request_id', $requestId)
+            ->where('status', 'Approved')
+            ->update([
+                'status' => 'Disposed',
+                'disposed_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+        if (!$updated) {
+            return redirect()->back()->with('error', 'Failed to complete file disposal.');
+        }
+
+        try {
+            $auditLog = service('auditLog');
+            $auditLog->log(auth_user()['user_id'] ?? null, 'complete_file_disposal', "disposal_request_id:{$requestId}");
+        } catch (\Throwable $e) {
+            log_message('error', 'File Disposal completion audit logging failed: {message}', ['message' => $e->getMessage()]);
+        }
+
+        return redirect()->back()->with('success', 'File Disposal marked as disposed');
     }
 
     /**
@@ -1285,7 +1337,9 @@ class ArchiveDisposalController extends BaseController
                     'approve_id' => ($request['status'] ?? '') === 'Pending' ? ($request['disposal_request_id'] ?? null) : null,
                     'decline_route' => ($request['status'] ?? '') === 'Pending' ? 'file-disposal.reject' : null,
                     'decline_id' => ($request['status'] ?? '') === 'Pending' ? ($request['disposal_request_id'] ?? null) : null,
-                    'confirm_message' => 'Approve this disposal request?',
+                    'complete_route' => ($request['status'] ?? '') === 'Approved' ? 'file-disposal.complete' : null,
+                    'complete_id' => ($request['status'] ?? '') === 'Approved' ? ($request['disposal_request_id'] ?? null) : null,
+                    'confirm_message' => ($request['status'] ?? '') === 'Approved' ? 'Mark this file as disposed?' : 'Approve this disposal request?',
                     'decline_confirm_message' => 'Reject this disposal request?',
                 ];
             }
