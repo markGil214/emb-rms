@@ -9,7 +9,7 @@
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
-        <span class="ml-2 text-sm">Back to Disposal Management</span>
+        <span class="ml-2 text-sm">Back to File Disposal</span>
     </a>
 </div>
 
@@ -115,6 +115,16 @@
                                         ]) ?>
                                     <?php else: ?>
                                         <span class="text-gray-500 text-sm"><?= esc($disposal['fallback_action_label'] ?? 'Pending review') ?></span>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($disposal['decline_route']) && !empty($disposal['route_id'])): ?>
+                                        <?= view('components/button', [
+                                            'label' => 'Decline',
+                                            'type' => 'submit',
+                                            'style' => 'danger',
+                                            'action' => route_to($disposal['decline_route'], $disposal['route_id']),
+                                            'confirm' => $disposal['decline_confirm_message'] ?? 'Reject this request?'
+                                        ]) ?>
                                     <?php endif; ?>
                                 </div>
                             </td>

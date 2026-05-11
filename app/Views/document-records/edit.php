@@ -149,33 +149,7 @@
                     </div>
 
 
-
                     <!-- Issuance Date -->
-
-                    <!-- Borrowed Date -->
-
-                    <div>
-
-                        <label for="borrowed_date" class="block text-sm font-semibold text-gray-700 mb-1">
-
-                            Borrowed Date
-
-                        </label>
-
-                        <input type="date" id="borrowed_date" name="borrowed_date" 
-
-                            value="<?= old('borrowed_date', $folder['borrowed_date'] ?? '') ?>"
-
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-
-                        <?php if (isset($errors['borrowed_date'])): ?>
-
-                            <p class="mt-1 text-sm text-red-600"><?= $errors['borrowed_date'] ?></p>
-
-                        <?php endif; ?>
-
-                    </div>
-
 
 
                     <!-- Location Code (Read-only) -->

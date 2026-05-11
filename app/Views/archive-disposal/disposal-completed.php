@@ -9,7 +9,7 @@
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
-        <span class="ml-2 text-sm">Back to Disposal Management</span>
+        <span class="ml-2 text-sm">Back to File Disposal</span>
     </a>
 </div>
 
@@ -25,7 +25,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <h3 class="text-lg font-medium text-gray-900 mb-2">No disposed records</h3>
-            <p class="text-gray-600">No file disposal records have been completed yet</p>
+            <p class="text-gray-600">No File Disposal Records have been completed yet</p>
         </div>
     <?php else: ?>
         <div class="overflow-x-auto">

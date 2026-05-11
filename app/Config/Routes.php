@@ -306,6 +306,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     $routes->post('/disposal/file/(:num)/approve',      'ArchiveDisposalController::approveFileDisposal/$1', ['as' => 'file-disposal.approve', 'filter' => 'permission:approve_disposal']);
 
+    $routes->post('/disposal/file/(:num)/reject',       'ArchiveDisposalController::rejectFileDisposal/$1', ['as' => 'file-disposal.reject', 'filter' => 'permission:approve_disposal']);
+
     $routes->post('/disposal/(:num)/complete',          'ArchiveDisposalController::completeDisposal/$1', ['as' => 'disposal.complete', 'filter' => 'permission:approve_disposal']);
 
     $routes->post('/archive/restoration/(:num)/approve', 'ArchiveDisposalController::approveRestoration/$1', ['as' => 'restoration.approve', 'filter' => 'permission:approve_restore']);

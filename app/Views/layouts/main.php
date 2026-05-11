@@ -378,6 +378,17 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
             border-left: 4px solid rgb(250 204 21) !important;
         }
 
+        .dark .disposal-summary-card--rose {
+            background-color: rgb(127 29 29 / 0.3) !important;
+            border-left: 4px solid rgb(251 146 60) !important;
+        }
+
+        .dark .disposal-status-badge--ready {
+            background: linear-gradient(135deg, rgb(78 36 0 / 0.6) 0%, rgb(127 29 29 / 0.6) 100%) !important;
+            color: rgb(253 186 116) !important;
+            border-color: rgb(194 65 12 / 0.5) !important;
+        }
+
         /* Dark mode for disposal records header section */
         .dark .disposal-toolbar {
             background-color: transparent;
@@ -884,7 +895,7 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                     </svg>
-                    <span x-show="sidebarOpen" x-transition class="ml-3">Disposal Management</span>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">File Disposal</span>
                     <?php if ($pendingDisposalCount > 0): ?>
                         <span x-show="sidebarOpen" class="ml-auto bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
                             <?= $pendingDisposalCount ?>

@@ -290,7 +290,7 @@ ksort($locationOptions);
                                 <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Category</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Type</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Borrowed / Due Date</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Return Date</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date Returned</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
                             </tr>
                         </thead>

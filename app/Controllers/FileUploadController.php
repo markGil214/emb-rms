@@ -4,21 +4,21 @@ namespace App\Controllers;
 
 use App\Models\FolderModel;
 use App\Models\FolderFileModel;
-use App\Models\FileDisposalRequestModel;
+// use App\Models\FileDisposalRequestModel;
 use CodeIgniter\Controller;
 
 class FileUploadController extends BaseController
 {
     protected $folderModel;
     protected $folderFileModel;
-    protected $fileDisposalRequestModel;
+//    protected $fileDisposalRequestModel;
     protected $uploadPath;
 
     public function __construct()
     {
         $this->folderModel = new FolderModel();
         $this->folderFileModel = new FolderFileModel();
-        $this->fileDisposalRequestModel = new FileDisposalRequestModel();
+//        $this->fileDisposalRequestModel = new FileDisposalRequestModel();
         $this->uploadPath = WRITEPATH . 'uploads/folders/';
         
         // Create directory if it doesn't exist
@@ -221,14 +221,12 @@ class FileUploadController extends BaseController
             ->setBody(file_get_contents($fullPath));
     }
 
-    /**
-     * Request file disposal (non-destructive).
-     */
+/*
     public function requestDisposal(int $fileId)
     {
         $db = \Config\Database::connect();
         if (! $db->tableExists('file_disposal_requests')) {
-            return redirect()->back()->with('error', 'File disposal workflow table is not ready yet. Please run database migrations first.');
+            return redirect()->back()->with('error', 'File Disposal workflow table is not ready yet. Please run database migrations first.');
         }
 
         $file = $this->folderFileModel->find($fileId);
@@ -268,6 +266,7 @@ class FileUploadController extends BaseController
         return redirect()->to(route_to('records.show', (int) $file['folder_id']))
             ->with('success', 'Disposal request submitted and is now pending approval.');
     }
+*/
 
     /**
      * Dispose file

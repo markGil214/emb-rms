@@ -64,7 +64,7 @@
                         <div class="flex-1">
                             <p class="text-sm font-semibold text-gray-600 mb-2">Total Documents</p>
                             <p class="text-2xl font-bold text-blue-600 mb-1"><?= $stats['totalDocuments'] ?? 0 ?></p>
-                            <p class="text-sm text-gray-500">in system</p>
+                            <p class="text-sm text-gray-500">In System</p>
                         </div>
                         <div class="p-3 bg-blue-100 rounded-full ml-4">
                             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,7 +81,7 @@
                         <div class="flex-1">
                             <p class="text-sm font-semibold text-gray-600 mb-2">Active Users</p>
                             <p class="text-2xl font-bold text-green-600 mb-1"><?= $stats['totalUsers'] ?? 0 ?></p>
-                            <p class="text-sm text-gray-500">registered</p>
+                            <p class="text-sm text-gray-500">Registered</p>
                         </div>
                         <div class="p-3 bg-green-100 rounded-full ml-4">
                             <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +98,7 @@
                         <div class="flex-1">
                             <p class="text-sm font-semibold text-gray-600 mb-2">Available</p>
                             <p class="text-2xl font-bold text-yellow-600 mb-1"><?= $documentStats['availableCount'] ?? 0 ?></p>
-                            <p class="text-sm text-gray-500">documents</p>
+                            <p class="text-sm text-gray-500">Documents</p>
                         </div>
                         <div class="p-3 bg-yellow-100 rounded-full ml-4">
                             <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +114,7 @@
                         <div class="flex-1">
                             <p class="text-sm font-semibold text-gray-600 mb-2">Pending</p>
                             <p class="text-2xl font-bold text-purple-600 mb-1"><?= $stats['pendingApprovals'] ?? 0 ?></p>
-                            <p class="text-sm text-gray-500">approvals</p>
+                            <p class="text-sm text-gray-500">Approvals</p>
                         </div>
                         <div class="p-3 bg-purple-100 rounded-full ml-4">
                             <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

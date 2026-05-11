@@ -367,17 +367,23 @@
                                             $disposalStatusClass = 'bg-gray-100 text-gray-700';
 
                                             if (in_array($explicitDisposalStatus, ['requested', 'pending'], true)) {
-                                                $disposalStatusLabel = 'Disposal Requested';
+                                                $disposalStatusLabel = 'Pending Disposal';
                                                 $disposalStatusClass = 'bg-blue-100 text-blue-700';
-                                            } elseif (in_array($explicitDisposalStatus, ['disposed', 'approved', 'completed'], true)) {
+                                            } elseif ($explicitDisposalStatus === 'approved') {
+                                                $disposalStatusLabel = 'Approved for Disposal';
+                                                $disposalStatusClass = 'bg-green-100 text-green-700';
+                                            } elseif (in_array($explicitDisposalStatus, ['disposed', 'completed'], true)) {
                                                 $disposalStatusLabel = 'Disposed';
                                                 $disposalStatusClass = 'bg-red-100 text-red-700';
+                                            } elseif ($explicitDisposalStatus === 'rejected') {
+                                                $disposalStatusLabel = 'Disposal Rejected';
+                                                $disposalStatusClass = 'bg-red-100 text-red-800 border border-red-200';
                                             } elseif ($isReadyForDisposal) {
                                                 $disposalStatusLabel = 'Eligible for Disposal';
                                                 $disposalStatusClass = 'bg-orange-100 text-orange-700';
                                             }
 
-                                            $canRequestDisposal = $isReadyForDisposal && $explicitDisposalStatus === '';
+                                            $canRequestDisposal = $isReadyForDisposal && ($explicitDisposalStatus === '' || $explicitDisposalStatus === 'rejected');
                                         ?>
                                         <div class="flex flex-col gap-1">
                                             <span><?= esc($expirationDisplay) ?></span>
@@ -392,22 +398,22 @@
 
                                     <td class="border px-4 py-2">
 
-                                        <div class="flex space-x-2">
+                                        <div class="flex items-center gap-2">
 
-                                            <a href="<?= route_to('file.download', $file['file_id']) ?>" 
-
-                                                class="text-blue-600 hover:text-blue-800 font-medium text-sm">Download</a>
+                                            <?= view('components/button', [
+                                                'label' => 'Download',
+                                                'url' => route_to('file.download', $file['file_id']),
+                                                'style' => 'info',
+                                            ]) ?>
 
                                             <?php if ($canRequestDisposal): ?>
-                                                <form action="<?= route_to('file.request-disposal', $file['file_id']) ?>" method="POST" style="display:inline;" data-confirm-message="Submit disposal request for this file?">
-
-                                                    <?= csrf_field() ?>
-
-                                                    <button type="submit" class="text-orange-600 hover:text-orange-800 font-medium text-sm">Request Disposal</button>
-
-                                                </form>
-                                            <?php else: ?>
-                                                <span class="text-gray-400 font-medium text-sm">-</span>
+                                                <?= view('components/button', [
+                                                    'label' => 'Request Disposal',
+                                                    'type' => 'submit',
+                                                    'style' => 'warning',
+                                                    'action' => route_to('file.request-disposal', $file['file_id']),
+                                                    'confirm' => 'Submit disposal request for this file?',
+                                                ]) ?>
                                             <?php endif; ?>
 
                                         </div>

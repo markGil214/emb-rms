@@ -6,12 +6,15 @@
     $statusCounts = $statusCounts ?? [];
     $disposalRows = $disposalRows ?? [];
     $fileDisposalPendingCount = (int) ($fileDisposalPendingCount ?? 0);
+    $readyToDisposeCount = (int) ($readyToDisposeCount ?? 0);
 
     $summaryCards = [
+        ['label' => 'Ready to Dispose', 'count' => $readyToDisposeCount, 'color' => 'rose'],
         ['label' => 'Archived', 'count' => (int) ($statusCounts['Archived'] ?? 0), 'color' => 'blue'],
         ['label' => 'Pending Disposal', 'count' => (int) ($statusCounts['Pending Disposal'] ?? 0), 'color' => 'orange'],
         ['label' => 'Approved for Disposal', 'count' => (int) ($statusCounts['Approved for Disposal'] ?? 0), 'color' => 'green'],
         ['label' => 'Disposed', 'count' => (int) ($statusCounts['Disposed'] ?? 0), 'color' => 'gray'],
+        ['label' => 'Rejected', 'count' => (int) ($statusCounts['Rejected'] ?? 0), 'color' => 'red'],
         ['label' => 'Pending Disposal Requests', 'count' => $fileDisposalPendingCount, 'color' => 'amber'],
     ];
 
@@ -82,7 +85,9 @@
     .disposal-summary-card--orange::after { background: linear-gradient(180deg, #fdba74 0%, #f97316 100%); }
     .disposal-summary-card--green::after { background: linear-gradient(180deg, #86efac 0%, #16a34a 100%); }
     .disposal-summary-card--gray::after { background: linear-gradient(180deg, #cbd5e1 0%, #64748b 100%); }
+    .disposal-summary-card--red::after { background: linear-gradient(180deg, #fca5a5 0%, #dc2626 100%); }
     .disposal-summary-card--amber::after { background: linear-gradient(180deg, #fde68a 0%, #d97706 100%); }
+    .disposal-summary-card--rose::after { background: linear-gradient(180deg, #fb923c 0%, #dc2626 100%); }
 
     .disposal-panel {
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
@@ -187,6 +192,23 @@
         color: #4b5563;
     }
 
+    .disposal-status-badge--rejected {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .disposal-status-badge--ready {
+        background: linear-gradient(135deg, #fef3c7 0%, #fee2e2 100%);
+        color: #c2410c;
+        border: 1px solid #fdba74;
+        animation: readyPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes readyPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.3); }
+        50% { box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.08); }
+    }
+
     .disposal-status-badge--other {
         background: #f3f4f6;
         color: #374151;
@@ -238,7 +260,7 @@
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-xl font-semibold text-gray-900">Disposal Records</h2>
+                    <h2 class="text-xl font-semibold text-gray-900">File Disposal</h2>
                     <p class="text-sm text-gray-600">Track disposal requests, approvals, and completed outcomes in one workspace.</p>
                 </div>
 
@@ -247,7 +269,7 @@
                         <input
                             type="text"
                             id="disposalSearchInput"
-                            placeholder="Search by folder, company, status..."
+                            placeholder="Search by folder, company, location, type, status..."
                             class="disposal-search-input"
                             aria-label="Search disposal records"
                         />
@@ -258,6 +280,7 @@
 
                     <div class="disposal-quick-filters" aria-label="Quick filters">
                         <button type="button" class="disposal-quick-filter is-active" data-status-filter="all">All</button>
+                        <button type="button" class="disposal-quick-filter" data-status-filter="ready">Ready to Dispose</button>
                         <button type="button" class="disposal-quick-filter" data-status-filter="pending">Pending</button>
                         <button type="button" class="disposal-quick-filter" data-status-filter="approved">Approved</button>
                     </div>
@@ -280,24 +303,27 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Folder Type</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disposal Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disposal Method</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested By</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved By</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reviewed By</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                         </tr>
                     </thead>
                     <tbody id="disposalRecordsBody" class="bg-white divide-y divide-gray-200">
                         <tr id="disposalNoResultsRow" class="hidden">
-                            <td colspan="8" class="px-6 py-8 text-center text-sm text-gray-500">No records match your current filters.</td>
+                            <td colspan="9" class="px-6 py-8 text-center text-sm text-gray-500">No records match your current filters.</td>
                         </tr>
                         <?php foreach ($disposalRows as $record): ?>
                             <?php
                                 $statusText = (string) ($record['status'] ?? 'Pending Disposal');
                                 $statusKey = 'other';
-                                if ($statusText === 'Pending Disposal') {
+                                if ($statusText === 'Ready to Dispose') {
+                                    $statusKey = 'ready';
+                                } elseif ($statusText === 'Pending Disposal') {
                                     $statusKey = 'pending';
                                 } elseif ($statusText === 'Approved for Disposal') {
                                     $statusKey = 'approved';
@@ -305,7 +331,8 @@
 
                                 $searchText = strtolower(trim(implode(' ', array_filter([
                                     (string) ($record['subject'] ?? ''),
-                                    (string) ($record['request_type'] ?? ''),
+                                    (string) ($record['location'] ?? ''),
+                                    (string) ($record['folder_type'] ?? ''),
                                     (string) ($record['status'] ?? ''),
                                     (string) ($record['method'] ?? ''),
                                     (string) ($record['requested_by'] ?? ''),
@@ -317,24 +344,33 @@
                                     <div class="font-medium"><?= esc($record['subject'] ?? '-') ?></div>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-700">
-                                    <?= esc($record['request_type'] ?? '-') ?>
+                                    <?= esc($record['location'] ?? '-') ?>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-700">
+                                    <?= esc($record['folder_type'] ?? '-') ?>
                                 </td>
                                 <td class="px-6 py-4 text-sm">
                                     <?php
                                         $statusText = (string) ($record['status'] ?? 'Pending Disposal');
                                         $statusBadgeClass = 'disposal-status-badge--other';
-                                        if ($statusText === 'Pending Disposal') {
+                                        if ($statusText === 'Ready to Dispose') {
+                                            $statusBadgeClass = 'disposal-status-badge--ready';
+                                        } elseif ($statusText === 'Pending Disposal') {
                                             $statusBadgeClass = 'disposal-status-badge--pending';
                                         } elseif ($statusText === 'Approved for Disposal') {
                                             $statusBadgeClass = 'disposal-status-badge--approved';
                                         } elseif ($statusText === 'Disposed') {
                                             $statusBadgeClass = 'disposal-status-badge--disposed';
+                                        } elseif ($statusText === 'Rejected') {
+                                            $statusBadgeClass = 'disposal-status-badge--rejected';
                                         }
 
                                         $shortStatusText = [
+                                            'Ready to Dispose' => 'Ready to Dispose',
                                             'Pending Disposal' => 'Pending',
                                             'Approved for Disposal' => 'Approved',
                                             'Disposed' => 'Disposed',
+                                            'Rejected' => 'Rejected',
                                         ][$statusText] ?? $statusText;
                                     ?>
                                     <span class="disposal-status-badge <?= esc($statusBadgeClass) ?>"><?= esc($shortStatusText) ?></span>
@@ -353,7 +389,7 @@
                                             ]) ?>
                                         <?php endif; ?>
 
-                                        <?php if (can('approve_disposal') && !empty($record['approve_route']) && !empty($record['approve_id'])): ?>
+                                         <?php if (can('approve_disposal') && !empty($record['approve_route']) && !empty($record['approve_id'])): ?>
                                             <?= view('components/button', [
                                                 'label' => 'Approve',
                                                 'type' => 'submit',
@@ -363,7 +399,32 @@
                                             ]) ?>
                                         <?php endif; ?>
 
-                                        <?php if ((empty($record['view_route']) || empty($record['view_id'])) && (empty($record['approve_route']) || empty($record['approve_id']))): ?>
+                                        <?php if (can('approve_disposal') && !empty($record['decline_route']) && !empty($record['decline_id'])): ?>
+                                            <?= view('components/button', [
+                                                'label' => 'Decline',
+                                                'type' => 'submit',
+                                                'style' => 'danger',
+                                                'action' => route_to($record['decline_route'], (int) $record['decline_id']),
+                                                'confirm' => $record['decline_confirm_message'] ?? 'Reject this disposal request?'
+                                            ]) ?>
+                                        <?php endif; ?>
+
+                                        <?php if (($record['status'] ?? '') === 'Ready to Dispose' && !empty($record['file_id']) && can('request_disposal')): ?>
+                                            <?= view('components/button', [
+                                                'label' => 'Request Disposal',
+                                                'type' => 'submit',
+                                                'style' => 'warning',
+                                                'action' => route_to('file.request-disposal', (int) $record['file_id']),
+                                                'confirm' => 'Submit disposal request for this expired file?',
+                                            ]) ?>
+                                        <?php endif; ?>
+
+                                        <?php if (
+                                            ($record['status'] ?? '') !== 'Ready to Dispose' &&
+                                            (empty($record['view_route']) || empty($record['view_id'])) && 
+                                            (empty($record['approve_route']) || empty($record['approve_id'])) &&
+                                            (empty($record['decline_route']) || empty($record['decline_id']))
+                                        ): ?>
                                             <span class="text-gray-400">-</span>
                                         <?php endif; ?>
                                     </div>

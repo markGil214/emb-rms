@@ -6,7 +6,7 @@ use App\Models\FolderModel;
 use App\Models\FolderFileModel;
 use App\Models\CategoryModel;
 use App\Models\RelocationRequestModel;
-use App\Models\FolderMovementModel;
+// use App\Models\FolderMovementModel;
 use App\Libraries\FileCodeGenerator;
 use CodeIgniter\Controller;
 
@@ -16,7 +16,7 @@ class FolderController extends BaseController
     protected $folderFileModel;
     protected $categoryModel;
     protected $relocationModel;
-    protected $movementModel;
+//    protected $movementModel;
 
     public function __construct()
     {
@@ -24,7 +24,7 @@ class FolderController extends BaseController
         $this->folderFileModel = new FolderFileModel();
         $this->categoryModel = new CategoryModel();
         $this->relocationModel = new RelocationRequestModel();
-        $this->movementModel = new FolderMovementModel();
+//        $this->movementModel = new FolderMovementModel();
     }
 
     /**
@@ -410,6 +410,7 @@ class FolderController extends BaseController
             return redirect()->to('/document-records')->with('success', 'Folder creation request approved.');
         }
 
+/*
         if (($folder['status'] ?? '') === 'Pending Update') {
             $request = $db->table('document_edit_requests')
                 ->where('folder_id', $folderId)
@@ -448,6 +449,7 @@ class FolderController extends BaseController
 
             return redirect()->to('/document-records')->with('success', 'Folder update request approved.');
         }
+*/
 
         return redirect()->to('/document-records')->with('error', 'This record is not awaiting approval.');
     }
@@ -471,6 +473,7 @@ class FolderController extends BaseController
             return redirect()->to('/document-records')->with('success', 'Folder creation request declined.');
         }
 
+/*
         if (($folder['status'] ?? '') === 'Pending Update') {
             $request = $db->table('document_edit_requests')
                 ->where('folder_id', $folderId)
@@ -500,6 +503,7 @@ class FolderController extends BaseController
 
             return redirect()->to('/document-records')->with('success', 'Folder update request declined.');
         }
+*/
 
         return redirect()->to('/document-records')->with('error', 'This record is not awaiting approval.');
     }

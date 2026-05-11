@@ -4,20 +4,20 @@ namespace App\Controllers;
 
 use App\Models\RelocationRequestModel;
 use App\Models\FolderModel;
-use App\Models\FolderMovementModel;
+// use App\Models\FolderMovementModel;
 use App\Models\LocationModel;
 
 class RelocationController extends BaseController
 {
     protected $relocationModel;
     protected $folderModel;
-    protected $movementModel;
+//    protected $movementModel;
 
     public function __construct()
     {
         $this->relocationModel = new RelocationRequestModel();
         $this->folderModel = new FolderModel();
-        $this->movementModel = new FolderMovementModel();
+//        $this->movementModel = new FolderMovementModel();
     }
 
     /**
@@ -346,11 +346,13 @@ class RelocationController extends BaseController
                 return redirect()->back()->with('error', 'Folder already has an active relocation movement.');
             }
 
+/*
             $movementId = $this->movementModel->startMovement(
                 $relocation['folder_id'],
                 $relocationId,
                 ['to_location_id' => $relocation['to_location_id']]
             );
+*/
 
             // Update relocation status
             $this->relocationModel->startRelocation($relocationId);
@@ -415,6 +417,7 @@ class RelocationController extends BaseController
             // - Movement finalization with approval audit
             // - Race condition detection
             // - Transaction management
+/*
             $this->movementModel->completeMovement(
                 $relocation['folder_id'],
                 $activeMovement['movement_id'],
@@ -427,6 +430,7 @@ class RelocationController extends BaseController
                     'box' => $toLocation['box'] ?? null,
                 ]
             );
+*/
 
             // Mark relocation as completed
             $this->relocationModel->completeRelocation($relocationId);

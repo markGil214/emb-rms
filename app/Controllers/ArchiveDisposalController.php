@@ -4,7 +4,7 @@ namespace App\Controllers;
 
 use App\Models\ArchiveRecordModel;
 use App\Models\DisposalRecordModel;
-use App\Models\FileDisposalRequestModel;
+// use App\Models\FileDisposalRequestModel;
 use App\Models\FolderModel;
 use App\Models\RestorationRequestModel;
 
@@ -12,7 +12,7 @@ class ArchiveDisposalController extends BaseController
 {
     protected $archiveModel;
     protected $disposalModel;
-    protected $fileDisposalRequestModel;
+//    protected $fileDisposalRequestModel;
     protected $folderModel;
     protected $restorationRequestModel;
 
@@ -20,7 +20,7 @@ class ArchiveDisposalController extends BaseController
     {
         $this->archiveModel = new ArchiveRecordModel();
         $this->disposalModel = new DisposalRecordModel();
-        $this->fileDisposalRequestModel = new FileDisposalRequestModel();
+//        $this->fileDisposalRequestModel = new FileDisposalRequestModel();
         $this->folderModel = new FolderModel();
         $this->restorationRequestModel = new RestorationRequestModel();
     }
@@ -51,12 +51,16 @@ class ArchiveDisposalController extends BaseController
                 ->countAllResults();
         }
 
+        // Count files that are Ready to Dispose (expired but not yet submitted for disposal)
+        $readyToDisposeCount = $this->countReadyToDisposeFiles();
+
         $disposalRows = $this->getDisposalDashboardRows();
 
         return view('archive-disposal/disposal-index', [
             'title' => 'Disposal Management',
             'statusCounts' => $statusCounts,
             'fileDisposalPendingCount' => $fileDisposalPendingCount,
+            'readyToDisposeCount' => $readyToDisposeCount,
             'disposalRows' => $disposalRows,
         ]);
     }
@@ -481,7 +485,7 @@ class ArchiveDisposalController extends BaseController
                 'request_type' => 'File Disposal',
                 'request_id' => $request['disposal_request_id'],
                 'subject' => $folderLabel ? $fileLabel . ' (' . $folderLabel . ')' : $fileLabel,
-                'method' => 'File disposal',
+                'method' => 'File Disposal',
                 'status' => $status,
                 'requested_at' => $request['requested_at'] ?? null,
                 'requested_by' => $request['requested_by_name'] ?? $request['requested_by'] ?? '-',
@@ -489,9 +493,12 @@ class ArchiveDisposalController extends BaseController
                 'view_route' => !empty($request['folder_id']) ? 'records.show' : null,
                 'view_id' => $request['folder_id'] ?? null,
                 'approve_route' => ($request['status'] ?? '') === 'Pending' ? 'file-disposal.approve' : null,
+                'decline_route' => ($request['status'] ?? '') === 'Pending' ? 'file-disposal.reject' : null,
                 'route_id' => $request['disposal_request_id'],
                 'action_label' => ($request['status'] ?? '') === 'Pending' ? 'Approve' : null,
+                'decline_label' => ($request['status'] ?? '') === 'Pending' ? 'Decline' : null,
                 'confirm_message' => 'Approve this disposal request?',
+                'decline_confirm_message' => 'Reject this disposal request?',
                 'fallback_action_label' => ($request['status'] ?? '') === 'Approved' ? 'Pending final disposal' : null,
             ];
         }
@@ -513,12 +520,12 @@ class ArchiveDisposalController extends BaseController
 
         $db = \Config\Database::connect();
         if (!$db->tableExists('file_disposal_requests')) {
-            return redirect()->back()->with('error', 'File disposal workflow table is not ready yet. Please run database migrations first.');
+            return redirect()->back()->with('error', 'File Disposal workflow table is not ready yet. Please run database migrations first.');
         }
 
         $request = $this->fileDisposalRequestModel->find($requestId);
         if (!$request) {
-            return redirect()->back()->with('error', 'File disposal request not found.');
+            return redirect()->back()->with('error', 'File Disposal request not found.');
         }
 
         if (($request['status'] ?? '') !== 'Pending') {
@@ -542,10 +549,56 @@ class ArchiveDisposalController extends BaseController
             $auditLog = service('auditLog');
             $auditLog->log(auth_user()['user_id'] ?? null, 'approve_file_disposal', "disposal_request_id:{$requestId}");
         } catch (\Throwable $e) {
-            log_message('error', 'File disposal approval audit logging failed: {message}', ['message' => $e->getMessage()]);
+            log_message('error', 'File Disposal approval audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
 
-        return redirect()->back()->with('success', 'File disposal request approved');
+        return redirect()->back()->with('success', 'File Disposal request approved');
+    }
+
+    /**
+     * Reject a pending file disposal request.
+     */
+    public function rejectFileDisposal(int $requestId)
+    {
+        if (!can('approve_disposal')) {
+            return redirect()->back()->with('error', 'Permission denied');
+        }
+
+        $db = \Config\Database::connect();
+        if (!$db->tableExists('file_disposal_requests')) {
+            return redirect()->back()->with('error', 'File Disposal workflow table is not ready yet.');
+        }
+
+        $request = $this->fileDisposalRequestModel->find($requestId);
+        if (!$request) {
+            return redirect()->back()->with('error', 'File Disposal request not found.');
+        }
+
+        if (($request['status'] ?? '') !== 'Pending') {
+            return redirect()->back()->with('error', 'Only pending file disposal requests can be rejected.');
+        }
+
+        $updated = $db->table('file_disposal_requests')
+            ->where('disposal_request_id', $requestId)
+            ->where('status', 'Pending')
+            ->update([
+                'status' => 'Rejected',
+                'approved_by' => auth_user()['user_id'] ?? null,
+                'approved_at' => date('Y-m-d H:i:s'),
+            ]);
+
+        if (!$updated) {
+            return redirect()->back()->with('error', 'Failed to reject file disposal request.');
+        }
+
+        try {
+            $auditLog = service('auditLog');
+            $auditLog->log(auth_user()['user_id'] ?? null, 'reject_file_disposal', "disposal_request_id:{$requestId}");
+        } catch (\Throwable $e) {
+            log_message('error', 'File Disposal rejection audit logging failed: {message}', ['message' => $e->getMessage()]);
+        }
+
+        return redirect()->back()->with('success', 'File Disposal request rejected');
     }
 
     /**
@@ -593,7 +646,7 @@ class ArchiveDisposalController extends BaseController
                     'request_type' => 'File',
                     'request_id' => $disposal['disposal_request_id'],
                     'subject' => $folderLabel ? $fileLabel . ' (' . $folderLabel . ')' : $fileLabel,
-                    'method' => 'File disposal',
+                    'method' => 'File Disposal',
                     'status' => $disposal['status'] ?? 'Disposed',
                     'requested_at' => $disposal['requested_at'] ?? $disposal['created_at'] ?? null,
                     'completed_at' => $disposal['disposed_at'] ?? $disposal['approved_at'] ?? null,
@@ -933,6 +986,7 @@ class ArchiveDisposalController extends BaseController
             'Pending Disposal' => 0,
             'Approved for Disposal' => 0,
             'Disposed' => 0,
+            'Rejected' => 0,
         ];
 
         foreach ($records as $record) {
@@ -961,7 +1015,7 @@ class ArchiveDisposalController extends BaseController
         if (!empty($record['disposal_id'])) {
             $status = (string) ($record['status'] ?? '');
             if ($status === 'Rejected') {
-                return 'Archived'; // If rejected, it's back to being just archived
+                return 'Rejected';
             }
             if (!empty($record['disposal_date'])) {
                 return 'Disposed';
@@ -1115,10 +1169,44 @@ class ArchiveDisposalController extends BaseController
         $db = \Config\Database::connect();
         $rows = [];
 
+        // ---- 1. Ready to Dispose: expired files not yet submitted for disposal ----
+        $expiredFiles = $this->getReadyToDisposeFiles();
+        foreach ($expiredFiles as $file) {
+            $fileLabel = $file['file_name'] ?: 'File #' . $file['file_id'];
+            $folderLabel = trim((string) (($file['file_code'] ?? '') . ' ' . ($file['company_name'] ?? '')));
+            $subject = $folderLabel !== '' ? $fileLabel . ' (' . $folderLabel . ')' : $fileLabel;
+            $location = 'Rack ' . ($file['rack'] ?? '-') . ' - Shelf ' . ($file['shelf'] ?? '-');
+
+            $rows[] = [
+                'subject' => $subject,
+                'request_type' => 'File Expiration',
+                'folder_type' => $file['folder_type'] ?? '-',
+                'location' => $location,
+                'status' => 'Ready to Dispose',
+                'method' => 'Expired (' . ($file['expiration_date'] ?? '-') . ')',
+                'requested_at' => $file['expiration_date'] ?? null,
+                'disposed_at' => null,
+                'requested_by' => $file['uploaded_by_name'] ?? '-',
+                'approved_by' => '-',
+                'view_route' => !empty($file['folder_id']) ? 'records.show' : null,
+                'view_id' => $file['folder_id'] ?? null,
+                'approve_route' => null,
+                'approve_id' => null,
+                'decline_route' => null,
+                'decline_id' => null,
+                'confirm_message' => null,
+                'decline_confirm_message' => null,
+                'file_id' => $file['file_id'] ?? null,
+                'expiration_date' => $file['expiration_date'] ?? null,
+            ];
+        }
+
+        // ---- 2. Archive disposal records ----
         $archiveDisposals = $db->table('disposal_records dr')
-            ->select('dr.disposal_id, dr.archive_id, dr.disposal_method, dr.disposal_date, dr.created_at, dr.requested_by, dr.approved_by, ar.folder_id, f.file_code, f.company_name, requester.username as requested_by_name, approver.username as approved_by_name', false)
+            ->select('dr.disposal_id, dr.archive_id, dr.disposal_method, dr.disposal_date, dr.status, dr.created_at, dr.requested_by, dr.approved_by, ar.folder_id, f.file_code, f.company_name, f.folder_type, l.rack, l.shelf, requester.username as requested_by_name, approver.username as approved_by_name', false)
             ->join('archive_records ar', 'ar.archive_id = dr.archive_id', 'left')
             ->join('folders f', 'f.folder_id = ar.folder_id', 'left')
+            ->join('locations l', 'l.location_id = f.location_id', 'left')
             ->join('users requester', 'requester.user_id = dr.requested_by', 'left')
             ->join('users approver', 'approver.user_id = dr.approved_by', 'left')
             ->orderBy('dr.created_at', 'DESC')
@@ -1128,10 +1216,13 @@ class ArchiveDisposalController extends BaseController
         foreach ($archiveDisposals as $record) {
             $folderLabel = trim((string) (($record['file_code'] ?? '') . ' ' . ($record['company_name'] ?? '')));
             $status = $this->disposalModel->inferStatus($record);
+            $location = 'Rack ' . ($record['rack'] ?? '-') . ' - Shelf ' . ($record['shelf'] ?? '-');
 
             $rows[] = [
                 'subject' => $folderLabel !== '' ? $folderLabel : 'Archive #' . ($record['archive_id'] ?? '-'),
                 'request_type' => 'Archive Disposal',
+                'folder_type' => $record['folder_type'] ?? '-',
+                'location' => $location,
                 'status' => $status,
                 'method' => $record['disposal_method'] ?? '-',
                 'requested_at' => $record['created_at'] ?? null,
@@ -1142,15 +1233,20 @@ class ArchiveDisposalController extends BaseController
                 'view_id' => $record['disposal_id'] ?? null,
                 'approve_route' => $status === 'Pending Disposal' ? 'disposal.approve' : null,
                 'approve_id' => $status === 'Pending Disposal' ? ($record['disposal_id'] ?? null) : null,
+                'decline_route' => $status === 'Pending Disposal' ? 'disposal.reject' : null,
+                'decline_id' => $status === 'Pending Disposal' ? ($record['disposal_id'] ?? null) : null,
                 'confirm_message' => 'Approve this disposal request?',
+                'decline_confirm_message' => 'Reject this disposal request?',
             ];
         }
 
+        // ---- 3. File disposal requests ----
         if ($db->tableExists('file_disposal_requests')) {
             $fileRequests = $db->table('file_disposal_requests fdr')
-                ->select('fdr.disposal_request_id, fdr.file_id, fdr.status, fdr.requested_at, fdr.created_at, fdr.approved_at, fdr.disposed_at, fdr.requested_by, fdr.approved_by, ff.file_name, ff.folder_id, f.file_code, f.company_name, requester.username as requested_by_name, approver.username as approved_by_name', false)
+                ->select('fdr.disposal_request_id, fdr.file_id, fdr.status, fdr.requested_at, fdr.created_at, fdr.approved_at, fdr.disposed_at, fdr.requested_by, fdr.approved_by, ff.file_name, ff.folder_id, f.file_code, f.company_name, f.folder_type, l.rack, l.shelf, requester.username as requested_by_name, approver.username as approved_by_name', false)
                 ->join('folder_files ff', 'ff.file_id = fdr.file_id', 'left')
                 ->join('folders f', 'f.folder_id = ff.folder_id', 'left')
+                ->join('locations l', 'l.location_id = f.location_id', 'left')
                 ->join('users requester', 'requester.user_id = fdr.requested_by', 'left')
                 ->join('users approver', 'approver.user_id = fdr.approved_by', 'left')
                 ->orderBy('COALESCE(fdr.requested_at, fdr.created_at)', 'DESC', false)
@@ -1161,19 +1257,24 @@ class ArchiveDisposalController extends BaseController
                 $fileLabel = $request['file_name'] ?: 'File #' . $request['file_id'];
                 $folderLabel = trim((string) (($request['file_code'] ?? '') . ' ' . ($request['company_name'] ?? '')));
                 $subject = $folderLabel !== '' ? $fileLabel . ' (' . $folderLabel . ')' : $fileLabel;
+                $location = 'Rack ' . ($request['rack'] ?? '-') . ' - Shelf ' . ($request['shelf'] ?? '-');
 
                 $status = 'Pending Disposal';
                 if (($request['status'] ?? '') === 'Approved') {
                     $status = 'Approved for Disposal';
                 } elseif (($request['status'] ?? '') === 'Disposed') {
                     $status = 'Disposed';
+                } elseif (($request['status'] ?? '') === 'Rejected') {
+                    $status = 'Rejected';
                 }
 
                 $rows[] = [
                     'subject' => $subject,
                     'request_type' => 'File Disposal',
+                    'folder_type' => $request['folder_type'] ?? '-',
+                    'location' => $location,
                     'status' => $status,
-                    'method' => 'File disposal',
+                    'method' => 'File Disposal',
                     'requested_at' => $request['requested_at'] ?? $request['created_at'] ?? null,
                     'disposed_at' => $request['disposed_at'] ?? null,
                     'requested_by' => $request['requested_by_name'] ?? $request['requested_by'] ?? '-',
@@ -1182,12 +1283,22 @@ class ArchiveDisposalController extends BaseController
                     'view_id' => $request['folder_id'] ?? null,
                     'approve_route' => ($request['status'] ?? '') === 'Pending' ? 'file-disposal.approve' : null,
                     'approve_id' => ($request['status'] ?? '') === 'Pending' ? ($request['disposal_request_id'] ?? null) : null,
+                    'decline_route' => ($request['status'] ?? '') === 'Pending' ? 'file-disposal.reject' : null,
+                    'decline_id' => ($request['status'] ?? '') === 'Pending' ? ($request['disposal_request_id'] ?? null) : null,
                     'confirm_message' => 'Approve this disposal request?',
+                    'decline_confirm_message' => 'Reject this disposal request?',
                 ];
             }
         }
 
+        // Sort: "Ready to Dispose" first, then by date
         usort($rows, static function (array $left, array $right): int {
+            $leftReady = ($left['status'] ?? '') === 'Ready to Dispose' ? 1 : 0;
+            $rightReady = ($right['status'] ?? '') === 'Ready to Dispose' ? 1 : 0;
+            if ($leftReady !== $rightReady) {
+                return $rightReady <=> $leftReady;
+            }
+
             $leftRequested = strtotime((string) ($left['requested_at'] ?? '')) ?: 0;
             $rightRequested = strtotime((string) ($right['requested_at'] ?? '')) ?: 0;
 
@@ -1201,5 +1312,70 @@ class ArchiveDisposalController extends BaseController
         });
 
         return $rows;
+    }
+
+    /**
+     * Get files from folder_files that have expired (expiration_date <= today)
+     * and have NOT yet been submitted for disposal via file_disposal_requests.
+     */
+    private function getReadyToDisposeFiles(): array
+    {
+        $db = \Config\Database::connect();
+        $today = date('Y-m-d');
+
+        $hasExpirationColumn = in_array('expiration_date', $db->getFieldNames('folder_files'), true);
+        if (!$hasExpirationColumn) {
+            return [];
+        }
+
+        $builder = $db->table('folder_files ff')
+            ->select('ff.file_id, ff.folder_id, ff.file_name, ff.file_path, ff.file_size, ff.uploaded_by, ff.retention_type, ff.expiration_date, ff.created_at, f.file_code, f.company_name, f.folder_type, l.rack, l.shelf, u.username as uploaded_by_name', false)
+            ->join('folders f', 'f.folder_id = ff.folder_id', 'left')
+            ->join('locations l', 'l.location_id = f.location_id', 'left')
+            ->join('users u', 'u.user_id = ff.uploaded_by', 'left')
+            ->where('ff.retention_type', 'expiration')
+            ->where('ff.expiration_date IS NOT NULL')
+            ->where('ff.expiration_date <=', $today);
+
+        // Exclude files that already have a disposal request
+        if ($db->tableExists('file_disposal_requests')) {
+            $builder->where('NOT EXISTS (
+                SELECT 1 FROM file_disposal_requests fdr
+                WHERE fdr.file_id = ff.file_id
+            )', null, false);
+        }
+
+        return $builder
+            ->orderBy('ff.expiration_date', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
+     * Count files ready to dispose (expired, not yet submitted for disposal).
+     */
+    private function countReadyToDisposeFiles(): int
+    {
+        $db = \Config\Database::connect();
+        $today = date('Y-m-d');
+
+        $hasExpirationColumn = in_array('expiration_date', $db->getFieldNames('folder_files'), true);
+        if (!$hasExpirationColumn) {
+            return 0;
+        }
+
+        $builder = $db->table('folder_files ff')
+            ->where('ff.retention_type', 'expiration')
+            ->where('ff.expiration_date IS NOT NULL')
+            ->where('ff.expiration_date <=', $today);
+
+        if ($db->tableExists('file_disposal_requests')) {
+            $builder->where('NOT EXISTS (
+                SELECT 1 FROM file_disposal_requests fdr
+                WHERE fdr.file_id = ff.file_id
+            )', null, false);
+        }
+
+        return (int) $builder->countAllResults();
     }
 }

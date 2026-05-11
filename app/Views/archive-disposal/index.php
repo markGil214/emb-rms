@@ -898,7 +898,7 @@
                         <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Archive Status</th>
                         <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Workflow Status</th>
                         <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Requested By</th>
-                        <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Approved By</th>
+                        <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Reviewed By</th>
                         <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -1160,6 +1160,13 @@
                                                     'style' => 'primary',
                                                     'action' => route_to('disposal.approve', $record['disposal_id']),
                                                     'confirm' => 'Approve this disposal request?'
+                                                ]) ?>
+                                                <?= view('components/button', [
+                                                    'label' => 'Reject',
+                                                    'type' => 'submit',
+                                                    'style' => 'danger',
+                                                    'action' => route_to('disposal.reject', $record['disposal_id']),
+                                                    'confirm' => 'Reject this disposal request and keep folder archived?'
                                                 ]) ?>
                                             <?php endif; ?>
 
