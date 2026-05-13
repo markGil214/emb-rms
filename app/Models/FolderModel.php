@@ -233,15 +233,32 @@ class FolderModel extends Model
     /**
      * Get document records for client-side filtering and sorting.
      */
-    public function getDocumentRecords(): array
+    public function getDocumentRecords(?int $limit = null, ?int $offset = null): array
     {
-        return $this->select('folders.*, categories.category_name AS folder_category, locations.rack AS cabinet, locations.shelf AS shelf, locations.rack AS rack, bt.borrowed_at AS borrowed_date, bt.expected_return_date AS due_date, bt.actual_return_date AS return_date, ar.archived_date')
+        $query = $this->select('folders.*, categories.category_name AS folder_category, locations.rack AS cabinet, locations.shelf AS shelf, locations.rack AS rack, bt.borrowed_at AS borrowed_date, bt.expected_return_date AS due_date, bt.actual_return_date AS return_date, ar.archived_date')
             ->join('locations', 'locations.location_id = folders.location_id', 'left')
             ->join('categories', 'categories.category_id = folders.category_id', 'left')
             ->join('borrow_transactions bt', 'bt.transaction_id = folders.current_borrow_transaction_id', 'left')
-            ->join('archive_records ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = folders.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false)
-            ->get()
+            ->join('archive_records ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = folders.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false);
+            
+        if ($limit !== null) {
+            $query = $query->limit($limit);
+        }
+        
+        if ($offset !== null) {
+            $query = $query->offset($offset);
+        }
+        
+        return $query->get()
             ->getResultArray();
+    }
+
+    /**
+     * Get total count of document records
+     */
+    public function getTotalDocumentRecords(): int
+    {
+        return $this->countAllResults();
     }
 
     /**

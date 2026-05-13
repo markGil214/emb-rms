@@ -38,14 +38,37 @@ class FolderController extends BaseController
             'folder_type' => trim((string) $this->request->getGet('folder_type')),
             'category' => trim((string) $this->request->getGet('category')),
             'sort' => trim((string) $this->request->getGet('sort')),
+            'limit' => trim((string) $this->request->getGet('limit')),
+            'page' => (int) ($this->request->getGet('page') ?? 1),
         ];
 
         if ($filters['sort'] === '') {
             $filters['sort'] = 'company_asc';
         }
 
-        $folders = $this->folderModel->getDocumentRecords();
+        // Handle pagination limit
+        $limit = $filters['limit'];
+        if ($limit === '' || $limit === 'all') {
+            $limit = null; // Show all
+            $offset = null;
+        } elseif (is_numeric($limit)) {
+            $limit = (int) $limit;
+            $page = $filters['page'];
+            $offset = ($page - 1) * $limit;
+        } else {
+            $limit = null; // Default to all
+            $offset = null;
+        }
+
+        $folders = $this->folderModel->getDocumentRecords($limit, $offset);
         $categories = $this->categoryModel->orderBy('category_name', 'ASC')->findAll();
+        $totalFolders = $this->folderModel->getTotalDocumentRecords();
+        
+        // Calculate pagination info
+        $totalPages = $limit ? ceil($totalFolders / $limit) : 1;
+        $currentPage = $filters['page'];
+        $hasNextPage = $limit ? $currentPage < $totalPages : false;
+        $hasPrevPage = $currentPage > 1;
 
         return view('document-records/index', [
             'title' => 'Folders',
@@ -54,6 +77,11 @@ class FolderController extends BaseController
             'filters' => $filters,
             'pager' => null,
             'perPage' => count($folders),
+            'totalFolders' => $totalFolders,
+            'currentPage' => $currentPage,
+            'totalPages' => $totalPages,
+            'hasNextPage' => $hasNextPage,
+            'hasPrevPage' => $hasPrevPage,
         ]);
     }
 
