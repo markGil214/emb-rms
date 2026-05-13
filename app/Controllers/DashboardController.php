@@ -170,14 +170,14 @@ $disposedFiles = (int) $db->table('file_disposal_requests')
         }
 
         // Add pending disposal requests
-        if ($db->tableExists('disposal_records')) {
-            $pendingDisposal = $db->table('disposal_records')
-                ->where('disposal_date', null)
-                ->where('approved_by', null)
-                ->where('status !=', 'Rejected')
-                ->countAllResults();
-            $pendingCount += $pendingDisposal;
-        }
+        // if ($db->tableExists('disposal_records')) {
+        //     $pendingDisposal = $db->table('disposal_records')
+        //         ->where('disposal_date', null)
+        //         ->where('approved_by', null)
+        //         ->where('status !=', 'Rejected')
+        //         ->countAllResults();
+        //     $pendingCount += $pendingDisposal;
+        // }
 
         // Add pending file-level disposal requests
         if ($db->tableExists('file_disposal_requests')) {
