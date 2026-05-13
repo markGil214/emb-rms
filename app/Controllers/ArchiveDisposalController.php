@@ -1253,44 +1253,7 @@ class ArchiveDisposalController extends BaseController
             ];
         }
 
-        // ---- 2. Archive disposal records ----
-        $archiveDisposals = $db->table('disposal_records dr')
-            ->select('dr.disposal_id, dr.archive_id, dr.disposal_method, dr.disposal_date, dr.status, dr.created_at, dr.requested_by, dr.approved_by, ar.folder_id, f.file_code, f.company_name, f.folder_type, l.rack, l.shelf, requester.username as requested_by_name, approver.username as approved_by_name', false)
-            ->join('archive_records ar', 'ar.archive_id = dr.archive_id', 'left')
-            ->join('folders f', 'f.folder_id = ar.folder_id', 'left')
-            ->join('locations l', 'l.location_id = f.location_id', 'left')
-            ->join('users requester', 'requester.user_id = dr.requested_by', 'left')
-            ->join('users approver', 'approver.user_id = dr.approved_by', 'left')
-            ->orderBy('dr.created_at', 'DESC')
-            ->get()
-            ->getResultArray();
-
-        foreach ($archiveDisposals as $record) {
-            $folderLabel = trim((string) (($record['file_code'] ?? '') . ' ' . ($record['company_name'] ?? '')));
-            $status = $this->disposalModel->inferStatus($record);
-            $location = 'Rack ' . ($record['rack'] ?? '-') . ' - Shelf ' . ($record['shelf'] ?? '-');
-
-            $rows[] = [
-                'subject' => $folderLabel !== '' ? $folderLabel : 'Archive #' . ($record['archive_id'] ?? '-'),
-                'request_type' => 'Archive Disposal',
-                'folder_type' => $record['folder_type'] ?? '-',
-                'location' => $location,
-                'status' => $status,
-                'method' => $record['disposal_method'] ?? '-',
-                'requested_at' => $record['created_at'] ?? null,
-                'disposed_at' => $record['disposal_date'] ?? null,
-                'requested_by' => $record['requested_by_name'] ?? $record['requested_by'] ?? '-',
-                'approved_by' => $record['approved_by_name'] ?? $record['approved_by'] ?? '-',
-                'view_route' => !empty($record['disposal_id']) ? 'disposal.show' : null,
-                'view_id' => $record['disposal_id'] ?? null,
-                'approve_route' => $status === 'Pending Disposal' ? 'disposal.approve' : null,
-                'approve_id' => $status === 'Pending Disposal' ? ($record['disposal_id'] ?? null) : null,
-                'decline_route' => $status === 'Pending Disposal' ? 'disposal.reject' : null,
-                'decline_id' => $status === 'Pending Disposal' ? ($record['disposal_id'] ?? null) : null,
-                'confirm_message' => 'Approve this disposal request?',
-                'decline_confirm_message' => 'Reject this disposal request?',
-            ];
-        }
+        // ---- 2. Archive disposal records (REMOVED: FILE DISPOSAL ONLY) ----
 
         // ---- 3. File disposal requests ----
         if ($db->tableExists('file_disposal_requests')) {
@@ -1341,6 +1304,7 @@ class ArchiveDisposalController extends BaseController
                     'complete_id' => ($request['status'] ?? '') === 'Approved' ? ($request['disposal_request_id'] ?? null) : null,
                     'confirm_message' => ($request['status'] ?? '') === 'Approved' ? 'Mark this file as disposed?' : 'Approve this disposal request?',
                     'decline_confirm_message' => 'Reject this disposal request?',
+                    'file_id' => $request['file_id'] ?? null,
                 ];
             }
         }
@@ -1391,11 +1355,12 @@ class ArchiveDisposalController extends BaseController
             ->where('ff.expiration_date IS NOT NULL')
             ->where('ff.expiration_date <=', $today);
 
-        // Exclude files that already have a disposal request
+        // Exclude files that already have an active/completed disposal request
         if ($db->tableExists('file_disposal_requests')) {
             $builder->where('NOT EXISTS (
                 SELECT 1 FROM file_disposal_requests fdr
                 WHERE fdr.file_id = ff.file_id
+                AND fdr.status IN ("Pending", "Approved", "Disposed")
             )', null, false);
         }
 
@@ -1427,6 +1392,7 @@ class ArchiveDisposalController extends BaseController
             $builder->where('NOT EXISTS (
                 SELECT 1 FROM file_disposal_requests fdr
                 WHERE fdr.file_id = ff.file_id
+                AND fdr.status IN ("Pending", "Approved", "Disposed")
             )', null, false);
         }
 

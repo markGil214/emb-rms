@@ -31,8 +31,6 @@ class DatabaseSeeder extends Seeder
         echo "Seeding archive records...\n";
         $this->call('ArchiveRecordSeeder');
 
-        echo "Seeding disposal records...\n";
-        $this->call('DisposalRecordSeeder');
 
         echo "\n✅ All seeders executed successfully!\n";
     }

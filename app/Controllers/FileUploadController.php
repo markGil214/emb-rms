@@ -253,7 +253,7 @@ class FileUploadController extends BaseController
 
         $existingRequest = $this->fileDisposalRequestModel->latestByFile($fileId);
         if ($existingRequest && in_array((string) ($existingRequest['status'] ?? ''), ['Pending', 'Approved', 'Disposed'], true)) {
-            return redirect()->to(route_to('records.show', (int) $file['folder_id']))
+            return redirect()->back()
                 ->with('error', 'A disposal workflow already exists for this file.');
         }
 
@@ -269,14 +269,14 @@ class FileUploadController extends BaseController
         ];
 
         if (! $this->fileDisposalRequestModel->save($requestData)) {
-            return redirect()->to(route_to('records.show', (int) $file['folder_id']))
+            return redirect()->back()
                 ->with('error', 'Failed to create disposal request.');
         }
 
         $auditLog = service('auditLog');
         $auditLog->log(auth_user()['user_id'] ?? null, 'request_file_disposal', "file_id:{$fileId}");
 
-        return redirect()->to(route_to('records.show', (int) $file['folder_id']))
+        return redirect()->back()
             ->with('success', 'Disposal request submitted and is now pending approval.');
     }
 
