@@ -16,7 +16,7 @@ class FolderController extends BaseController
     protected $folderFileModel;
     protected $categoryModel;
     protected $relocationModel;
-//    protected $movementModel;
+    //    protected $movementModel;
 
     public function __construct()
     {
@@ -24,7 +24,7 @@ class FolderController extends BaseController
         $this->folderFileModel = new FolderFileModel();
         $this->categoryModel = new CategoryModel();
         $this->relocationModel = new RelocationRequestModel();
-//        $this->movementModel = new FolderMovementModel();
+        //        $this->movementModel = new FolderMovementModel();
     }
 
     /**
@@ -63,7 +63,7 @@ class FolderController extends BaseController
         $folders = $this->folderModel->getDocumentRecords($limit, $offset);
         $categories = $this->categoryModel->orderBy('category_name', 'ASC')->findAll();
         $totalFolders = $this->folderModel->getTotalDocumentRecords();
-        
+
         // Calculate pagination info
         $totalPages = $limit ? ceil($totalFolders / $limit) : 1;
         $currentPage = $filters['page'];
@@ -109,7 +109,7 @@ class FolderController extends BaseController
         $categories = $this->categoryModel
             ->orderBy('category_name', 'ASC')
             ->findAll();
-        
+
         return view('document-records/create', [
             'title' => 'Create New Folder',
             'locations' => $locations,
@@ -139,7 +139,7 @@ class FolderController extends BaseController
 
         $locationId = (int) $this->request->getPost('location_id');
         $location = $db->table('locations')->where('location_id', $locationId)->get()->getRow();
-        
+
         if (!$location) {
             $db->transRollback();
             return redirect()->back()->withInput()->with('error', 'Selected location not found');
@@ -228,8 +228,8 @@ class FolderController extends BaseController
             ->join('users as ru', 'ru.user_id = r.requested_by', 'left')
             ->join('users as au', 'au.user_id = r.approved_by', 'left')
             ->groupStart()
-                ->where('r.folder_id', $folderId)
-                ->orWhere('f.file_code', $folder['file_code'])
+            ->where('r.folder_id', $folderId)
+            ->orWhere('f.file_code', $folder['file_code'])
             ->groupEnd()
             ->groupBy('r.relocation_id')
             ->orderBy('r.requested_at', 'DESC')
@@ -392,7 +392,7 @@ class FolderController extends BaseController
                     'proposed_changes' => json_encode($data),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
-            
+
             return redirect()->to('/document-records')->with('success', 'Existing update request updated.');
         }
 
@@ -446,7 +446,7 @@ class FolderController extends BaseController
             return redirect()->to('/document-records')->with('success', 'Folder creation request approved.');
         }
 
-/*
+
         if (($folder['status'] ?? '') === 'Pending Update') {
             $request = $db->table('document_edit_requests')
                 ->where('folder_id', $folderId)
@@ -485,7 +485,7 @@ class FolderController extends BaseController
 
             return redirect()->to('/document-records')->with('success', 'Folder update request approved.');
         }
-*/
+
 
         return redirect()->to('/document-records')->with('error', 'This record is not awaiting approval.');
     }
@@ -509,7 +509,7 @@ class FolderController extends BaseController
             return redirect()->to('/document-records')->with('success', 'Folder creation request declined.');
         }
 
-/*
+        /*
         if (($folder['status'] ?? '') === 'Pending Update') {
             $request = $db->table('document_edit_requests')
                 ->where('folder_id', $folderId)
