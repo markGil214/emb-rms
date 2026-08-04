@@ -221,7 +221,7 @@ class FolderController extends BaseController
             ->getResultArray();
 
         $requestHistory = $db->table('relocation_requests as r')
-            ->select('r.relocation_id, r.folder_id, r.from_location_id, r.to_location_id, r.reason, r.reason_type, r.status, r.requested_by, r.approved_by, r.requested_at, r.approved_at, r.rejection_reason, r.created_at, r.updated_at, fl.building as from_building, fl.room as from_room, fl.rack as from_rack, fl.shelf as from_shelf, tl.building as to_building, tl.room as to_room, tl.rack as to_rack, tl.shelf as to_shelf, ru.username as requested_by_username, au.username as approved_by_username')
+            ->select('r.relocation_id, r.folder_id, r.from_location_id, r.to_location_id, r.reason, r.reason_type, r.status, r.requested_by, r.approved_by, r.requested_at, r.approved_at, r.rejection_reason, r.created_at, r.updated_at, fl.rack as from_rack, fl.shelf as from_shelf, tl.rack as to_rack, tl.shelf as to_shelf, ru.username as requested_by_username, au.username as approved_by_username')
             ->join('folders as f', 'f.folder_id = r.folder_id', 'left')
             ->join('locations as fl', 'fl.location_id = r.from_location_id', 'left')
             ->join('locations as tl', 'tl.location_id = r.to_location_id', 'left')
