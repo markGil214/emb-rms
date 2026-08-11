@@ -40,7 +40,7 @@
         border-radius: 16px;
         border: 1px solid rgba(148, 163, 184, 0.22);
         background: rgba(15, 23, 42, 0.94);
-        backdrop-filter: blur(14px);
+        backdrop-filter: blur(14px); 
         -webkit-backdrop-filter: blur(14px);
         box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
         border-top: 3px solid #10b981;
@@ -52,7 +52,7 @@
                 </svg>
             </div>
             <div style="min-width: 0;">
-                <div style="font-size: 14px; font-weight: 700; color: #f8fafc; line-height: 1.2;">Record updated</div>
+                <div style="font-size: 14px; font-weight: 700; color: #f8fafc; line-height: 1.2;">Update request submitted</div>
                 <div class="recordUpdateAlertMessage" style="margin-top: 4px; font-size: 12px; color: rgba(226, 232, 240, 0.78); line-height: 1.45;">Saving your changes...</div>
             </div>
         </div>
@@ -327,7 +327,7 @@
 
                     class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-600 text-white rounded-lg hover:from-green-700 hover:to-green-700 font-medium w-full sm:w-auto">
 
-                    Update Record
+                    Request for Update
 
                 </button>
 

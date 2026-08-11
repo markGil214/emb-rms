@@ -122,6 +122,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
     $routes->post('/document-records/(:num)/decline', 'FolderController::decline/$1', ['as' => 'records.decline', 'filter' => 'permission:approve_folder_creation']);
 
+    $routes->get('/document-records/(:num)/edit-request-diff', 'FolderController::editRequestDiff/$1', ['as' => 'records.editRequestDiff', 'filter' => 'permission:approve_folder_creation']);
+
     $routes->get('/document-records/(:num)',         'FolderController::show/$1',  ['as' => 'records.show', 'filter' => 'permission:search_documents']);
 
     $routes->get('/document-records/(:num)/history', 'FolderController::history/$1', ['as' => 'records.history', 'filter' => 'permission:search_documents']);

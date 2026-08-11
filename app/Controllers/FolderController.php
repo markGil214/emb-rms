@@ -443,6 +443,106 @@ class FolderController extends BaseController
         return redirect()->to('/document-records')->with('success', 'Folder update request submitted. Waiting for approval.');
     }
 
+    /**
+     * Return the current vs. proposed values for a folder's pending update
+     * request so the approver can review the change before deciding.
+     */
+    public function editRequestDiff(int $folderId)
+    {
+        if (!can('approve_folder_creation')) {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Permission denied']);
+        }
+
+        $db = \Config\Database::connect();
+        $request = $db->table('document_edit_requests')
+            ->where('folder_id', $folderId)
+            ->where('status', 'Pending')
+            ->orderBy('requested_at', 'DESC')
+            ->get()
+            ->getRowArray();
+
+        if (! $request) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'No pending update request found.']);
+        }
+
+        $current = json_decode((string) ($request['current_values'] ?? '{}'), true) ?: [];
+        $proposed = json_decode((string) ($request['proposed_changes'] ?? '{}'), true) ?: [];
+
+        $categoryIds = array_filter([$current['category_id'] ?? null, $proposed['category_id'] ?? null]);
+        $categoryNames = [];
+        if ($categoryIds) {
+            foreach ($this->categoryModel->whereIn('category_id', $categoryIds)->findAll() as $category) {
+                $categoryNames[$category['category_id']] = $category['category_name'];
+            }
+        }
+
+        $locationIds = array_filter([$current['location_id'] ?? null, $proposed['location_id'] ?? null]);
+        $locationLabels = [];
+        if ($locationIds) {
+            foreach ($db->table('locations')->whereIn('location_id', $locationIds)->get()->getResultArray() as $location) {
+                $rack = trim((string) ($location['rack'] ?? ''));
+                $shelf = trim((string) ($location['shelf'] ?? ''));
+                $parts = [];
+
+                if ($rack !== '') {
+                    $parts[] = 'Rack ' . $rack;
+                }
+
+                if ($shelf !== '') {
+                    $parts[] = 'Shelf ' . $shelf;
+                }
+
+                $locationLabels[$location['location_id']] = implode(' - ', $parts);
+            }
+        }
+
+        $fields = [
+            'company_name'  => 'Company Name',
+            'folder_type'   => 'Folder Type',
+            'category_id'   => 'Category',
+            'location_id'   => 'Location',
+            'borrowed_date' => 'Borrowed Date',
+            'due_date'      => 'Due Date',
+        ];
+
+        $display = function (string $field, $value) use ($categoryNames, $locationLabels) {
+            if ($value === null || $value === '') {
+                return '—';
+            }
+
+            if ($field === 'category_id') {
+                return $categoryNames[$value] ?? (string) $value;
+            }
+
+            if ($field === 'location_id') {
+                return $locationLabels[$value] ?? (string) $value;
+            }
+
+            return (string) $value;
+        };
+
+        $diff = [];
+        foreach ($fields as $field => $label) {
+            $currentValue = $current[$field] ?? null;
+            $proposedValue = $proposed[$field] ?? null;
+
+            $diff[] = [
+                'field'    => $field,
+                'label'    => $label,
+                'current'  => $display($field, $currentValue),
+                'proposed' => $display($field, $proposedValue),
+                'changed'  => (string) $currentValue !== (string) $proposedValue,
+            ];
+        }
+
+        return $this->response->setJSON([
+            'folder_id'    => $folderId,
+            'requested_at' => $request['requested_at'] ?? null,
+            'reason'       => $request['reason'] ?? null,
+            'diff'         => $diff,
+        ]);
+    }
+
     public function approve(int $folderId)
     {
         if (!can('approve_folder_creation')) {
@@ -525,7 +625,7 @@ class FolderController extends BaseController
             return redirect()->to('/document-records')->with('success', 'Folder creation request declined.');
         }
 
-        /*
+        
         if (($folder['status'] ?? '') === 'Pending Update') {
             $request = $db->table('document_edit_requests')
                 ->where('folder_id', $folderId)
@@ -555,7 +655,7 @@ class FolderController extends BaseController
 
             return redirect()->to('/document-records')->with('success', 'Folder update request declined.');
         }
-*/
+
 
         return redirect()->to('/document-records')->with('error', 'This record is not awaiting approval.');
     }
