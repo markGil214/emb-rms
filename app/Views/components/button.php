@@ -10,6 +10,9 @@
  * @var string $confirm  Optional confirmation message
  * @var string $class    Additional CSS classes
  * @var string $title    Title attribute
+ * @var string $bulkAction Optional bulk-action key ('approve', 'reject',
+ *                         'restore'), tagged onto the generated form so
+ *                         bulk-selection toolbars can find and submit it
  */
 
 $style = $style ?? 'secondary';
@@ -20,9 +23,11 @@ $label = $label ?? 'Button';
 $url = $url ?? '#';
 $action = $action ?? '#';
 $confirm = $confirm ?? null;
+$bulkAction = $bulkAction ?? null;
 
 $baseClass = "disposal-action disposal-action--{$style} {$class}";
 $confirmAttr = !empty($confirm) ? 'data-confirm-message="' . esc($confirm, 'attr') . '"' : '';
+$bulkActionAttr = !empty($bulkAction) ? 'data-bulk-action="' . esc($bulkAction, 'attr') . '"' : '';
 ?>
 
 <?php if ($type === 'link'): ?>
@@ -30,7 +35,7 @@ $confirmAttr = !empty($confirm) ? 'data-confirm-message="' . esc($confirm, 'attr
         <?= esc($label) ?>
     </a>
 <?php else: ?>
-    <form action="<?= $action ?? '#' ?>" method="POST" style="display:inline;" <?= $confirmAttr ?>>
+    <form action="<?= $action ?? '#' ?>" method="POST" style="display:inline;" <?= $confirmAttr ?> <?= $bulkActionAttr ?>>
         <?= csrf_field() ?>
         <button type="submit" class="<?= $baseClass ?>" title="<?= esc($title, 'attr') ?>">
             <?= esc($label) ?>
