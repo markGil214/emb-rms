@@ -300,6 +300,41 @@
     .modal-btn-save:hover { background:#1d4ed8;transform:translateY(-1px); }
     .update-btn { height:34px;padding:0 16px;background:#3b82f6;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;border:none;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 4px rgba(59,130,246,0.2); }
     .update-btn:hover { background:#2563eb;transform:translateY(-1px); }
+
+    /* Dark mode: this page uses its own hand-rolled CSS instead of Tailwind
+       utility classes, so the global dark-mode.css overrides (which only
+       target Tailwind class names) never match anything here. A few class
+       names below (.status-badge, .modal-body) collide with the shared
+       modal-system component's dark rules, which force text color via
+       !important without touching background — so those need !important
+       here too, or the badges/modal end up with light text on a light
+       background that dark-mode.css never fixed. */
+    .dark .filter-container { border-color: var(--color-border); background: var(--color-bg-secondary); box-shadow: none; }
+    .dark .custom-input, .dark .custom-select { border-color: var(--color-border-light); color: var(--color-text) !important; background-color: var(--color-bg-secondary); }
+    .dark .filter-btn { background: var(--color-bg-tertiary); color: var(--color-text); border: 1px solid var(--color-border-light); }
+    .dark .filter-btn:hover { background: var(--color-border); }
+    .dark .stat-card { border-color: var(--color-border); background: var(--color-bg-secondary); }
+    .dark .stat-info p:first-child { color: var(--color-text-muted); }
+    .dark .stat-info p:last-child { color: var(--color-text); }
+    .dark .user-table-card { border-color: var(--color-border); background: var(--color-bg-secondary); }
+    .dark .status-active { background: rgba(34, 197, 94, 0.2); color: #86efac !important; }
+    .dark .status-inactive { background: rgba(220, 38, 38, 0.2); color: #fca5a5 !important; }
+    .dark .status-pending { background: rgba(245, 158, 11, 0.2); color: #fcd34d !important; }
+    .dark .role-badge { background: var(--color-bg-tertiary); color: var(--color-text-secondary) !important; border-color: var(--color-border); }
+    .dark .quick-select { border-color: var(--color-border-light); color: var(--color-text-secondary); background-color: var(--color-bg-tertiary); }
+    .dark .quick-select:hover:not(:disabled) { background-color: var(--color-bg-secondary); border-color: var(--color-border-light); }
+    .dark .alert-success { background: rgba(34, 197, 94, 0.15); border-color: rgba(34, 197, 94, 0.4); color: #86efac; }
+    .dark .alert-warning { background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: #fcd34d; }
+    .dark .modal-card { background: var(--color-bg-secondary); }
+    .dark .modal-header { background: var(--color-bg-tertiary); border-color: var(--color-border); }
+    .dark .modal-header h2 { color: var(--color-text) !important; }
+    .dark .modal-close { background: var(--color-border-light); color: var(--color-text-secondary); }
+    .dark .modal-close:hover { background: var(--color-border); color: var(--color-text); }
+    .dark .modal-label { color: var(--color-text-muted) !important; }
+    .dark .modal-input, .dark .modal-select { border-color: var(--color-border-light); color: var(--color-text) !important; background-color: var(--color-bg-secondary); }
+    .dark .modal-actions { border-color: var(--color-border); }
+    .dark .modal-btn-cancel { background: var(--color-bg-tertiary); color: var(--color-text-secondary) !important; }
+    .dark .modal-btn-cancel:hover { background: var(--color-border); color: var(--color-text) !important; }
 </style>
 
 <div class="max-w-8xl mx-auto px-4 py-6 sm:px-6 lg:px-8">

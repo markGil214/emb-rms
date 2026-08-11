@@ -252,9 +252,6 @@
             <!-- Chart JavaScript -->
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('darkMode', 'false');
-
                     var ctx = document.getElementById('myChart').getContext('2d');
 
                     var myChart = new Chart(ctx, {

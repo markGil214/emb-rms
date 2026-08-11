@@ -188,6 +188,15 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+        // Applied synchronously (not deferred like Alpine) so the page never
+        // paints in the wrong theme first: without this, every navigation
+        // rendered light-mode markup until Alpine booted and flipped it to
+        // dark, which read as "the theme doesn't stick."
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="<?= base_url('images/EMB-Logo.png') ?>">
     <link rel="shortcut icon" href="<?= base_url('images/EMB-Logo.png') ?>">
@@ -292,7 +301,16 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
         }
         
         .dark .hover\:bg-green-900:hover {
-            background-color: rgb(20 83 45) !important;
+            background-color: rgb(22 101 52) !important;
+        }
+
+        /* The active sidebar link reuses .bg-green-900, which dark mode also
+           uses (see below) for the sidebar's own background — without this,
+           both resolve to the same color and the "current page" highlight
+           becomes invisible. Scoped to the nav so it doesn't affect the
+           unrelated .bg-green-900 badges/buttons used elsewhere in the app. */
+        .dark nav .bg-green-900 {
+            background-color: rgb(21 128 61) !important;
         }
         
         .dark .hover\:bg-green-600:hover {

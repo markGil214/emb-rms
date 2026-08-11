@@ -82,6 +82,7 @@ $firstGroupId = !empty($allPermissions) ? array_keys($allPermissions)[0] : '';
     .user-avatar {
         width: 32px;
         height: 32px;
+        flex-shrink: 0;
         background: #3b82f6;
         color: white;
         border-radius: 50%;
@@ -136,6 +137,21 @@ $firstGroupId = !empty($allPermissions) ? array_keys($allPermissions)[0] : '';
         z-index: 1000;
         animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
+    /* Dark mode: this page uses its own hand-rolled CSS instead of Tailwind
+       utility classes, so the global dark-mode.css overrides (which only
+       target Tailwind class names) never match anything here. */
+    .dark .matrix-card { border-color: var(--color-border); background: var(--color-bg-secondary); box-shadow: none; }
+    .dark .tab-btn { color: var(--color-text-muted); }
+    .dark .tab-btn.active { color: #93c5fd; border-bottom-color: #93c5fd; background: rgba(59, 130, 246, 0.15); }
+    .dark .matrix-table th { background: var(--color-bg-tertiary); color: var(--color-text-secondary); border-color: var(--color-border); }
+    .dark .matrix-table td { border-color: var(--color-border); }
+    .dark .matrix-table td:first-child { background: var(--color-bg-secondary); border-color: var(--color-border); }
+    .dark .matrix-table th:first-child { background: var(--color-bg-tertiary); }
+    .dark .perm-checkbox { border-color: var(--color-border-light); }
+    .dark .role-super_admin { background: rgba(220, 38, 38, 0.2); color: #fca5a5; }
+    .dark .role-admin { background: rgba(14, 165, 233, 0.2); color: #7dd3fc; }
+    .dark .role-records_officer { background: rgba(34, 197, 94, 0.2); color: #86efac; }
 </style>
 
 <div class="max-w-8xl mx-auto px-4 py-8">
@@ -190,9 +206,9 @@ $firstGroupId = !empty($allPermissions) ? array_keys($allPermissions)[0] : '';
                                     <div class="user-avatar" style="background: <?= $isSuperAdmin ? '#991b1b' : ($roleKey === 'admin' ? '#075985' : '#166534') ?>">
                                         <?= substr($user['username'], 0, 1) ?>
                                     </div>
-                                    <div class="flex flex-col">
-                                        <div class="flex items-center gap-2">
-                                            <span class="font-bold text-gray-900 text-sm"><?= esc($user['full_name'] ?: $user['username']) ?></span>
+                                    <div class="flex flex-col gap-1 min-w-0">
+                                        <span class="font-bold text-gray-900 text-sm truncate"><?= esc($user['full_name'] ?: $user['username']) ?></span>
+                                        <div class="flex items-center gap-1.5 flex-wrap">
                                             <span class="role-badge role-<?= str_replace('superadmin', 'super_admin', $roleKey) ?>">
                                                 <?= esc(str_replace('_', ' ', $roleKey)) ?>
                                             </span>
