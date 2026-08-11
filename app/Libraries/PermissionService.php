@@ -26,7 +26,11 @@ class PermissionService
     private function normalizeRoleName($roleName)
     {
         $normalized = strtolower(trim((string) $roleName));
-        return str_replace('superadmin', 'super_admin', $normalized);
+        $legacyMap = [
+            'superadmin' => 'super_admin',
+            'recordsofficer' => 'records_officer',
+        ];
+        return $legacyMap[$normalized] ?? $normalized;
     }
 
     public function __construct()

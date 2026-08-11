@@ -25,6 +25,7 @@ class OverdueNotificationService
     protected $userModel;
     protected $folderModel;
     protected $emailService;
+    protected $permissionService;
 
     public function __construct()
     {
@@ -32,6 +33,7 @@ class OverdueNotificationService
         $this->userModel = new UserModel();
         $this->folderModel = new FolderModel();
         $this->emailService = new EmailService();
+        $this->permissionService = service('permissionService');
     }
 
     /**
@@ -218,13 +220,15 @@ class OverdueNotificationService
                 $managerEmail = $manager['email'] ?? null;
             }
 
-            // If no manager, escalate to system admin (role = SuperAdmin or first Admin)
+            // If no manager, escalate to system admin. Resolved via the
+            // RBAC-reconciled role (not a raw `users.role` query) so this
+            // still works even if the legacy column has drifted.
             if (!$managerEmail) {
-                $admin = $this->userModel
-                    ->whereIn('role', ['SuperAdmin'])
-                    ->first();
-                if ($admin) {
-                    $managerEmail = $admin['email'];
+                foreach ($this->userModel->findAll() as $candidate) {
+                    if ($this->permissionService->isSuperAdmin($candidate['user_id'])) {
+                        $managerEmail = $candidate['email'];
+                        break;
+                    }
                 }
             }
 

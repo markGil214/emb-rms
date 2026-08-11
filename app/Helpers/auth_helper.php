@@ -42,40 +42,7 @@ if (!function_exists('is_logged_in')) {
     }
 }
 
-if (!function_exists('user_role')) {
-    /**
-     * Get current user's role
-     * 
-     * @return string|null
-     */
-    function user_role()
-    {
-        $user = service('authentication')->user();
-        return $user['role'] ?? null;
-    }
-}
-
-if (!function_exists('is_admin')) {
-    /**
-     * Check if user is admin or super admin
-     * 
-     * @return bool
-     */
-    function is_admin()
-    {
-        $role = user_role();
-        return in_array($role, ['Admin', 'SuperAdmin']);
-    }
-}
-
-if (!function_exists('is_super_admin')) {
-    /**
-     * Check if user is super admin
-     * 
-     * @return bool
-     */
-    function is_super_admin()
-    {
-        return user_role() === 'SuperAdmin';
-    }
-}
+// user_role() / is_admin() / is_super_admin() used to be duplicated here
+// against raw session role (legacy `users.role`), which silently shadowed
+// the RBAC-reconciled versions in permission_helper.php due to helper load
+// order. Those are now the only definitions — see app/Helpers/permission_helper.php.

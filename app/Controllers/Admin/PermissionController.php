@@ -157,6 +157,20 @@ class PermissionController extends BaseController
 		if ($roleId && $roleId != $currentRoleId && $this->request->getPost('role_id')) {
 			$adminId = session()->get('user_id');
 			$permissionService->assignRole($userId, $roleId, $adminId);
+
+			// Keep the legacy users.role column in sync so session role
+			// (set at login from this column) doesn't go stale after an
+			// RBAC-only role change.
+			$newRole = $db->table('roles')->where('role_id', $roleId)->get()->getRowArray();
+			if ($newRole) {
+				$roleNameMap = [
+					'super_admin' => 'SuperAdmin',
+					'admin' => 'Admin',
+					'records_officer' => 'RecordsOfficer',
+				];
+				$legacyRoleName = $roleNameMap[strtolower($newRole['role_name'])] ?? $newRole['role_name'];
+				$db->table('users')->where('user_id', $userId)->update(['role' => $legacyRoleName]);
+			}
 		}
 
 		// Get permissions from the role (these cannot be unchecked per-user in current architecture)
