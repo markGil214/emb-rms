@@ -21,6 +21,7 @@ class RackManagementController extends BaseController
             'title' => 'Manage Racks',
             'locations' => $this->rackShelfModel->getAllOrdered(),
             'racks' => $this->rackShelfModel->getAllowedRacks(),
+            'occupancyMap' => $this->rackShelfModel->getOccupancyMap(),
         ]);
     }
 
@@ -35,6 +36,7 @@ class RackManagementController extends BaseController
             'title' => 'Manage Racks',
             'locations' => $this->rackShelfModel->getAllOrdered(),
             'racks' => $this->rackShelfModel->getAllowedRacks(),
+            'occupancyMap' => $this->rackShelfModel->getOccupancyMap(),
             'editLocation' => $location,
         ]);
     }
@@ -44,6 +46,7 @@ class RackManagementController extends BaseController
         $rules = [
             'rack' => 'required|integer|greater_than_equal_to[1]|less_than_equal_to[20]',
             'shelf' => 'required|max_length[50]|alpha_numeric_space',
+            'capacity' => 'permit_empty|integer|greater_than_equal_to[0]',
         ];
         $messages = [
             'rack' => [
@@ -56,6 +59,10 @@ class RackManagementController extends BaseController
                 'required' => 'Shelf label is required.',
                 'max_length' => 'Shelf label must not exceed 50 characters.',
                 'alpha_numeric_space' => 'Shelf label may only contain letters, numbers, and spaces.',
+            ],
+            'capacity' => [
+                'integer' => 'Capacity must be a whole number.',
+                'greater_than_equal_to' => 'Capacity cannot be negative. Use 0 for unlimited.',
             ],
         ];
 
@@ -77,6 +84,7 @@ class RackManagementController extends BaseController
         $saved = $this->rackShelfModel->insert([
             'rack' => $rack,
             'shelf' => $shelf,
+            'capacity' => (int) ($this->request->getPost('capacity') ?: 0),
             'current_count' => 0,
         ]);
 
@@ -97,6 +105,7 @@ class RackManagementController extends BaseController
         $rules = [
             'rack' => 'required|integer|greater_than_equal_to[1]|less_than_equal_to[20]',
             'shelf' => 'required|max_length[50]|alpha_numeric_space',
+            'capacity' => 'permit_empty|integer|greater_than_equal_to[0]',
         ];
         $messages = [
             'rack' => [
@@ -109,6 +118,10 @@ class RackManagementController extends BaseController
                 'required' => 'Shelf label is required.',
                 'max_length' => 'Shelf label must not exceed 50 characters.',
                 'alpha_numeric_space' => 'Shelf label may only contain letters, numbers, and spaces.',
+            ],
+            'capacity' => [
+                'integer' => 'Capacity must be a whole number.',
+                'greater_than_equal_to' => 'Capacity cannot be negative. Use 0 for unlimited.',
             ],
         ];
 
@@ -123,9 +136,21 @@ class RackManagementController extends BaseController
             return redirect()->to(route_to('racks.edit', $locationId))->withInput()->with('error', 'Rack and shelf combination already exists.');
         }
 
+        $newCapacity = (int) ($this->request->getPost('capacity') ?: 0);
+
+        // Don't let a shelf be capped below what it already holds, or the
+        // records sitting there would be silently over capacity.
+        $occupied = $this->rackShelfModel->getOccupancy($locationId);
+        if ($newCapacity < $occupied) {
+            return redirect()->to(route_to('racks.edit', $locationId))
+                ->withInput()
+                ->with('error', 'Capacity cannot be lower than the ' . $occupied . ' folder(s) already stored on this shelf.');
+        }
+
         $updated = $this->rackShelfModel->update($locationId, [
             'rack' => $rack,
             'shelf' => $shelf,
+            'capacity' => $newCapacity,
         ]);
 
         if (! $updated) {

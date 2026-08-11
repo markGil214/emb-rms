@@ -35,12 +35,18 @@ class ShelfMapApiController extends BaseController
                 ]);
             }
 
-            // Group folders by location to calculate occupancy
+            // Group folders by location to calculate occupancy. Folders still
+            // awaiting creation approval (or declined outright) have not been
+            // accepted onto a shelf, so they don't occupy space.
             $locationOccupancy = [];
             foreach ($folders as $folder) {
                 $locId = (int)($folder['location_id'] ?? 0);
                 if ($locId === 0) continue;
-                
+
+                if (in_array((string) ($folder['status'] ?? ''), \App\Models\RackShelfModel::NON_OCCUPYING_STATUSES, true)) {
+                    continue;
+                }
+
                 if (!isset($locationOccupancy[$locId])) {
                     $locationOccupancy[$locId] = [
                         'occupied' => 0,
@@ -67,8 +73,10 @@ class ShelfMapApiController extends BaseController
                 $occupied = (int)$occupancy['occupied'];
                 $capacity = (int)($loc['capacity'] ?? 100);
 
-                // Determine status based on occupancy percentage
-                $percentage = ($capacity > 0) ? ($occupied / $capacity) * 100 : 0;
+                // Determine status based on occupancy percentage. A shelf with
+                // no capacity set cannot take folders at all, so it is treated
+                // as full rather than reported as healthy.
+                $percentage = ($capacity > 0) ? ($occupied / $capacity) * 100 : 100;
                 if ($percentage >= 90) {
                     $status = 'Critical';
                     $color = 'red';

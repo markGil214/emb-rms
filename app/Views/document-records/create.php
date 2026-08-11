@@ -204,6 +204,8 @@
 
                         </select>
 
+                        <p id="shelfCapacityNote" class="mt-1 text-sm text-gray-600"></p>
+
                     </div>
 
                 </div>
@@ -267,13 +269,17 @@
 
                                 shelf: loc.shelf || loc.cabinet,
 
-                                locationId: loc.location_id
+                                locationId: loc.location_id,
+
+                                capacity: Number(loc.capacity || 0),
+
+                                remaining: Number(loc.remaining || 0)
 
                             }));
 
 
 
-                        const uniqueShelves = [...new Map(shelves.map(s => [s.shelf, s])).values()].sort((a, b) => 
+                        const uniqueShelves = [...new Map(shelves.map(s => [s.shelf, s])).values()].sort((a, b) =>
 
                             a.shelf.localeCompare(b.shelf)
 
@@ -287,7 +293,35 @@
 
                             option.value = JSON.stringify({ shelf: item.shelf, locationId: item.locationId });
 
-                            option.textContent = 'Shelf ' + item.shelf;
+                            // Show what's left so a full shelf is obvious before selecting it.
+
+                            let suffix;
+
+                            if (item.capacity <= 0) {
+
+                                suffix = ' — no capacity set';
+
+                            } else if (item.remaining <= 0) {
+
+                                suffix = ' — FULL (0 left)';
+
+                            } else {
+
+                                suffix = ' — ' + item.remaining + ' left';
+
+                            }
+
+                            option.textContent = 'Shelf ' + item.shelf + suffix;
+
+                            option.dataset.remaining = String(item.remaining);
+
+                            option.dataset.capacity = String(item.capacity);
+
+                            if (item.remaining <= 0) {
+
+                                option.disabled = true;
+
+                            }
 
                             shelfSelect.appendChild(option);
 
@@ -307,6 +341,77 @@
 
 
 
+                const createButton = document.getElementById('createRecordButton');
+
+                const capacityNote = document.getElementById('shelfCapacityNote');
+
+                // Keep the submit button in step with the selected shelf's
+                // remaining space -- the server rejects a full shelf anyway,
+                // so there's no point letting the form be submitted.
+                function syncCapacityState() {
+
+                    const option = shelfSelect.options[shelfSelect.selectedIndex];
+
+                    const hasSelection = !!(option && option.value);
+
+                    const remaining = hasSelection ? Number(option.dataset.remaining || 0) : null;
+
+                    const capacity = hasSelection ? Number(option.dataset.capacity || 0) : null;
+
+                    if (!hasSelection) {
+
+                        if (capacityNote) capacityNote.textContent = '';
+
+                        if (createButton) createButton.disabled = false;
+
+                        return;
+
+                    }
+
+                    if (capacity <= 0) {
+
+                        if (capacityNote) {
+
+                            capacityNote.textContent = 'This shelf has no capacity set and cannot store folders. Set its capacity in Manage Racks first.';
+
+                            capacityNote.className = 'mt-1 text-sm text-red-600';
+
+                        }
+
+                        if (createButton) createButton.disabled = true;
+
+                        return;
+
+                    }
+
+                    if (remaining <= 0) {
+
+                        if (capacityNote) {
+
+                            capacityNote.textContent = 'This shelf is full. Choose another shelf or raise its capacity in Manage Racks.';
+
+                            capacityNote.className = 'mt-1 text-sm text-red-600';
+
+                        }
+
+                        if (createButton) createButton.disabled = true;
+
+                        return;
+
+                    }
+
+                    if (capacityNote) {
+
+                        capacityNote.textContent = remaining + ' slot(s) left on this shelf.';
+
+                        capacityNote.className = remaining <= 5 ? 'mt-1 text-sm text-amber-600' : 'mt-1 text-sm text-gray-600';
+
+                    }
+
+                    if (createButton) createButton.disabled = false;
+
+                }
+
                 shelfSelect.addEventListener('change', function() {
 
                     locationIdInput.value = '';
@@ -319,7 +424,11 @@
 
                     }
 
+                    syncCapacityState();
+
                 });
+
+                cabinetSelect.addEventListener('change', syncCapacityState);
 
                 // Category options come directly from the database and are shown as plain names.
 
@@ -331,6 +440,14 @@
                     if (!cabinet || !shelf || !locationId) {
                         event.preventDefault();
                         window.showAppAlert('Please select both Rack and Shelf before creating the record.');
+                        return false;
+                    }
+
+                    const shelfSelectEl = document.getElementById('shelf');
+                    const selectedOption = shelfSelectEl.options[shelfSelectEl.selectedIndex];
+                    if (selectedOption && Number(selectedOption.dataset.remaining || 0) <= 0) {
+                        event.preventDefault();
+                        window.showAppAlert('That shelf has no space left. Choose another shelf or raise its capacity in Manage Racks.');
                         return false;
                     }
                     
@@ -353,9 +470,9 @@
 
                 </a>
 
-                <button type="submit" 
+                <button type="submit" id="createRecordButton"
 
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-full sm:w-auto">
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-full sm:w-auto disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:bg-gray-400">
 
                     Create Record
 
