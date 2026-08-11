@@ -20,8 +20,26 @@ class AuditLogModel extends Model
     protected $createdField = 'created_at';
     protected $updatedField = null;  // audit_logs doesn't have updated_at column
 
+    /**
+     * Record an audit entry.
+     *
+     * Argument order matters: callers previously passed
+     * ($userId, $action, $details), which silently wrote the user id into
+     * `action` and the action name into `entity_type`. The guard below makes
+     * that mistake visible in the logs instead of quietly corrupting the
+     * audit trail.
+     */
     public function log($action, $entityType, $entityId, $oldData = null, $newData = null, $userId = null)
     {
+        if (is_numeric($action)) {
+            log_message(
+                'warning',
+                'AuditLogModel::log() received a numeric $action ("' . $action . '"). '
+                . 'Expected log($action, $entityType, $entityId, $oldData, $newData, $userId) '
+                . '-- check the argument order at the call site.'
+            );
+        }
+
         return $this->insert([
             'user_id' => $userId ?? session('user_id'),
             'entity_type' => $entityType,
