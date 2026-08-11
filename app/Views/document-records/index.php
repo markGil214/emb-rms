@@ -48,18 +48,6 @@ $folderTypeOptions = [
 
 
 
-$sortOptions = [
-
-    'company_asc' => 'Alphabetical (A-Z)',
-
-    'company_desc' => 'Alphabetical (Z-A)',
-
-    'newest' => 'Newest Created',
-
-];
-
-
-
 $categories = $categories ?? [];
 
 $categoryOptions = [];
@@ -73,80 +61,14 @@ foreach ($categories as $category) {
     if ($categoryName !== '') {
 
         $categoryOptions[$categoryName] = $categoryName;
-
     }
-
 }
 
 ksort($categoryOptions);
 
 
 
-$formatLocation = static function (array $folder): string {
-
-    return (string) ($folder['location_code'] ?? '--');
-
-};
-
-
-
-$formatDate = static function ($dateString, string $fallback = '--'): string {
-
-    if (!$dateString) {
-
-        return $fallback;
-
-    }
-
-
-
-    $trimmed = trim((string) $dateString);
-
-    if ($trimmed === '' || $trimmed === '1970-01-01' || $trimmed === '1970-01-01 00:00:00') {
-
-        return $fallback;
-
-    }
-
-
-
-    $timestamp = strtotime($trimmed);
-
-    if ($timestamp === false) {
-
-        return $fallback;
-
-    }
-
-
-
-    return date('M d, Y', $timestamp);
-
-};
-
-
-
 $folders = $folders ?? [];
-
-$totalFolders = count($folders);
-
-$locationOptions = [];
-
-
-
-foreach ($folders as $folderRow) {
-
-    $locationLabel = $formatLocation($folderRow);
-
-    if ($locationLabel !== '' && $locationLabel !== '--') {
-
-        $locationOptions[$locationLabel] = $locationLabel;
-
-    }
-
-}
-
-ksort($locationOptions);
 
 ?>
 
@@ -176,21 +98,23 @@ ksort($locationOptions);
 
                         <input type="text"
 
-                               id="folderSearchInput"
+                            id="folderSearchInput"
 
-                               name="search"
+                            name="search"
 
-                               value="<?= esc($search) ?>"
+                            value="<?= esc($search) ?>"
 
-                               placeholder="Search folders..."
+                            placeholder="Search folders..."
 
-                               class="w-full lg:w-72 rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:ring-2 focus:ring-blue-500">
+                            class="w-full lg:w-72 rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:ring-2 focus:ring-blue-500">
 
-                        <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button type="button" id="folderSearchButton" aria-label="Search" class="absolute left-3 top-2.5 h-5 w-5 text-gray-400 hover:text-gray-600">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
 
-                        </svg>
+                            </svg>
+                        </button>
 
                     </div>
 
@@ -228,7 +152,7 @@ ksort($locationOptions);
 
                         <a href="<?= route_to('racks.index') ?>"
 
-                           class="inline-flex items-center space-x-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition-colors duration-200 hover:bg-gray-50">
+                            class="inline-flex items-center space-x-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition-colors duration-200 hover:bg-gray-50">
 
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 
@@ -250,7 +174,7 @@ ksort($locationOptions);
 
                         <a href="<?= route_to('categories.index') ?>"
 
-                           class="inline-flex items-center space-x-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition-colors duration-200 hover:bg-gray-50">
+                            class="inline-flex items-center space-x-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition-colors duration-200 hover:bg-gray-50">
 
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 
@@ -446,445 +370,15 @@ ksort($locationOptions);
 
         <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
 
-            <!-- Table Limiter at Top -->
-
-            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 px-4 py-3">
-
-                <div class="text-sm text-gray-700">
-
-                    Showing <span id="folderVisibleCount"><?= esc((string) count($folders)) ?></span> of <span id="folderTotalCount"><?= esc((string) $totalFolders) ?></span> entries
-
-                </div>
-
-                <div class="flex items-center gap-4">
-
-                    <div class="text-sm text-gray-500">
-
-                        Active sort: <span id="folderActiveSortLabel"><?= esc($sortOptions[$sortFilter] ?? 'Alphabetical (A-Z)') ?></span>
-
-                    </div>
-
-                    <!-- Table Limiter Buttons -->
-
-                    <div class="flex items-center gap-2">
-
-                        <span class="text-sm text-gray-600">Show:</span>
-
-                        <div class="flex gap-1" id="tableLimiterButtons">
-
-                            <button type="button" class="limiter-btn px-3 py-1 text-sm font-medium border border-gray-300 rounded hover:bg-gray-50 hover:border-gray-400 transition-all duration-200" data-limit="25">25</button>
-
-                            <button type="button" class="limiter-btn px-3 py-1 text-sm font-medium border border-gray-300 rounded hover:bg-gray-50 hover:border-gray-400 transition-all duration-200" data-limit="100">100</button>
-
-                            <button type="button" class="limiter-btn px-3 py-1 text-sm font-medium border border-gray-300 rounded hover:bg-gray-50 hover:border-gray-400 transition-all duration-200" data-limit="250">250</button>
-
-                            <button type="button" class="limiter-btn px-3 py-1 text-sm font-medium border border-gray-300 rounded hover:bg-gray-50 hover:border-gray-400 transition-all duration-200" data-limit="all">All</button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
+            <div id="folderResultsPanel">
+                <?= view('document-records/_results_panel', [
+                    'folders' => $folders,
+                    'totalFolders' => $totalFolders,
+                    'currentPage' => $currentPage,
+                    'totalPages' => $totalPages,
+                    'filters' => $filters,
+                ]) ?>
             </div>
-
-            <?php if (empty($folders)): ?>
-
-                <div class="p-12 text-center">
-
-                    <svg class="mx-auto mb-4 h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-
-                    </svg>
-
-                    <h3 class="mb-2 text-lg font-medium text-gray-900">
-
-                        <?php if ($search !== '' || $statusFilter !== '' || $folderTypeFilter !== '' || $sortFilter !== 'company_asc' || $categoryFilter !== ''): ?>
-
-                            No matching folders found
-
-                        <?php else: ?>
-
-                            No folders found
-
-                        <?php endif; ?>
-
-                    </h3>
-
-                    <p class="mb-4 text-gray-600">
-
-                        <?php if ($search !== '' || $statusFilter !== '' || $folderTypeFilter !== '' || $sortFilter !== 'company_asc' || $categoryFilter !== ''): ?>
-
-                            Try adjusting your search or filter criteria
-
-                        <?php else: ?>
-
-                            Get started by creating your first folder
-
-                        <?php endif; ?>
-
-                    </p>
-
-                    <?php if (can('create_document_record') && $search === '' && $statusFilter === '' && $folderTypeFilter === '' && $sortFilter === 'company_asc' && $categoryFilter === ''): ?>
-
-                        <a href="<?= route_to('records.create') ?>"
-
-                           class="inline-flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-700">
-
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-
-                            </svg>
-
-                            <span>Create Folder</span>
-
-                        </a>
-
-                    <?php endif; ?>
-
-                </div>
-
-            <?php else: ?>
-
-                <div class="overflow-x-auto">
-
-                    <table class="min-w-full divide-y divide-gray-200">
-
-                        <thead class="bg-gray-50">
-
-                            <tr>
-
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">File Code</th>
-
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Location</th>
-
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Company</th>
-
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Category</th>
-
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Type</th>
-
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Borrowed / Due Date</th>
-
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date Returned</th>
-
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody id="folderTableBody" class="divide-y divide-gray-200 bg-white">
-
-                            <tr id="folderNoResultsRow" class="hidden">
-
-                                <td colspan="9" class="px-6 py-12 text-center text-gray-500">No matching folders found</td>
-
-                            </tr>
-
-                            <?php foreach ($folders as $folder): ?>
-
-                                <?php
-
-                                $folderStatus = $folder['status'] ?? 'Unknown';
-
-                                switch ($folderStatus) {
-
-                                    case 'Available':
-
-                                        $statusClass = 'bg-green-100 text-green-800';
-
-                                        break;
-
-                                    case 'Borrowed':
-
-                                        $statusClass = 'bg-red-100 text-red-800';
-
-                                        break;
-
-                                    case 'Archived':
-
-                                        $statusClass = 'bg-gray-100 text-gray-800';
-
-                                        break;
-
-                                    case 'Archival':
-
-                                        $statusClass = 'bg-orange-100 text-orange-800';
-
-                                        break;
-
-                                    case 'Pending':
-
-                                        $statusClass = 'bg-blue-100 text-blue-800';
-
-                                        break;
-
-                                    case 'Pending Update':
-
-                                        $statusClass = 'bg-indigo-100 text-indigo-800';
-
-                                        break;
-
-                                    case 'Pending Archive':
-
-                                        $statusClass = 'bg-orange-100 text-orange-800';
-
-                                        break;
-
-                                    case 'Declined':
-
-                                        $statusClass = 'bg-red-100 text-red-800';
-
-                                        break;
-
-                                    default:
-
-                                        $statusClass = 'bg-yellow-100 text-yellow-800';
-
-                                        break;
-
-                                }
-
-
-
-                                $categoryLabel = trim((string) ($folder['folder_category'] ?? '--'));
-
-                                $searchText = strtolower(trim(implode(' ', array_filter([
-
-                                    (string) ($folder['file_code'] ?? ''),
-
-                                    (string) ($folder['company_name'] ?? ''),
-
-                                    (string) ($folder['location_code'] ?? ''),
-
-                                    (string) $categoryLabel,
-
-                                    (string) ($folder['folder_type'] ?? ''),
-
-                                    (string) $folderStatus,
-
-                                ]))));
-
-                                ?>
-
-                                <tr
-
-                                    class="folder-row bg-white transition-colors duration-150 hover:bg-gray-50"
-
-                                    data-company-name="<?= esc(strtolower((string) ($folder['company_name'] ?? ''))); ?>"
-
-                                    data-file-code="<?= esc(strtolower((string) ($folder['file_code'] ?? ''))); ?>"
-
-                                    data-location-code="<?= esc(strtolower((string) ($folder['location_code'] ?? ''))); ?>"
-
-                                    data-category-label="<?= esc(strtolower($categoryLabel)); ?>"
-
-                                    data-folder-type="<?= esc(strtolower((string) ($folder['folder_type'] ?? ''))); ?>"
-
-                                    data-status="<?= esc(strtolower((string) $folderStatus)); ?>"
-
-                                    data-created-at="<?= esc((string) ($folder['created_at'] ?? '')); ?>"
-
-                                    data-search-text="<?= esc($searchText); ?>">
-
-                                    <td class="whitespace-nowrap px-4 py-2">
-
-                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium <?= $statusClass ?>">
-
-                                            <?= esc($folderStatus) ?>
-
-                                        </span>
-
-                                    </td>
-
-                                    <td class="whitespace-nowrap px-4 py-2 text-sm font-semibold text-gray-900"><?= esc($folder['file_code'] ?? '--') ?></td>
-
-                                    <td class="whitespace-nowrap px-4 py-2 text-sm font-medium text-blue-600"><?= esc($folder['location_code'] ?? '--') ?></td>
-
-                                    <td class="px-4 py-2 text-sm text-gray-900"><?= esc($folder['company_name'] ?? 'Unknown Folder') ?></td>
-
-                                    <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-700"><?= esc($categoryLabel) ?></td>
-
-                                    <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-900"><?= esc($folder['folder_type'] ?? '--') ?></td>
-
-                                    <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-700">
-
-                                        <div>Borrowed Date: <?= esc($formatDate($folder['borrowed_date'] ?? null, 'Not yet borrowed')) ?></div>
-
-                                        <div>Due Date: <?= esc($formatDate($folder['due_date'] ?? null, 'Not yet borrowed')) ?></div>
-
-                                    </td>
-
-                                    <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-700">
-
-                                        <?php if (! empty($folder['return_date'])): ?>
-
-                                            <?= esc($formatDate($folder['return_date'], '--')) ?>
-
-                                        <?php elseif ($folderStatus === 'Borrowed'): ?>
-
-                                            Not yet returned
-
-                                        <?php else: ?>
-
-                                            No return record
-
-                                        <?php endif; ?>
-
-                                    </td>
-
-                                    <td class="whitespace-nowrap px-4 py-2 text-sm font-medium">
-
-                                        <div class="flex items-center gap-2 whitespace-nowrap">
-
-                                            <?= view('components/button', [
-
-                                                'label' => 'View',
-
-                                                'type' => 'link',
-
-                                                'url' => route_to('records.show', $folder['folder_id']),
-
-                                                'style' => 'info',
-
-                                                'title' => 'View Details',
-
-                                                'confirm' => null,
-
-                                                'class' => 'px-3 py-2'
-
-                                            ]) ?>
-
-
-
-                                            <?php if ($folderStatus !== 'Pending Archive'): ?>
-
-                                                <?= view('components/button', [
-
-                                                    'label' => 'Edit',
-
-                                                    'type' => 'link',
-
-                                                    'url' => route_to('records.edit', $folder['folder_id']),
-
-                                                    'style' => 'info',
-
-                                                    'title' => 'Edit Folder',
-
-                                                    'confirm' => null,
-
-                                                    'class' => 'px-3 py-2'
-
-                                                ]) ?>
-
-                                            <?php endif; ?>
-
-
-
-                                            <?php if (can('approve_folder_creation') && ($folderStatus === 'Pending' || $folderStatus === 'Pending Update')): ?>
-
-                                                <?= view('components/button', [
-
-                                                    'label' => 'Approve',
-
-                                                    'type' => 'submit',
-
-                                                    'style' => 'primary',
-
-                                                    'action' => route_to('records.approve', $folder['folder_id']),
-
-                                                    'confirm' => 'Are you sure you want to approve this folder?',
-
-                                                    'class' => 'px-3 py-2'
-
-                                                ]) ?>
-
-                                                <?= view('components/button', [
-
-                                                    'label' => 'Decline',
-
-                                                    'type' => 'submit',
-
-                                                    'style' => 'danger',
-
-                                                    'action' => route_to('records.decline', $folder['folder_id']),
-
-                                                    'confirm' => 'Are you sure you want to decline this folder?',
-
-                                                    'class' => 'px-3 py-2'
-
-                                                ]) ?>
-
-                                            <?php endif; ?>
-
-
-
-                                            <?php if (can('approve_archive') && $folderStatus !== 'Archived' && $folderStatus !== 'Archival' && $folderStatus !== 'Borrowed' && $folderStatus !== 'Disposed' && $folderStatus !== 'Pending' && $folderStatus !== 'Pending Update' && $folderStatus !== 'Pending Archive'): ?>
-
-                                                <?= view('components/button', [
-
-                                                    'label' => 'Archive',
-
-                                                    'type' => 'submit',
-
-                                                    'style' => 'secondary',
-
-                                                    'class' => 'text-green-700 px-3 py-2',
-
-                                                    'action' => route_to('records.archive', $folder['folder_id']),
-
-                                                    'confirm' => 'Submit this folder for archive approval?'
-
-                                                ]) ?>
-
-                                            <?php elseif ($folderStatus === 'Archived'): ?>
-
-                                                <span class="text-gray-400 font-medium px-2">Archived</span>
-
-                                            <?php elseif ($folderStatus === 'Borrowed'): ?>
-
-                                                <span class="text-red-600 font-medium px-2">Borrowed</span>
-
-                                            <?php elseif ($folderStatus === 'Archival'): ?>
-
-                                                <span class="text-orange-600 font-medium px-2">Archival</span>
-
-                                            <?php elseif ($folderStatus === 'Pending Archive'): ?>
-
-                                                <span class="text-orange-600 font-medium px-2">Archive pending</span>
-
-                                            <?php endif; ?>
-
-                                        </div>
-
-                                    </td>
-
-                                </tr>
-
-                            <?php endforeach; ?>
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-                <!-- Pagination Numbers -->
-                <?php if ($totalFolders > 0): ?>
-                    <div class="flex flex-col items-center justify-end gap-4 border-t border-gray-200 px-4 py-3 sm:flex-row">
-                        <!-- Pagination Numbers -->
-                        <div class="flex items-center gap-1" id="paginationNumbers">
-                            <!-- Pagination will be generated by JavaScript -->
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-            <?php endif; ?>
 
         </div>
 
@@ -895,518 +389,312 @@ ksort($locationOptions);
 
 
 <script>
-
-(function () {
-
-    var form = document.getElementById('folderFiltersForm');
-
-    if (!form) {
-
-        return;
-
-    }
-
-
-
-    var searchInput = document.getElementById('folderSearchInput');
-
-    var sortFilterInput = document.getElementById('sortFilterInput');
-
-    var statusFilterInput = document.getElementById('statusFilterInput');
-
-    var folderTypeFilterInput = document.getElementById('folderTypeFilterInput');
-
-    var categoryFilterInput = document.getElementById('categoryFilterInput');
-
-
-
-    var filtersModal = document.getElementById('filtersModal');
-
-    var openFiltersModal = document.getElementById('openFiltersModal');
-
-    var closeFiltersModal = document.getElementById('closeFiltersModal');
-
-    var applyFiltersButton = document.getElementById('applyFiltersButton');
-
-
-
-    var modalStatusFilter = document.getElementById('modalStatusFilter');
-
-    var modalFolderTypeFilter = document.getElementById('modalFolderTypeFilter');
-
-    var modalCategoryFilter = document.getElementById('modalCategoryFilter');
-
-    var sortButtons = Array.prototype.slice.call(document.querySelectorAll('.sort-button.modal-filter'));
-
-
-
-    var resetButton = document.getElementById('resetFiltersButton');
-
-    var tbody = document.getElementById('folderTableBody');
-
-    var noResultsRow = document.getElementById('folderNoResultsRow');
-
-    var visibleCount = document.getElementById('folderVisibleCount');
-
-    var totalCount = document.getElementById('folderTotalCount');
-
-    var activeSortLabel = document.getElementById('folderActiveSortLabel');
-
-
-
-    if (!searchInput || !tbody) {
-
-        return;
-
-    }
-
-
-
-    var sortLabels = {
-
-        company_asc: 'Alphabetical (A-Z)',
-
-        company_desc: 'Alphabetical (Z-A)',
-
-        newest: 'Newest Created'
-
-    };
-
-
-
-    function normalizeValue(value) {
-
-        return String(value || '').trim().toLowerCase();
-
-    }
-
-
-
-    function setActiveSort(sortValue) {
-
-        if (sortFilterInput) {
-
-            sortFilterInput.value = sortValue;
-
-        }
-
-
-
-        sortButtons.forEach(function (button) {
-
-            var isActive = button.dataset.sortValue === sortValue;
-
-            button.classList.toggle('bg-blue-50', isActive);
-
-            button.classList.toggle('text-blue-700', isActive);
-
-            button.classList.toggle('font-semibold', isActive);
-
-        });
-
-    }
-
-
-
-    function rowMatches(row, filters) {
-
-        var searchText = normalizeValue(row.dataset.searchText);
-
-        var status = normalizeValue(row.dataset.status);
-
-        var folderType = normalizeValue(row.dataset.folderType);
-
-        var categoryLabel = normalizeValue(row.dataset.categoryLabel);
-
-
-
-        if (filters.search !== '' && searchText.indexOf(filters.search) === -1) {
-
-            return false;
-
-        }
-
-
-
-        if (filters.status !== '' && status !== filters.status) {
-
-            return false;
-
-        }
-
-
-
-        if (filters.folderType !== '' && folderType !== filters.folderType) {
-
-            return false;
-
-        }
-
-
-
-        if (filters.category !== '' && categoryLabel !== filters.category) {
-
-            return false;
-
-        }
-
-
-
-        return true;
-
-    }
-
-
-
-    function compareRows(a, b, sortKey) {
-
-        var companyA = normalizeValue(a.dataset.companyName);
-
-        var companyB = normalizeValue(b.dataset.companyName);
-
-        var createdA = Date.parse(a.dataset.createdAt || '') || 0;
-
-        var createdB = Date.parse(b.dataset.createdAt || '') || 0;
-
-        var fallbackA = normalizeValue(a.dataset.fileCode);
-
-        var fallbackB = normalizeValue(b.dataset.fileCode);
-
-
-
-        if (sortKey === 'company_desc') {
-
-            var descResult = companyB.localeCompare(companyA);
-
-            return descResult !== 0 ? descResult : fallbackB.localeCompare(fallbackA);
-
-        }
-
-
-
-        if (sortKey === 'newest') {
-
-            if (createdB !== createdA) {
-
-                return createdB - createdA;
-
-            }
-
-            return fallbackB.localeCompare(fallbackA);
-
-        }
-
-
-
-        var ascResult = companyA.localeCompare(companyB);
-
-        return ascResult !== 0 ? ascResult : fallbackA.localeCompare(fallbackB);
-
-    }
-
-
-
-    function applyFilters() {
-
-        var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr.folder-row'));
-
-        
-
-        var filters = {
-
-            search: normalizeValue(searchInput.value),
-
-            status: normalizeValue(statusFilterInput ? statusFilterInput.value : ''),
-
-            folderType: normalizeValue(folderTypeFilterInput ? folderTypeFilterInput.value : ''),
-
-            category: normalizeValue(categoryFilterInput ? categoryFilterInput.value : ''),
-
-            sort: normalizeValue(sortFilterInput ? sortFilterInput.value : 'company_asc') || 'company_asc'
-
-        };
-
-
-
-        var filteredRows = rows.filter(function (row) {
-
-            return rowMatches(row, filters);
-
-        });
-
-
-
-        var sortedRows = rows.slice().sort(function (a, b) {
-
-            return compareRows(a, b, filters.sort);
-
-        });
-
-
-
-        sortedRows.forEach(function (row) {
-
-            var isVisible = rowMatches(row, filters);
-
-            row.style.display = isVisible ? '' : 'none';
-
-            tbody.appendChild(row);
-
-        });
-
-
-
-        if (noResultsRow) {
-
-            noResultsRow.style.display = filteredRows.length === 0 ? '' : 'none';
-
-            tbody.appendChild(noResultsRow);
-
-        }
-
-
-
-        if (visibleCount) {
-
-            visibleCount.textContent = String(filteredRows.length);
-
-        }
-
-
-
-        if (totalCount) {
-
-            totalCount.textContent = String(rows.length);
-
-        }
-
-
-
-        if (activeSortLabel) {
-
-            activeSortLabel.textContent = sortLabels[filters.sort] || sortLabels.company_asc;
-
-        }
-
-    }
-
-
-
-    var searchTimer = null;
-
-    searchInput.addEventListener('input', function () {
-
-        window.clearTimeout(searchTimer);
-
-        searchTimer = window.setTimeout(applyFilters, 150);
-
-    });
-
-
-
-    [modalStatusFilter, modalFolderTypeFilter, modalCategoryFilter].forEach(function (control) {
-
-        if (control) {
-
-            control.addEventListener('change', function () {
-
-                if (control === modalStatusFilter) statusFilterInput.value = control.value;
-
-                if (control === modalFolderTypeFilter) folderTypeFilterInput.value = control.value;
-
-                if (control === modalCategoryFilter) categoryFilterInput.value = control.value;
-
-            });
-
-        }
-
-    });
-
-
-
-    sortButtons.forEach(function (button) {
-
-        button.addEventListener('click', function () {
-
-            setActiveSort(button.dataset.sortValue || 'company_asc');
-
-        });
-
-    });
-
-
-
-    openFiltersModal.addEventListener('click', function () {
-
-        filtersModal.classList.remove('hidden');
-
-        filtersModal.classList.add('flex');
-
-    });
-
-
-
-    closeFiltersModal.addEventListener('click', function () {
-
-        filtersModal.classList.add('hidden');
-
-        filtersModal.classList.remove('flex');
-
-    });
-
-
-
-    applyFiltersButton.addEventListener('click', function () {
-
-        applyFilters();
-
-        filtersModal.classList.add('hidden');
-
-        filtersModal.classList.remove('flex');
-
-    });
-
-
-
-    filtersModal.addEventListener('click', function (event) {
-
-        if (event.target === filtersModal) {
-
-            filtersModal.classList.add('hidden');
-
-            filtersModal.classList.remove('flex');
-
-        }
-
-    });
-
-
-
-    setActiveSort(normalizeValue(sortFilterInput ? sortFilterInput.value : 'company_asc') || 'company_asc');
-
-
-
-    if (resetButton) {
-
-        resetButton.addEventListener('click', function () {
-
-            searchInput.value = '';
-
-            if (modalStatusFilter) modalStatusFilter.value = '';
-
-            if (modalFolderTypeFilter) modalFolderTypeFilter.value = '';
-
-            if (modalCategoryFilter) modalCategoryFilter.value = '';
-
-            if (statusFilterInput) statusFilterInput.value = '';
-
-            if (folderTypeFilterInput) folderTypeFilterInput.value = '';
-
-            if (categoryFilterInput) categoryFilterInput.value = '';
-
-            setActiveSort('company_asc');
-
-            applyFilters();
-
-            filtersModal.classList.add('hidden');
-
-            filtersModal.classList.remove('flex');
-
-        });
-
-    }
-
-    // Table limiter functionality
-    var limiterButtons = document.querySelectorAll('.limiter-btn');
-    var currentLimit = 'all'; // Default to show all
-
-    function setActiveLimiterButton(limit) {
-        limiterButtons.forEach(function (button) {
-            button.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
-            button.classList.add('border-gray-300');
-        });
-        
-        var activeButton = document.querySelector('.limiter-btn[data-limit="' + limit + '"]');
-        if (activeButton) {
-            activeButton.classList.remove('border-gray-300');
-            activeButton.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
-        }
-        
-        currentLimit = limit;
-        
-        // Store preference
-        localStorage.setItem('documentTableLimit', limit);
-    }
-
-    limiterButtons.forEach(function (button) {
-        button.addEventListener('click', function () {
-            var limit = this.getAttribute('data-limit');
-            setActiveLimiterButton(limit);
-            // Reload page with new limit parameter
-            var url = new URL(window.location.href);
-            url.searchParams.set('limit', limit);
-            url.searchParams.set('page', '1'); // Reset to first page when changing limit
-            window.location.href = url.toString();
-        });
-    });
-
-    // Generate pagination numbers
-    function generatePaginationNumbers() {
-        var totalFolders = <?= (int) ($totalFolders ?? 0) ?>;
-        var currentPage = <?= (int) ($currentPage ?? 1) ?>;
-        var totalPages = <?= (int) ($totalPages ?? 1) ?>;
-        var paginationContainer = document.getElementById('paginationNumbers');
-        
-        if (!paginationContainer || totalFolders <= 0) {
+    (function() {
+        var form = document.getElementById('folderFiltersForm');
+        var resultsPanel = document.getElementById('folderResultsPanel');
+        var searchInput = document.getElementById('folderSearchInput');
+
+        if (!form || !resultsPanel || !searchInput) {
             return;
         }
-        
-        var html = '';
-        
-        // Previous button
-        if (currentPage > 1) {
-            html += '<a href="' + getPageUrl(currentPage - 1) + '" class="px-3 py-1 text-sm border border-gray-300 rounded-l hover:bg-gray-50 transition-colors">←prev</a>';
+
+        var sortFilterInput = document.getElementById('sortFilterInput');
+        var statusFilterInput = document.getElementById('statusFilterInput');
+        var folderTypeFilterInput = document.getElementById('folderTypeFilterInput');
+        var categoryFilterInput = document.getElementById('categoryFilterInput');
+
+        var filtersModal = document.getElementById('filtersModal');
+        var openFiltersModal = document.getElementById('openFiltersModal');
+        var closeFiltersModal = document.getElementById('closeFiltersModal');
+        var applyFiltersButton = document.getElementById('applyFiltersButton');
+
+        var modalStatusFilter = document.getElementById('modalStatusFilter');
+        var modalFolderTypeFilter = document.getElementById('modalFolderTypeFilter');
+        var modalCategoryFilter = document.getElementById('modalCategoryFilter');
+        var sortButtons = Array.prototype.slice.call(document.querySelectorAll('.sort-button.modal-filter'));
+
+        var resetButton = document.getElementById('resetFiltersButton');
+        var searchButton = document.getElementById('folderSearchButton');
+
+        function normalizeValue(value) {
+            return String(value || '').trim().toLowerCase();
         }
-        
-        // Page numbers
-        var maxPages = Math.min(5, totalPages); // Show max 5 page numbers
-        
-        for (var i = 1; i <= maxPages; i++) {
-            var isActive = i === currentPage;
-            var activeClass = isActive ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 hover:bg-gray-50';
-            html += '<a href="' + getPageUrl(i) + '" class="px-3 py-1 text-sm border ' + activeClass + ' transition-colors">' + i + '</a>';
-            
-            if (i < maxPages) {
-                html += '<span class="text-gray-500">|</span>';
+
+        function setActiveSort(sortValue) {
+            if (sortFilterInput) {
+                sortFilterInput.value = sortValue;
+            }
+
+            sortButtons.forEach(function(button) {
+                var isActive = button.dataset.sortValue === sortValue;
+                button.classList.toggle('bg-blue-50', isActive);
+                button.classList.toggle('text-blue-700', isActive);
+                button.classList.toggle('font-semibold', isActive);
+            });
+        }
+
+        function applyActiveLimiterButton(limit) {
+            var limiterButtons = resultsPanel.querySelectorAll('.limiter-btn');
+            limiterButtons.forEach(function(button) {
+                button.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+                button.classList.add('border-gray-300');
+            });
+
+            var activeButton = resultsPanel.querySelector('.limiter-btn[data-limit="' + limit + '"]');
+            if (activeButton) {
+                activeButton.classList.remove('border-gray-300');
+                activeButton.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
             }
         }
-        
-        // Next button
-        if (currentPage < totalPages) {
-            html += '<a href="' + getPageUrl(currentPage + 1) + '" class="px-3 py-1 text-sm border border-gray-300 rounded-r hover:bg-gray-50 transition-colors">next→</a>';
+
+        function buildFilterUrl() {
+            var url = new URL(window.location.href);
+
+            var params = {
+                search: searchInput.value,
+                status: statusFilterInput ? statusFilterInput.value : '',
+                folder_type: folderTypeFilterInput ? folderTypeFilterInput.value : '',
+                category: categoryFilterInput ? categoryFilterInput.value : '',
+                sort: sortFilterInput ? sortFilterInput.value : 'company_asc',
+            };
+
+            Object.keys(params).forEach(function(key) {
+                var value = params[key];
+                if (!value) {
+                    url.searchParams.delete(key);
+                } else {
+                    url.searchParams.set(key, value);
+                }
+            });
+
+            url.searchParams.set('page', '1');
+
+            return url.toString();
         }
-        
-        paginationContainer.innerHTML = html;
-    }
-    
-    function getPageUrl(page) {
-        var url = new URL(window.location.href);
-        url.searchParams.set('page', page);
-        return url.toString();
-    }
-    
-    // Set active limiter button based on current limit or saved preference
-    var savedLimit = localStorage.getItem('documentTableLimit');
-    setActiveLimiterButton(savedLimit || 'all');
-    
-    // Generate pagination on page load
-    generatePaginationNumbers();
 
-    applyFilters();
-})();
+        // Results (count, table/empty-state, pagination) are fetched and
+        // swapped in place so typing a keyword — or changing a filter, sort,
+        // page size, or page — feels instant instead of reloading the page.
+        var requestToken = 0;
 
+        function loadResults(url, options) {
+            options = options || {};
+            var thisToken = ++requestToken;
+
+            resultsPanel.classList.add('opacity-60');
+
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('Failed to load results');
+                    }
+                    return response.text();
+                })
+                .then(function(html) {
+                    if (thisToken !== requestToken) {
+                        return; // a newer request already landed
+                    }
+
+                    resultsPanel.innerHTML = html;
+
+                    var limit = new URL(url, window.location.origin).searchParams.get('limit') || '25';
+                    applyActiveLimiterButton(limit);
+
+                    if (options.replace) {
+                        window.history.replaceState({}, '', url);
+                    } else {
+                        window.history.pushState({}, '', url);
+                    }
+                })
+                .catch(function() {
+                    window.location.href = url;
+                })
+                .finally(function() {
+                    if (thisToken === requestToken) {
+                        resultsPanel.classList.remove('opacity-60');
+                    }
+                });
+        }
+
+        function navigateWithCurrentFilters() {
+            loadResults(buildFilterUrl());
+        }
+
+        // Live search: debounce while typing so it feels real-time without
+        // firing a request on every single keystroke; Enter/the search icon
+        // trigger immediately.
+        var searchTimer = null;
+
+        searchInput.addEventListener('input', function() {
+            window.clearTimeout(searchTimer);
+            searchTimer = window.setTimeout(navigateWithCurrentFilters, 300);
+        });
+
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                window.clearTimeout(searchTimer);
+                navigateWithCurrentFilters();
+            }
+        });
+
+        if (searchButton) {
+            searchButton.addEventListener('click', function() {
+                window.clearTimeout(searchTimer);
+                navigateWithCurrentFilters();
+            });
+        }
+
+        [modalStatusFilter, modalFolderTypeFilter, modalCategoryFilter].forEach(function(control) {
+            if (control) {
+                control.addEventListener('change', function() {
+                    if (control === modalStatusFilter) statusFilterInput.value = control.value;
+                    if (control === modalFolderTypeFilter) folderTypeFilterInput.value = control.value;
+                    if (control === modalCategoryFilter) categoryFilterInput.value = control.value;
+                });
+            }
+        });
+
+        sortButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                setActiveSort(button.dataset.sortValue || 'company_asc');
+            });
+        });
+
+        openFiltersModal.addEventListener('click', function() {
+            filtersModal.classList.remove('hidden');
+            filtersModal.classList.add('flex');
+        });
+
+        closeFiltersModal.addEventListener('click', function() {
+            filtersModal.classList.add('hidden');
+            filtersModal.classList.remove('flex');
+        });
+
+        applyFiltersButton.addEventListener('click', function() {
+            navigateWithCurrentFilters();
+        });
+
+        filtersModal.addEventListener('click', function(event) {
+            if (event.target === filtersModal) {
+                filtersModal.classList.add('hidden');
+                filtersModal.classList.remove('flex');
+            }
+        });
+
+        setActiveSort(normalizeValue(sortFilterInput ? sortFilterInput.value : 'company_asc') || 'company_asc');
+
+        if (resetButton) {
+            resetButton.addEventListener('click', function() {
+                searchInput.value = '';
+                if (modalStatusFilter) modalStatusFilter.value = '';
+                if (modalFolderTypeFilter) modalFolderTypeFilter.value = '';
+                if (modalCategoryFilter) modalCategoryFilter.value = '';
+                if (statusFilterInput) statusFilterInput.value = '';
+                if (folderTypeFilterInput) folderTypeFilterInput.value = '';
+                if (categoryFilterInput) categoryFilterInput.value = '';
+                setActiveSort('company_asc');
+                navigateWithCurrentFilters();
+            });
+        }
+
+        // The limiter buttons, pagination links, and per-row approve/decline
+        // forms all live inside resultsPanel and get replaced on every
+        // reload, so they're handled via delegation instead of being bound
+        // directly (direct bindings would go stale after the first swap).
+        resultsPanel.addEventListener('click', function(event) {
+            var limiterBtn = event.target.closest('.limiter-btn');
+            if (limiterBtn) {
+                event.preventDefault();
+                var url = new URL(window.location.href);
+                url.searchParams.set('limit', limiterBtn.getAttribute('data-limit'));
+                url.searchParams.set('page', '1');
+                loadResults(url.toString());
+                return;
+            }
+
+            var pageLink = event.target.closest('a[data-page-link]');
+            if (pageLink) {
+                event.preventDefault();
+                loadResults(pageLink.href);
+            }
+        });
+
+        function formatDiffDetails(diff) {
+            var details = {};
+            var hasChanges = false;
+
+            (diff || []).forEach(function(item) {
+                if (item.changed) {
+                    hasChanges = true;
+                    details[item.label] = item.current + '  →  ' + item.proposed;
+                }
+            });
+
+            if (!hasChanges) {
+                details['Changes'] = 'No field changes detected.';
+            }
+
+            return details;
+        }
+
+        resultsPanel.addEventListener('submit', function(event) {
+            var updateForm = event.target;
+            if (!updateForm.classList.contains('update-diff-form')) {
+                return;
+            }
+
+            if (updateForm.dataset.diffConfirmed === 'true') {
+                updateForm.dataset.diffConfirmed = 'false';
+                event.stopPropagation();
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            var isApprove = updateForm.getAttribute('data-diff-action') === 'approve';
+            var diffUrl = updateForm.getAttribute('data-diff-url');
+
+            fetch(diffUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function(response) {
+                    if (!response.ok) {
+                        return response.json().then(function(body) {
+                            throw new Error(body.error || 'Unable to load the proposed update.');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    window.showConfirmation({
+                        title: isApprove ? 'Approve Metadata Update' : 'Decline Metadata Update',
+                        message: isApprove ?
+                            'Review the proposed changes below before approving this update.' : 'Review the proposed changes below before declining this update.',
+                        confirmText: isApprove ? 'Approve' : 'Decline',
+                        cancelText: 'Cancel',
+                        details: formatDiffDetails(data.diff),
+                        onConfirm: function() {
+                            updateForm.dataset.diffConfirmed = 'true';
+                            if (typeof updateForm.requestSubmit === 'function') {
+                                updateForm.requestSubmit();
+                            } else {
+                                updateForm.submit();
+                            }
+                        },
+                    });
+                })
+                .catch(function(err) {
+                    window.showError(err.message || 'Unable to load the proposed update.');
+                });
+        });
+
+        // Keep the results panel in sync with browser back/forward.
+        window.addEventListener('popstate', function() {
+            loadResults(window.location.href, { replace: true });
+        });
+
+        applyActiveLimiterButton(<?= json_encode((string) ($filters['limit'] ?? 'all')) ?>);
+    })();
 </script>
 
-
 <?= $this->endSection() ?>
-

@@ -231,34 +231,100 @@ class FolderModel extends Model
     }
 
     /**
-     * Get document records for client-side filtering and sorting.
+     * Build the base query for the document records listing, applying the
+     * same search/status/type/category filters used by both the paginated
+     * fetch and the matching total count.
      */
-    public function getDocumentRecords(?int $limit = null, ?int $offset = null): array
+    protected function buildDocumentRecordsQuery(array $filters = [])
     {
-        $query = $this->select('folders.*, categories.category_name AS folder_category, locations.rack AS cabinet, locations.shelf AS shelf, locations.rack AS rack, bt.borrowed_at AS borrowed_date, bt.expected_return_date AS due_date, bt.actual_return_date AS return_date, ar.archived_date')
+        $builder = $this->select('folders.*, categories.category_name AS folder_category, locations.rack AS cabinet, locations.shelf AS shelf, locations.rack AS rack, bt.borrowed_at AS borrowed_date, bt.expected_return_date AS due_date, bt.actual_return_date AS return_date, ar.archived_date')
             ->join('locations', 'locations.location_id = folders.location_id', 'left')
             ->join('categories', 'categories.category_id = folders.category_id', 'left')
             ->join('borrow_transactions bt', 'bt.transaction_id = folders.current_borrow_transaction_id', 'left')
             ->join('archive_records ar', 'ar.archive_id = (SELECT ar2.archive_id FROM archive_records ar2 WHERE ar2.folder_id = folders.folder_id ORDER BY ar2.archived_date DESC, ar2.archive_id DESC LIMIT 1)', 'left', false);
-            
-        if ($limit !== null) {
-            $query = $query->limit($limit);
+
+        $statusMap = [
+            'available' => 'Available',
+            'borrowed' => 'Borrowed',
+            'archived' => 'Archived',
+            'disposed' => 'Disposed',
+            'pending_archive' => 'Pending Archive',
+        ];
+
+        $status = strtolower(trim((string) ($filters['status'] ?? '')));
+        if ($status !== '' && isset($statusMap[$status])) {
+            $builder->where('folders.status', $statusMap[$status]);
         }
-        
-        if ($offset !== null) {
-            $query = $query->offset($offset);
+
+        $search = trim((string) ($filters['search'] ?? ''));
+        if ($search !== '') {
+            $builder->groupStart()
+                ->like('folders.file_code', $search)
+                ->orLike('folders.company_name', $search)
+                ->orLike('folders.location_code', $search)
+                ->orLike('locations.rack', $search)
+                ->orLike('locations.shelf', $search)
+                ->orLike('categories.category_name', $search)
+                ->groupEnd();
         }
-        
-        return $query->get()
-            ->getResultArray();
+
+        $folderType = trim((string) ($filters['folder_type'] ?? ''));
+        if ($folderType !== '') {
+            $builder->where('folders.folder_type', $folderType);
+        }
+
+        $category = trim((string) ($filters['category'] ?? ''));
+        if ($category !== '') {
+            $builder->where('categories.category_name', $category);
+        }
+
+        return $builder;
     }
 
     /**
-     * Get total count of document records
+     * Apply the listing's sort options to a document records query builder.
      */
-    public function getTotalDocumentRecords(): int
+    protected function applyDocumentRecordsSort($builder, string $sort): void
     {
-        return $this->countAllResults();
+        switch ($sort) {
+            case 'company_desc':
+                $builder->orderBy('folders.company_name', 'DESC');
+                $builder->orderBy('folders.folder_id', 'DESC');
+                break;
+            case 'newest':
+                $builder->orderBy('folders.created_at', 'DESC');
+                $builder->orderBy('folders.folder_id', 'DESC');
+                break;
+            case 'company_asc':
+            default:
+                $builder->orderBy('folders.company_name', 'ASC');
+                $builder->orderBy('folders.folder_id', 'ASC');
+                break;
+        }
+    }
+
+    /**
+     * Get document records for the listing page, filtered/sorted/paginated
+     * entirely at the database level.
+     */
+    public function getDocumentRecords(array $filters = [], ?int $limit = null, ?int $offset = null): array
+    {
+        $builder = $this->buildDocumentRecordsQuery($filters);
+        $this->applyDocumentRecordsSort($builder, trim((string) ($filters['sort'] ?? 'company_asc')));
+
+        if ($limit !== null) {
+            $builder->limit($limit, (int) $offset);
+        }
+
+        return $builder->get()->getResultArray();
+    }
+
+    /**
+     * Get total count of document records matching the given filters.
+     */
+    public function getTotalDocumentRecords(array $filters = []): int
+    {
+        return $this->buildDocumentRecordsQuery($filters)->countAllResults();
     }
 
     /**

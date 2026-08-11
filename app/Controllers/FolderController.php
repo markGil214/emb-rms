@@ -46,29 +46,45 @@ class FolderController extends BaseController
             $filters['sort'] = 'company_asc';
         }
 
-        // Handle pagination limit
-        $limit = $filters['limit'];
-        if ($limit === '' || $limit === 'all') {
-            $limit = null; // Show all
-            $offset = null;
-        } elseif (is_numeric($limit)) {
-            $limit = (int) $limit;
-            $page = $filters['page'];
-            $offset = ($page - 1) * $limit;
+        // Handle pagination limit. Defaults to 25 so a growing folders table
+        // never loads unbounded on a fresh visit; "all" remains an explicit,
+        // opt-in choice via the table limiter buttons.
+        $rawLimit = $filters['limit'];
+        if ($rawLimit === 'all') {
+            $limit = null;
+        } elseif (is_numeric($rawLimit) && (int) $rawLimit > 0) {
+            $limit = (int) $rawLimit;
         } else {
-            $limit = null; // Default to all
-            $offset = null;
+            $limit = 25;
         }
+        $filters['limit'] = $limit === null ? 'all' : (string) $limit;
 
-        $folders = $this->folderModel->getDocumentRecords($limit, $offset);
+        $page = max(1, $filters['page']);
+        $filters['page'] = $page;
+        $offset = $limit !== null ? ($page - 1) * $limit : null;
+
+        $folders = $this->folderModel->getDocumentRecords($filters, $limit, $offset);
         $categories = $this->categoryModel->orderBy('category_name', 'ASC')->findAll();
-        $totalFolders = $this->folderModel->getTotalDocumentRecords();
+        $totalFolders = $this->folderModel->getTotalDocumentRecords($filters);
 
         // Calculate pagination info
-        $totalPages = $limit ? ceil($totalFolders / $limit) : 1;
+        $totalPages = $limit ? (int) ceil($totalFolders / $limit) : 1;
         $currentPage = $filters['page'];
         $hasNextPage = $limit ? $currentPage < $totalPages : false;
         $hasPrevPage = $currentPage > 1;
+
+        // Live search/filter/sort/pagination fetch just the results panel so
+        // typing a keyword updates the table in place instead of reloading
+        // the whole page.
+        if ($this->request->isAJAX()) {
+            return view('document-records/_results_panel', [
+                'folders' => $folders,
+                'totalFolders' => $totalFolders,
+                'currentPage' => $currentPage,
+                'totalPages' => $totalPages,
+                'filters' => $filters,
+            ]);
+        }
 
         return view('document-records/index', [
             'title' => 'Folders',
