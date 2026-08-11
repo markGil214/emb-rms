@@ -1126,6 +1126,13 @@ $headerNotificationsJson = json_encode($headerNotifications, JSON_HEX_TAG | JSON
                     <?= session()->getFlashdata('success') ?>
                 </div>
             <?php endif; ?>
+
+            <?php // Partial-success cases (e.g. a batch upload where some files were skipped). ?>
+            <?php if(session()->getFlashdata('warning')): ?>
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded mb-6">
+                    <?= session()->getFlashdata('warning') ?>
+                </div>
+            <?php endif; ?>
         
                 <?= $this->renderSection('content') ?>
          

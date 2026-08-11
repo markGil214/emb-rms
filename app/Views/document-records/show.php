@@ -164,10 +164,98 @@
                         updateExpirationPreview();
                     }
 
+                    // Preview the chosen batch so the user can confirm what is
+                    // about to be uploaded, and catch oversized files before
+                    // the request is sent rather than after.
+                    function initSelectedFiles() {
+                        const input = document.getElementById('file_modal');
+                        const wrapper = document.getElementById('selectedFilesList_modal');
+                        const items = document.getElementById('selectedFilesItems_modal');
+                        const countEl = document.getElementById('selectedFilesCount_modal');
+                        const sizeEl = document.getElementById('selectedFilesSize_modal');
+                        const warningEl = document.getElementById('selectedFilesWarning_modal');
+
+                        if (!input || !wrapper || !items) {
+                            return;
+                        }
+
+                        const MAX_BYTES = 30 * 1024 * 1024;
+                        const MAX_FILES = 20;
+
+                        function formatBytes(bytes) {
+                            const units = ['B', 'KB', 'MB', 'GB'];
+                            let i = 0;
+                            let value = bytes;
+                            while (value >= 1024 && i < units.length - 1) {
+                                value /= 1024;
+                                i++;
+                            }
+                            return (i === 0 ? value : value.toFixed(1)) + ' ' + units[i];
+                        }
+
+                        input.addEventListener('change', function () {
+                            const files = Array.from(this.files || []);
+                            items.innerHTML = '';
+
+                            if (!files.length) {
+                                wrapper.classList.add('hidden');
+                                return;
+                            }
+
+                            let totalBytes = 0;
+                            const problems = [];
+
+                            files.forEach(function (file) {
+                                totalBytes += file.size;
+                                const tooBig = file.size > MAX_BYTES;
+                                if (tooBig) {
+                                    problems.push(file.name + ' exceeds 30MB');
+                                }
+
+                                const li = document.createElement('li');
+                                li.className = 'flex items-center justify-between gap-2 px-3 py-2';
+
+                                const name = document.createElement('span');
+                                name.className = 'truncate ' + (tooBig ? 'text-red-600' : 'text-gray-700');
+                                name.textContent = file.name;
+                                name.title = file.name;
+
+                                const size = document.createElement('span');
+                                size.className = 'whitespace-nowrap text-xs ' + (tooBig ? 'text-red-600 font-semibold' : 'text-gray-500');
+                                size.textContent = formatBytes(file.size);
+
+                                li.appendChild(name);
+                                li.appendChild(size);
+                                items.appendChild(li);
+                            });
+
+                            if (files.length > MAX_FILES) {
+                                problems.push('Only ' + MAX_FILES + ' files can be uploaded at a time (' + files.length + ' selected)');
+                            }
+
+                            countEl.textContent = files.length;
+                            sizeEl.textContent = formatBytes(totalBytes) + ' total';
+
+                            if (problems.length) {
+                                warningEl.textContent = problems.join('. ') + '.';
+                                warningEl.classList.remove('hidden');
+                            } else {
+                                warningEl.textContent = '';
+                                warningEl.classList.add('hidden');
+                            }
+
+                            wrapper.classList.remove('hidden');
+                        });
+                    }
+
                     if (document.readyState === 'loading') {
-                        document.addEventListener('DOMContentLoaded', initExpirationFields);
+                        document.addEventListener('DOMContentLoaded', function () {
+                            initExpirationFields();
+                            initSelectedFiles();
+                        });
                     } else {
                         initExpirationFields();
+                        initSelectedFiles();
                     }
                 })();
             </script>
@@ -467,7 +555,7 @@
 
                         <div>
                             <label for="file_modal" class="block text-sm font-semibold text-gray-700 mb-1">
-                                File <span class="text-red-500">*</span>
+                                Files <span class="text-red-500">*</span>
                             </label>
                             <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400">
                                 <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -476,16 +564,33 @@
 
                                 <input type="file"
                                        id="file_modal"
-                                       name="file"
+                                       name="files[]"
+                                       multiple
                                        class="mb-3 block w-full cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
                                        required>
 
                                 <label for="file_modal" class="cursor-pointer">
-                                    <span class="text-blue-600 font-medium hover:text-blue-800">Choose a file</span>
+                                    <span class="text-blue-600 font-medium hover:text-blue-800">Choose files</span>
                                     <span class="text-gray-500"> or drag and drop</span>
                                 </label>
-                                <p class="text-gray-600 text-sm mt-1">Maximum file size: 30MB</p>
+                                <p class="text-gray-600 text-sm mt-1">Up to 20 files, 30MB each</p>
                             </div>
+
+                            <!-- Populated by JS so the user can confirm the batch before submitting. -->
+                            <div id="selectedFilesList_modal" class="mt-3 hidden">
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="text-sm font-semibold text-gray-700">
+                                        Selected: <span id="selectedFilesCount_modal">0</span>
+                                    </p>
+                                    <p id="selectedFilesSize_modal" class="text-xs text-gray-500"></p>
+                                </div>
+                                <ul id="selectedFilesItems_modal" class="max-h-40 overflow-y-auto rounded-md border border-gray-200 divide-y divide-gray-100 text-sm"></ul>
+                                <p id="selectedFilesWarning_modal" class="mt-1 text-sm text-red-600 hidden"></p>
+                            </div>
+
+                            <?php if (!empty($uploadErrors['files'])): ?>
+                                <p class="mt-1 text-sm text-red-600"><?= esc($uploadErrors['files']) ?></p>
+                            <?php endif; ?>
                             <?php if (!empty($uploadErrors['file'])): ?>
                                 <p class="mt-1 text-sm text-red-600"><?= esc($uploadErrors['file']) ?></p>
                             <?php endif; ?>
