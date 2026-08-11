@@ -2,19 +2,16 @@
 
 namespace App\Libraries;
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
 use CodeIgniter\I18n\Time;
 
 /**
- * EmailService - Robust email sending via PHPMailer + Gmail SMTP
- * 
+ * EmailService - Robust email sending via the Resend API
+ *
  * Handles:
- * - SMTP authentication with Gmail App Passwords
+ * - Authenticated calls to Resend's REST API
  * - HTML template rendering
  * - Error handling & logging
- * - Retry logic on transient failures
- * 
+ *
  * Usage:
  *   $emailService = new EmailService();
  *   $sent = $emailService->send(
@@ -26,56 +23,22 @@ use CodeIgniter\I18n\Time;
  */
 class EmailService
 {
-    protected $mailer;
     protected $config;
     protected $from;
     protected $fromName;
+    protected $resendApiKey;
 
     public function __construct()
     {
         $this->config = config('Email');
         $this->from = env('email.fromEmail') ?? $this->config->fromEmail;
         $this->fromName = env('email.fromName') ?? $this->config->fromName;
-
-        // Initialize PHPMailer
-        $this->mailer = new PHPMailer(true);
-        $this->configureMailer();
-    }
-
-    /**
-     * Configure PHPMailer for Gmail SMTP
-     */
-    protected function configureMailer()
-    {
-        try {
-            $this->mailer->isSMTP();
-            $this->mailer->Host = $this->config->SMTPHost;
-            $this->mailer->SMTPAuth = true;
-            $this->mailer->Username = env('email.SMTPUser') ?? $this->config->SMTPUser;
-            $this->mailer->Password = env('email.SMTPPass') ?? $this->config->SMTPPass;
-            $this->mailer->SMTPSecure = $this->config->SMTPCrypto;
-            $this->mailer->Port = $this->config->SMTPPort;
-            $this->mailer->Timeout = $this->config->SMTPTimeout;
-            $this->mailer->SMTPKeepAlive = $this->config->SMTPKeepAlive;
-
-            // Set from address
-            $this->mailer->setFrom($this->from, $this->fromName);
-
-            // Mail type
-            $this->mailer->isHTML(true);
-            $this->mailer->CharSet = 'UTF-8';
-        } catch (Exception $e) {
-            LogHelper::error('email_config_failed', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-        }
+        $this->resendApiKey = env('email.resendApiKey') ?? $this->config->resendApiKey;
     }
 
     /**
      * Send email to single recipient
-     * 
+     *
      * @param string $to Recipient email
      * @param string $subject Email subject
      * @param string $htmlBody HTML body content
@@ -84,31 +47,37 @@ class EmailService
      */
     public function send($to, $subject, $htmlBody, $textBody = null)
     {
+        if (empty($this->resendApiKey)) {
+            LogHelper::error('email_not_configured', [
+                'reason' => 'Resend API key not set in .env (email.resendApiKey)',
+            ]);
+            return false;
+        }
+
         try {
-            // Validate credentials
-            if (empty($this->config->SMTPUser) || empty($this->config->SMTPPass)) {
-                LogHelper::error('email_not_configured', [
-                    'reason' => 'SMTP credentials not set in .env',
-                ]);
-                return false;
-            }
-
-            // Clear previous recipients
-            $this->mailer->clearAllRecipients();
-
-            // Set recipient
-            $this->mailer->addAddress($to);
-
-            // Set subject & body
-            $this->mailer->Subject = $subject;
-            $this->mailer->Body = $htmlBody;
+            $payload = [
+                'from' => $this->fromName . ' <' . $this->from . '>',
+                'to' => [$to],
+                'subject' => $subject,
+                'html' => $htmlBody,
+            ];
 
             if ($textBody) {
-                $this->mailer->AltBody = $textBody;
+                $payload['text'] = $textBody;
             }
 
-            // Send
-            $sent = $this->mailer->send();
+            $client = \Config\Services::curlrequest();
+            $response = $client->post('https://api.resend.com/emails', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->resendApiKey,
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => $payload,
+                'http_errors' => false,
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $sent = $statusCode >= 200 && $statusCode < 300;
 
             if ($sent) {
                 LogHelper::info('email_sent', [
@@ -116,10 +85,20 @@ class EmailService
                     'subject' => $subject,
                     'timestamp' => Time::now()->format('Y-m-d H:i:s'),
                 ]);
+            } else {
+                $responseData = json_decode((string) $response->getBody(), true);
+
+                LogHelper::error('email_send_failed', [
+                    'to' => $to,
+                    'subject' => $subject,
+                    'status' => $statusCode,
+                    'error' => $responseData['message'] ?? (string) $response->getBody(),
+                    'timestamp' => Time::now()->format('Y-m-d H:i:s'),
+                ]);
             }
 
             return $sent;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             LogHelper::error('email_send_failed', [
                 'to' => $to,
                 'subject' => $subject,
@@ -132,7 +111,7 @@ class EmailService
 
     /**
      * Send email to multiple recipients
-     * 
+     *
      * @param array $recipients Array of emails
      * @param string $subject Email subject
      * @param string $htmlBody HTML body content
@@ -163,7 +142,7 @@ class EmailService
 
     /**
      * Render view template as email body
-     * 
+     *
      * @param string $viewPath View path (e.g., 'emails/overdue-notification')
      * @param array $data Data to pass to view
      * @return string Rendered HTML
@@ -175,7 +154,7 @@ class EmailService
 
     /**
      * Send templated email
-     * 
+     *
      * @param string $to Recipient email
      * @param string $subject Subject line
      * @param string $viewPath View template path

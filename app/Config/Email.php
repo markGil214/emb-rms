@@ -22,6 +22,14 @@ class Email extends BaseConfig
 	public $recipients;
 
 	/**
+	 * Resend API key (from https://resend.com/api-keys). Set via
+	 * `email.resendApiKey` in .env — used by EmailService instead of SMTP.
+	 *
+	 * @var string
+	 */
+	public $resendApiKey = '';
+
+	/**
 	 * The "user agent"
 	 *
 	 * @var string
