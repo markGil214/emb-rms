@@ -36,22 +36,26 @@ class ArchiveDisposalController extends BaseController
 
         $db = \Config\Database::connect();
 
-        $archiveDisposalRecords = $this->archiveModel->getArchiveDisposalRecords();
-        foreach ($archiveDisposalRecords as &$record) {
-            $record['current_status'] = $this->inferArchiveDisposalStatus($record);
-        }
-        unset($record);
-
-        $statusCounts = $this->getArchiveDisposalStatusCounts($archiveDisposalRecords);
-
+        // This dashboard is file-level disposal only (disposal_records/
+        // folder-level counts live on the separate Archive Folders page).
+        // Both the summary cards and $disposalRows below must describe the
+        // same file_disposal_requests dataset.
         $fileDisposalPendingCount = 0;
         $fileDisposalApprovedCount = 0;
+        $fileDisposalRejectedCount = 0;
+        $fileDisposalDisposedCount = 0;
         if ($db->tableExists('file_disposal_requests')) {
             $fileDisposalPendingCount = (int) $db->table('file_disposal_requests')
                 ->where('status', 'Pending')
                 ->countAllResults();
             $fileDisposalApprovedCount = (int) $db->table('file_disposal_requests')
                 ->where('status', 'Approved')
+                ->countAllResults();
+            $fileDisposalRejectedCount = (int) $db->table('file_disposal_requests')
+                ->where('status', 'Rejected')
+                ->countAllResults();
+            $fileDisposalDisposedCount = (int) $db->table('file_disposal_requests')
+                ->where('status', 'Disposed')
                 ->countAllResults();
         }
 
@@ -62,9 +66,10 @@ class ArchiveDisposalController extends BaseController
 
         return view('archive-disposal/disposal-index', [
             'title' => 'Disposal Management',
-            'statusCounts' => $statusCounts,
             'fileDisposalPendingCount' => $fileDisposalPendingCount,
             'fileDisposalApprovedCount' => $fileDisposalApprovedCount,
+            'fileDisposalRejectedCount' => $fileDisposalRejectedCount,
+            'fileDisposalDisposedCount' => $fileDisposalDisposedCount,
             'readyToDisposeCount' => $readyToDisposeCount,
             'disposalRows' => $disposalRows,
         ]);
@@ -86,14 +91,17 @@ class ArchiveDisposalController extends BaseController
         }
         unset($record);
 
-        foreach ($workflowRequests as &$request) {
+        // Counts must reflect the full dataset, not whatever subset is left
+        // after the status filter below narrows the display arrays --
+        // otherwise every status other than the one being filtered on
+        // collapses to zero and the summary cards vanish.
+        $statusCounts = $this->getArchiveDisposalStatusCounts($archiveDisposalRecords);
+        foreach ($workflowRequests as $request) {
             $requestStatus = (string) ($request['status'] ?? '');
-            if ($requestStatus === 'Restoration Requested') {
-                continue;
+            if (isset($statusCounts[$requestStatus])) {
+                $statusCounts[$requestStatus]++;
             }
-
         }
-        unset($request);
 
         if ($statusFilter !== '') {
             if ($statusFilter === 'Archived' || $statusFilter === 'Disposed') {
@@ -114,14 +122,6 @@ class ArchiveDisposalController extends BaseController
                 $archiveDisposalRecords = [];
             } else {
                 $statusFilter = '';
-            }
-        }
-
-        $statusCounts = $this->getArchiveDisposalStatusCounts($archiveDisposalRecords);
-        foreach ($workflowRequests as $request) {
-            $requestStatus = (string) ($request['status'] ?? '');
-            if (isset($statusCounts[$requestStatus])) {
-                $statusCounts[$requestStatus]++;
             }
         }
 

@@ -3,20 +3,21 @@
 <?= $this->section('content') ?>
 
 <?php
-    $statusCounts = $statusCounts ?? [];
     $disposalRows = $disposalRows ?? [];
     $fileDisposalPendingCount = (int) ($fileDisposalPendingCount ?? 0);
+    $fileDisposalApprovedCount = (int) ($fileDisposalApprovedCount ?? 0);
+    $fileDisposalRejectedCount = (int) ($fileDisposalRejectedCount ?? 0);
+    $fileDisposalDisposedCount = (int) ($fileDisposalDisposedCount ?? 0);
     $readyToDisposeCount = (int) ($readyToDisposeCount ?? 0);
 
+    // File-level only, matching $disposalRows below (folder-level disposal
+    // status lives on the separate Archive Folders page).
     $summaryCards = [
         ['label' => 'Ready to Dispose', 'count' => $readyToDisposeCount, 'color' => 'rose'],
-        ['label' => 'Archived', 'count' => (int) ($statusCounts['Archived'] ?? 0), 'color' => 'blue'],
-        ['label' => 'Pending Disposal', 'count' => (int) ($statusCounts['Pending Disposal'] ?? 0), 'color' => 'orange'],
-        ['label' => 'Approved for Disposal', 'count' => (int) ($statusCounts['Approved for Disposal'] ?? 0), 'color' => 'green'],
-        ['label' => 'Disposed', 'count' => (int) ($statusCounts['Disposed'] ?? 0), 'color' => 'gray'],
-        ['label' => 'Rejected', 'count' => (int) ($statusCounts['Rejected'] ?? 0), 'color' => 'red'],
-        ['label' => 'Pending Disposal Requests', 'count' => (int) ($fileDisposalPendingCount ?? 0), 'color' => 'amber'],
-        ['label' => 'Approved File Disposals', 'count' => (int) ($fileDisposalApprovedCount ?? 0), 'color' => 'green'],
+        ['label' => 'Pending Disposal Requests', 'count' => $fileDisposalPendingCount, 'color' => 'amber'],
+        ['label' => 'Approved File Disposals', 'count' => $fileDisposalApprovedCount, 'color' => 'green'],
+        ['label' => 'Rejected File Disposals', 'count' => $fileDisposalRejectedCount, 'color' => 'red'],
+        ['label' => 'Disposed Files', 'count' => $fileDisposalDisposedCount, 'color' => 'gray'],
     ];
 
     $summaryCards = array_values(array_filter($summaryCards, static function (array $card): bool {
@@ -246,16 +247,18 @@
 </style>
 
 <div class="disposal-dashboard">
-    <div class="disposal-panel archive-table-wrap p-6 sm:p-8">
-        <div class="disposal-summary-grid">
-            <?php foreach ($summaryCards as $card): ?>
-                <div class="disposal-summary-card disposal-summary-card--<?= esc($card['color']) ?>">
-                    <p class="text-sm font-semibold text-gray-700"><?= esc($card['label']) ?></p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1"><?= esc((string) $card['count']) ?></p>
-                </div>
-            <?php endforeach; ?>
+    <?php if (!empty($summaryCards)): ?>
+        <div class="disposal-panel archive-table-wrap p-6 sm:p-8">
+            <div class="disposal-summary-grid">
+                <?php foreach ($summaryCards as $card): ?>
+                    <div class="disposal-summary-card disposal-summary-card--<?= esc($card['color']) ?>">
+                        <p class="text-sm font-semibold text-gray-700"><?= esc($card['label']) ?></p>
+                        <p class="text-3xl font-bold text-gray-900 mt-1"><?= esc((string) $card['count']) ?></p>
+                    </div>
+                <?php endforeach; ?>
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
 
     <div class="disposal-panel archive-table-wrap overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
