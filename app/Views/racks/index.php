@@ -7,6 +7,7 @@ $locationsList = $locations ?? [];
 $racksList = $racks ?? [];
 $totalShelves = is_array($locationsList) ? count($locationsList) : 0;
 $totalRacks = is_array($racksList) ? count($racksList) : 0;
+$editLocation = $editLocation ?? null;
 ?>
 
 <style>
@@ -90,6 +91,52 @@ $totalRacks = is_array($racksList) ? count($racksList) : 0;
     .submit-button:hover { background: #1e293b; }
     @media (min-width: 640px) { .page-hero__inner, .pagination-layout { flex-direction: row; justify-content: space-between; align-items: center; } }
     @media (min-width: 1024px) { .controls-grid { grid-template-columns: minmax(0, 22rem) 11rem 10rem; } .controls-layout { grid-template-columns: minmax(0, 1fr) auto; } }
+
+    /* Dark mode: this page uses its own hand-rolled CSS instead of Tailwind
+       utility classes, so the global dark-mode.css overrides (which only
+       target Tailwind class names) never match anything here. */
+    .dark .rack-page { color: var(--color-text); }
+    .dark .page-hero,
+    .dark .controls-card,
+    .dark .table-card,
+    .dark .pagination-card { border-color: var(--color-border); background: var(--color-bg-secondary); }
+    .dark .page-hero { background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-secondary) 60%, var(--color-bg-tertiary) 100%); }
+    .dark .page-kicker, .dark .controls-kicker { color: var(--color-text-muted); }
+    .dark .page-title { color: var(--color-text); }
+    .dark .page-description { color: var(--color-text-secondary); }
+    .dark .stat-pill, .dark .summary-pill, .dark .pagination-page { border-color: var(--color-border); background: var(--color-bg-secondary); color: var(--color-text-secondary); }
+    .dark .search-input, .dark .select-input, .dark .form-control { border-color: var(--color-border-light); background: var(--color-bg-secondary); color: var(--color-text); }
+    .dark .search-icon { color: var(--color-text-muted); }
+    .dark .primary-button { border-color: var(--color-text); }
+    .dark .rack-table thead { background: var(--color-bg-tertiary); }
+    .dark .rack-table th, .dark .rack-table td { border-color: var(--color-border); }
+    .dark .rack-table th { color: var(--color-text-muted); }
+    .dark .rack-group-row { background: var(--color-bg-tertiary); }
+    .dark .rack-toggle { border-color: var(--color-border); background: var(--color-bg-secondary); color: var(--color-text-secondary); }
+    .dark .rack-icon { color: var(--color-text-muted); }
+    .dark .rack-title { color: var(--color-text); }
+    .dark .rack-count { color: var(--color-text-muted); }
+    .dark .used-pill { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+    .dark .summary-pill { color: var(--color-text-secondary); }
+    .dark .shelf-row:nth-child(odd) { background: var(--color-bg-secondary); }
+    .dark .shelf-row:nth-child(even) { background: var(--color-bg-tertiary); }
+    .dark .shelf-marker { background: var(--color-border-light); }
+    .dark .shelf-title { color: var(--color-text); }
+    .dark .action-pill { border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+    .dark .action-pill:hover { border-color: rgba(59, 130, 246, 0.6); background: rgba(59, 130, 246, 0.25); color: #bfdbfe; }
+    .dark .pagination-text { color: var(--color-text-secondary); }
+    .dark .pagination-button { border-color: var(--color-border-light); background: var(--color-bg-secondary); color: var(--color-text-secondary); }
+    .dark .pagination-button:hover { background: var(--color-bg-tertiary); }
+    .dark .pagination-page { background: var(--color-bg-tertiary); color: var(--color-text-secondary); }
+    .dark .empty-state__icon { color: var(--color-text-muted); }
+    .dark .empty-state__title { color: var(--color-text); }
+    .dark .empty-state__text { color: var(--color-text-secondary); }
+    .dark .modal-panel { border-color: var(--color-border); background: var(--color-bg-secondary); }
+    .dark .modal-title { color: var(--color-text); }
+    .dark .form-label { color: var(--color-text-secondary); }
+    .dark .secondary-button { border-color: var(--color-border); background: var(--color-bg-tertiary); color: var(--color-text-secondary); }
+    .dark .secondary-button:hover { background: var(--color-border); }
+    .dark .submit-button { border-color: var(--color-text); }
 </style>
 
 <div x-data="racksManager()" class="rack-page">
@@ -185,6 +232,40 @@ $totalRacks = is_array($racksList) ? count($racksList) : 0;
         </div>
     </div>
 
+    <div id="editRackModal" class="modal-overlay">
+        <div class="modal-panel">
+            <h3 class="modal-title">Edit Shelf</h3>
+            <form method="post" id="editRackForm" action="<?= $editLocation ? route_to('racks.update', $editLocation['location_id']) : '#' ?>" data-confirm-message="Save changes to this shelf?">
+                <?= csrf_field() ?>
+                <div class="form-group">
+                    <label for="edit-rack" class="form-label">Rack</label>
+                    <select id="edit-rack" name="rack" required class="form-control">
+                        <option value="">Choose a rack</option>
+                        <?php for ($i = 1; $i <= 20; $i++): ?>
+                            <option value="<?= $i ?>" <?= old('rack', (string) ($editLocation['rack'] ?? '')) === (string) $i ? 'selected' : '' ?>>Rack <?= $i ?></option>
+                        <?php endfor; ?>
+                    </select>
+                    <?php if (! empty($errors['rack'])): ?>
+                        <p class="form-error"><?= esc($errors['rack']) ?></p>
+                    <?php endif; ?>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-shelf" class="form-label">Shelf</label>
+                    <input id="edit-shelf" type="text" name="shelf" value="<?= esc(old('shelf', (string) ($editLocation['shelf'] ?? ''))) ?>" required maxlength="50" pattern="[A-Za-z0-9 ]+" title="Use letters, numbers, and spaces only." class="form-control">
+                    <?php if (! empty($errors['shelf'])): ?>
+                        <p class="form-error"><?= esc($errors['shelf']) ?></p>
+                    <?php endif; ?>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="closeModal('editRackModal')" class="secondary-button">Cancel</button>
+                    <button type="submit" class="submit-button">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="table-card">
         <template x-if="filteredLocations.length === 0">
             <div class="empty-state">
@@ -252,7 +333,7 @@ $totalRacks = is_array($racksList) ? count($racksList) : 0;
                                             <span class="used-pill" x-text="Number(location.current_count) > 0 ? location.current_count : ''"></span>
                                         </td>
                                         <td class="cell-center">
-                                            <button class="action-pill">Edit</button>
+                                            <button type="button" class="action-pill" @click="openEditModal(location)">Edit</button>
                                         </td>
                                     </tr>
                                 </template>
@@ -294,9 +375,8 @@ $totalRacks = is_array($racksList) ? count($racksList) : 0;
     }
 
     document.addEventListener('click', function (event) {
-        var modal = document.getElementById('addRackModal');
-        if (modal && event.target === modal) {
-            closeModal('addRackModal');
+        if (event.target.classList && event.target.classList.contains('modal-overlay')) {
+            closeModal(event.target.id);
         }
     });
 
@@ -309,12 +389,17 @@ $totalRacks = is_array($racksList) ? count($racksList) : 0;
     <?php if (session()->getFlashdata('modal') === 'add-rack'): ?>
     openModal('addRackModal');
     <?php endif; ?>
+
+    <?php if ($editLocation): ?>
+    openModal('editRackModal');
+    <?php endif; ?>
 </script>
 
 <script>
 function racksManager() {
     return {
         locations: <?= json_encode($locations ?? []) ?>,
+        updateUrlBase: <?= json_encode(rtrim(base_url('manage-racks'), '/')) ?>,
         filteredLocations: [],
         filteredRacks: [],
         rackExpansionState: {},
@@ -323,11 +408,30 @@ function racksManager() {
         entriesPerPage: '25',
         previousEntriesPerPage: '25',
         currentPage: 1,
-        
+
         init() {
             this.filteredLocations = [...this.locations];
             this.groupFilteredLocations();
             this.updatePagination();
+        },
+
+        openEditModal(location) {
+            var form = document.getElementById('editRackForm');
+            if (form) {
+                form.action = this.updateUrlBase + '/' + location.location_id + '/update';
+            }
+
+            var rackSelect = document.getElementById('edit-rack');
+            if (rackSelect) {
+                rackSelect.value = String(location.rack);
+            }
+
+            var shelfInput = document.getElementById('edit-shelf');
+            if (shelfInput) {
+                shelfInput.value = location.shelf;
+            }
+
+            openModal('editRackModal');
         },
 
         groupFilteredLocations() {

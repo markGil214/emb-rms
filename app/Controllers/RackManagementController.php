@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\RackShelfModel;
+use App\Libraries\FileCodeGenerator;
 
 class RackManagementController extends BaseController
 {
@@ -112,14 +113,14 @@ class RackManagementController extends BaseController
         ];
 
         if (! $this->validate($rules, $messages)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            return redirect()->to(route_to('racks.edit', $locationId))->withInput()->with('errors', $this->validator->getErrors());
         }
 
         $rack = trim((string) $this->request->getPost('rack'));
         $shelf = trim((string) $this->request->getPost('shelf'));
 
         if ($this->rackShelfModel->rackShelfExists($rack, $shelf, $locationId)) {
-            return redirect()->back()->withInput()->with('error', 'Rack and shelf combination already exists.');
+            return redirect()->to(route_to('racks.edit', $locationId))->withInput()->with('error', 'Rack and shelf combination already exists.');
         }
 
         $updated = $this->rackShelfModel->update($locationId, [
@@ -128,8 +129,14 @@ class RackManagementController extends BaseController
         ]);
 
         if (! $updated) {
-            return redirect()->back()->withInput()->with('errors', $this->rackShelfModel->errors());
+            return redirect()->to(route_to('racks.edit', $locationId))->withInput()->with('errors', $this->rackShelfModel->errors());
         }
+
+        // Cascade to every folder at this location so location_code doesn't
+        // go stale until someone happens to open that folder individually.
+        \Config\Database::connect()->table('folders')
+            ->where('location_id', $locationId)
+            ->update(['location_code' => FileCodeGenerator::generateLocationCode($rack, $shelf)]);
 
         return redirect()->to('/manage-racks')->with('success', 'Shelf updated to rack "' . $rack . '", shelf "' . $shelf . '".');
     }
