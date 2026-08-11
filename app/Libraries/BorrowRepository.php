@@ -134,10 +134,15 @@ class BorrowRepository
 
             // ✅ ATOMIC: Only unlock folder if currently Borrowed
             // Prevents unlocking wrong folder
+            // Also clears current_borrow_transaction_id, which otherwise
+            // keeps pointing at this now-Returned transaction forever.
             $result = $db->table('folders')
                          ->where('folder_id', $folderId)
                          ->where('status', 'Borrowed')
-                         ->update(['status' => 'Available']);
+                         ->update([
+                             'status' => 'Available',
+                             'current_borrow_transaction_id' => null,
+                         ]);
 
             if ($result === 0) {
                 $currentFolder = $this->folderModel->find($folderId);
