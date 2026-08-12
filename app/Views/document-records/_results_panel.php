@@ -16,6 +16,7 @@ $search = $filters['search'] ?? '';
 $statusFilter = $filters['status'] ?? '';
 $folderTypeFilter = $filters['folder_type'] ?? '';
 $categoryFilter = $filters['category'] ?? '';
+$noAttachmentsFilter = ($filters['no_attachments'] ?? '') === '1' ? '1' : '';
 $sortFilter = $filters['sort'] ?? 'company_asc';
 
 $sortOptions = [
@@ -71,6 +72,7 @@ $pageUrl = static function (int $page) use ($filters): string {
         'status' => $filters['status'] ?? '',
         'folder_type' => $filters['folder_type'] ?? '',
         'category' => $filters['category'] ?? '',
+        'no_attachments' => ($filters['no_attachments'] ?? '') === '1' ? '1' : '',
         'sort' => $filters['sort'] ?? 'company_asc',
         'limit' => $filters['limit'] ?? 'all',
         'page' => $page,
@@ -83,7 +85,7 @@ $pageUrl = static function (int $page) use ($filters): string {
     return base_url('document-records') . '?' . http_build_query($params);
 };
 
-$hasActiveFilters = $search !== '' || $statusFilter !== '' || $folderTypeFilter !== '' || $sortFilter !== 'company_asc' || $categoryFilter !== '';
+$hasActiveFilters = $search !== '' || $statusFilter !== '' || $folderTypeFilter !== '' || $sortFilter !== 'company_asc' || $categoryFilter !== '' || $noAttachmentsFilter === '1';
 ?>
 
 <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 px-4 py-3">
@@ -144,6 +146,7 @@ $hasActiveFilters = $search !== '' || $statusFilter !== '' || $folderTypeFilter 
                     <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Location</th>
                     <th class="w-80 px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Company</th>
                     <th class="w-28 px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Category</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Attachments</th>
                     <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Type</th>
                     <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Borrowed / Due Date</th>
                     <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date Returned</th>
@@ -197,6 +200,24 @@ $hasActiveFilters = $search !== '' || $statusFilter !== '' || $folderTypeFilter 
                         <td class="whitespace-nowrap px-4 py-2 text-sm font-medium text-blue-600"><?= esc($formatLocation($folder)) ?></td>
                         <td class="max-w-[20rem] truncate px-4 py-2 text-sm text-gray-900" title="<?= esc($folder['company_name'] ?? 'Unknown Folder', 'attr') ?>"><?= esc($folder['company_name'] ?? 'Unknown Folder') ?></td>
                         <td class="max-w-[7rem] truncate px-4 py-2 text-sm text-gray-700" title="<?= esc($categoryLabel, 'attr') ?>"><?= esc($categoryLabel) ?></td>
+                        <td class="whitespace-nowrap px-4 py-2 text-sm">
+                            <?php $attachmentCount = (int) ($folder['attachment_count'] ?? 0); ?>
+                            <?php if ($attachmentCount > 0): ?>
+                                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">
+                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                    </svg>
+                                    <?= $attachmentCount ?> file<?= $attachmentCount === 1 ? '' : 's' ?>
+                                </span>
+                            <?php else: ?>
+                                <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800" title="This record has no files uploaded yet">
+                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                    </svg>
+                                    Missing attachments
+                                </span>
+                            <?php endif; ?>
+                        </td>
                         <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-900"><?= esc($folder['folder_type'] ?? '--') ?></td>
                         <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-700">
                             <div>Borrowed Date: <?= esc($formatDate($folder['borrowed_date'] ?? null, 'Not yet borrowed')) ?></div>

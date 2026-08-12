@@ -31,7 +31,7 @@ class FolderModel extends Model
     protected $returnType       = 'array';
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'file_code', 'company_name', 'folder_type', 'category_id',
+        'file_code', 'company_name', 'company_location', 'folder_type', 'category_id',
         'location_code', 'status', 'location_id', 'created_by', 'updated_by',
         'borrowed_date', 'due_date'
     ];
@@ -50,6 +50,7 @@ class FolderModel extends Model
         'location_code'  => 'required|max_length[50]',
         'location_id'    => 'required|integer',
         'company_name'   => 'required|max_length[100]',
+        'company_location' => 'permit_empty|max_length[255]',
         'folder_type'    => 'required|in_list[PERMITS,ECC / CNC FILES,IEE / EIS FILES]|max_length[50]',
         'category_id'    => 'required|integer|is_not_unique[categories.category_id]',
         'status'         => 'in_list[Available,Borrowed,Archived,Disposed,Pending,Pending Update,Pending Archive,Declined]',
@@ -69,6 +70,9 @@ class FolderModel extends Model
         ],
         'company_name' => [
             'required' => 'Company name is required',
+        ],
+        'company_location' => [
+            'max_length' => 'Company location cannot exceed 255 characters.',
         ],
         'folder_type' => [
             'required'       => 'Folder type is required',
@@ -197,6 +201,7 @@ class FolderModel extends Model
             $builder->groupStart()
                 ->like('folders.file_code', $search)
                 ->orLike('folders.company_name', $search)
+                ->orLike('folders.company_location', $search)
                 ->orLike('folders.location_code', $search)
                 ->orLike('locations.rack', $search)
                 ->orLike('locations.shelf', $search)
@@ -237,7 +242,13 @@ class FolderModel extends Model
      */
     protected function buildDocumentRecordsQuery(array $filters = [])
     {
-        $builder = $this->select('folders.*, categories.category_name AS folder_category, locations.rack AS cabinet, locations.shelf AS shelf, locations.rack AS rack, bt.borrowed_at AS borrowed_date, bt.expected_return_date AS due_date, bt.actual_return_date AS return_date, ar.archived_date')
+        // Attachment count comes from a correlated subquery so the listing can
+        // flag records with nothing attached without a second round trip.
+        $attachmentCount = $this->db->tableExists('folder_files')
+            ? '(SELECT COUNT(*) FROM folder_files ff WHERE ff.folder_id = folders.folder_id) AS attachment_count'
+            : '0 AS attachment_count';
+
+        $builder = $this->select('folders.*, categories.category_name AS folder_category, locations.rack AS cabinet, locations.shelf AS shelf, locations.rack AS rack, bt.borrowed_at AS borrowed_date, bt.expected_return_date AS due_date, bt.actual_return_date AS return_date, ar.archived_date, ' . $attachmentCount, false)
             ->join('locations', 'locations.location_id = folders.location_id', 'left')
             ->join('categories', 'categories.category_id = folders.category_id', 'left')
             ->join('borrow_transactions bt', 'bt.transaction_id = folders.current_borrow_transaction_id', 'left')
@@ -261,6 +272,7 @@ class FolderModel extends Model
             $builder->groupStart()
                 ->like('folders.file_code', $search)
                 ->orLike('folders.company_name', $search)
+                ->orLike('folders.company_location', $search)
                 ->orLike('folders.location_code', $search)
                 ->orLike('locations.rack', $search)
                 ->orLike('locations.shelf', $search)
@@ -276,6 +288,11 @@ class FolderModel extends Model
         $category = trim((string) ($filters['category'] ?? ''));
         if ($category !== '') {
             $builder->where('categories.category_name', $category);
+        }
+
+        // Surfaces records that were created but never populated with files.
+        if (! empty($filters['no_attachments']) && $this->db->tableExists('folder_files')) {
+            $builder->where('NOT EXISTS (SELECT 1 FROM folder_files ff WHERE ff.folder_id = folders.folder_id)', null, false);
         }
 
         return $builder;

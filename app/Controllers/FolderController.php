@@ -40,6 +40,7 @@ class FolderController extends BaseController
             'status' => trim((string) $this->request->getGet('status')),
             'folder_type' => trim((string) $this->request->getGet('folder_type')),
             'category' => trim((string) $this->request->getGet('category')),
+            'no_attachments' => $this->request->getGet('no_attachments') === '1' ? '1' : '',
             'sort' => trim((string) $this->request->getGet('sort')),
             'limit' => trim((string) $this->request->getGet('limit')),
             'page' => (int) ($this->request->getGet('page') ?? 1),
@@ -188,6 +189,7 @@ class FolderController extends BaseController
             'file_code' => $nextCode,
             'location_code' => $locationCode,
             'company_name' => $companyName,
+            'company_location' => trim((string) $this->request->getPost('company_location')) ?: null,
             'folder_type' => $folderType,
             'category_id' => $categoryId,
             'status' => 'Pending',
@@ -397,6 +399,7 @@ class FolderController extends BaseController
 
         $data = [
             'company_name' => $companyName,
+            'company_location' => trim((string) $this->request->getPost('company_location')) ?: null,
             'folder_type' => $folderType,
             'category_id' => $categoryId,
             'status' => $folder['status'] ?? 'Available',
@@ -457,6 +460,7 @@ class FolderController extends BaseController
             'proposed_changes' => json_encode($data),
             'current_values' => json_encode([
                 'company_name' => $folder['company_name'] ?? null,
+                'company_location' => $folder['company_location'] ?? null,
                 'folder_type' => $folder['folder_type'] ?? null,
                 'category_id' => $folder['category_id'] ?? null,
                 'status' => $folder['status'] ?? null,
@@ -538,6 +542,7 @@ class FolderController extends BaseController
 
         $fields = [
             'company_name'  => 'Company Name',
+            'company_location' => 'Company Location',
             'folder_type'   => 'Folder Type',
             'category_id'   => 'Category',
             'location_id'   => 'Location',

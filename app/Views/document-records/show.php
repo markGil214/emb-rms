@@ -301,6 +301,10 @@
                     <p class="text-base font-semibold text-gray-900"><?= esc($folder['company_name']) ?></p>
                 </div>
                 <div class="rounded-lg bg-gray-50 p-3">
+                    <label class="mb-1 block text-xs font-semibold text-gray-600">Company Location</label>
+                    <p class="text-base font-semibold text-gray-900"><?= esc($folder['company_location'] ?? '') !== '' ? esc($folder['company_location']) : '--' ?></p>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-3">
                     <label class="mb-1 block text-xs font-semibold text-gray-600">Location Code</label>
                     <p class="text-base font-semibold text-gray-900"><?= esc($folder['location_code'] ?? '--') ?></p>
                 </div>

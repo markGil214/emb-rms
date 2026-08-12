@@ -38,9 +38,15 @@
 
 
 
-            <!-- Company Name and Document Status -->
+            <!-- Group 1: Company -->
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+
+                <h3 class="text-base font-semibold text-gray-900 mb-1">Company Information</h3>
+
+                <p class="text-xs text-gray-500 mb-3">Who the records belong to</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <!-- Company Name -->
 
@@ -68,7 +74,53 @@
 
                 </div>
 
-                
+
+
+                <!-- Company Location -->
+
+                <div>
+
+                    <label for="company_location" class="block text-sm font-medium text-gray-700 pt-2">
+
+                        Company Location
+
+                    </label>
+
+                    <input type="text" id="company_location" name="company_location"
+
+                        value="<?= esc(old('company_location')) ?>"
+
+                        maxlength="255"
+
+                        class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+
+                        placeholder="e.g. Turod, Luna, Apayao">
+
+                    <p class="mt-1 text-xs text-gray-500">Where the company is located. Separate from the shelf location below.</p>
+
+                    <?php if (isset($errors['company_location'])): ?>
+
+                        <p class="mt-1 text-sm text-red-600"><?= $errors['company_location'] ?></p>
+
+                    <?php endif; ?>
+
+                </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Group 2: Folder -->
+
+            <div class="border-t pt-4">
+
+                <h3 class="text-base font-semibold text-gray-900 mb-1">Folder Information</h3>
+
+                <p class="text-xs text-gray-500 mb-3">How this record is classified</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <!-- Folder Type -->
 
@@ -138,17 +190,19 @@
 
                 </div>
 
-                
+                </div>
 
             </div>
 
 
 
-            <!-- Location Section -->
+            <!-- Group 3: Shelf Location -->
 
             <div class="border-t pt-4">
 
-                <h3 class="text-base font-medium text-gray-900 mb-3">Location Information</h3>
+                <h3 class="text-base font-semibold text-gray-900 mb-1">Shelf Location</h3>
+
+                <p class="text-xs text-gray-500 mb-3">Where the physical folder will be stored</p>
 
                 
 
