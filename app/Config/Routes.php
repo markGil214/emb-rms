@@ -159,6 +159,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->get('/users/create',                 'Admin\UserController::create',        ['as' => 'users.create', 'filter' => 'permission:manage_users']);
     $routes->post('/users',                       'Admin\UserController::store',         ['as' => 'users.store', 'filter' => 'permission:manage_users']);
     $routes->get('/users/(:num)/status-confirm',  'Admin\UserController::confirmStatus/$1',['as' => 'users.status-confirm', 'filter' => 'permission:manage_users']);
+    $routes->get('/users/(:num)',                 'Admin\UserController::show/$1',        ['as' => 'users.show', 'filter' => 'permission:manage_users']);
     $routes->post('/users/(:num)/status',         'Admin\UserController::updateStatus/$1',['as' => 'users.update-status', 'filter' => 'permission:manage_users']);
     $routes->post('/users/(:num)/update-info',   'Admin\UserController::updateInfo/$1',  ['as' => 'users.update-info', 'filter' => 'permission:manage_users']);
 
