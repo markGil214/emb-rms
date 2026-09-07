@@ -78,7 +78,7 @@
 
                 <!-- Company Location -->
 
-                <div>
+                <div class="relative">
 
                     <label for="company_location" class="block text-sm font-medium text-gray-700 pt-2">
 
@@ -92,9 +92,15 @@
 
                         maxlength="255"
 
+                        autocomplete="off"
+
                         class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
 
                         placeholder="e.g. Turod, Luna, Apayao">
+
+                    <ul id="companyLocationSuggestions"
+                        class="absolute z-20 hidden w-full mt-1 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded shadow-lg text-sm">
+                    </ul>
 
                     <p class="mt-1 text-xs text-gray-500">Where the company is located. Separate from the shelf location below.</p>
 
@@ -604,6 +610,82 @@ document.addEventListener('DOMContentLoaded', function() {
 
     }
 
+    // Company Location autocomplete, backed by /api/ph-address/search.
+    const locationInput = document.getElementById('company_location');
+    const locationSuggestions = document.getElementById('companyLocationSuggestions');
+
+    if (locationInput && locationSuggestions) {
+        let debounceTimer = null;
+        let activeController = null;
+
+        function hideSuggestions() {
+            locationSuggestions.innerHTML = '';
+            locationSuggestions.classList.add('hidden');
+        }
+
+        function renderSuggestions(items) {
+            locationSuggestions.innerHTML = '';
+
+            if (!items.length) {
+                hideSuggestions();
+                return;
+            }
+
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item.label;
+                li.className = 'px-3 py-2 cursor-pointer hover:bg-blue-50';
+                li.addEventListener('mousedown', function(event) {
+                    // mousedown (not click) so this fires before the input's blur hides the list.
+                    event.preventDefault();
+                    locationInput.value = item.label;
+                    hideSuggestions();
+                });
+                locationSuggestions.appendChild(li);
+            });
+
+            locationSuggestions.classList.remove('hidden');
+        }
+
+        locationInput.addEventListener('input', function() {
+            const query = this.value.trim();
+
+            clearTimeout(debounceTimer);
+
+            if (query.length < 2) {
+                hideSuggestions();
+                return;
+            }
+
+            debounceTimer = setTimeout(function() {
+                if (activeController) activeController.abort();
+                activeController = new AbortController();
+
+                fetch('<?= route_to('api.phaddress.search') ?>?q=' + encodeURIComponent(query), {
+                        signal: activeController.signal,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(renderSuggestions)
+                    .catch(function(error) {
+                        if (error.name !== 'AbortError') hideSuggestions();
+                    });
+            }, 250);
+        });
+
+        locationInput.addEventListener('blur', function() {
+            // Small delay so a suggestion's mousedown handler still runs first.
+            setTimeout(hideSuggestions, 150);
+        });
+
+        locationInput.addEventListener('focus', function() {
+            if (this.value.trim().length >= 2 && locationSuggestions.children.length) {
+                locationSuggestions.classList.remove('hidden');
+            }
+        });
+    }
 });
 
 </script>
