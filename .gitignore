@@ -135,3 +135,9 @@ package-lock.json
 # Documentations
 #-------------------------
 *.md
+
+#-------------------------
+# PSA PSGC publication downloads (reference data for PhAddressSeeder --
+# large binary, refreshed quarterly, not source code)
+#-------------------------
+PSGC-*-Publication-Datafile.xlsx
