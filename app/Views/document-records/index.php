@@ -514,7 +514,11 @@ $folders = $folders ?? [];
 
             resultsPanel.classList.add('opacity-60');
 
-            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
                 .then(function(response) {
                     if (!response.ok) {
                         throw new Error('Failed to load results');
@@ -696,7 +700,11 @@ $folders = $folders ?? [];
             var isApprove = updateForm.getAttribute('data-diff-action') === 'approve';
             var diffUrl = updateForm.getAttribute('data-diff-url');
 
-            fetch(diffUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            fetch(diffUrl, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
                 .then(function(response) {
                     if (!response.ok) {
                         return response.json().then(function(body) {
@@ -730,7 +738,9 @@ $folders = $folders ?? [];
 
         // Keep the results panel in sync with browser back/forward.
         window.addEventListener('popstate', function() {
-            loadResults(window.location.href, { replace: true });
+            loadResults(window.location.href, {
+                replace: true
+            });
         });
 
         applyActiveLimiterButton(<?= json_encode((string) ($filters['limit'] ?? 'all')) ?>);
