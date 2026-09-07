@@ -112,6 +112,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
 $routes->group('', ['filter' => 'auth'], function($routes) {
 
+    $routes->get('/api/ph-address/search',            'Api\PhAddressApiController::search', ['as' => 'api.phaddress.search']);
+
     $routes->get('/document-records',                'FolderController::index',    ['as' => 'records', 'filter' => 'permission:search_documents']);
 
     $routes->get('/document-records/create',         'FolderController::create',   ['as' => 'records.create', 'filter' => 'permission:create_document_record']);
