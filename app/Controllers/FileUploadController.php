@@ -49,13 +49,6 @@ class FileUploadController extends BaseController
         $retentionType = (string) $this->request->getPost('retention_type');
 
         $validationRules = [
-            'file' => [
-                'rules' => 'uploaded[file]|max_size[file,30720]',
-                'errors' => [
-                    'uploaded'  => 'You must select a file to upload.',
-                    'max_size'  => 'File size must not exceed 30MB.',
-                ]
-            ],
             'retention_type' => [
                 'rules' => 'required|in_list[permanent,expiration]',
                 'errors' => [
@@ -92,44 +85,43 @@ class FileUploadController extends BaseController
             ];
         }
 
-        // Validate file upload
+        // Validate the retention fields before touching any uploads.
         if (!$this->validate($validationRules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $file = $this->request->getFile('file');
-        
-        // Generate unique filename with folder_id prefix
-        $newName = $folderId . '_' . time() . '_' . $file->getRandomName();
-        
-        log_message('debug', "Uploading file: " . $file->getClientName() . " as " . $newName);
-        
-        // Move file to uploads directory
-        try {
-            $file->move($this->uploadPath, $newName);
-            log_message('debug', "File moved to: " . $this->uploadPath . $newName);
-        } catch (\Exception $e) {
-            log_message('error', "File move failed: " . $e->getMessage());
+        // Accepts a batch. The form posts files[]; the older single `file`
+        // field is still honoured so nothing else that posts here breaks.
+        $files = $this->request->getFileMultiple('files') ?? [];
+        if (empty($files)) {
+            $single = $this->request->getFile('file');
+            if ($single !== null) {
+                $files = [$single];
+            }
+        }
+
+        $files = array_filter($files, static function ($file) {
+            return $file !== null && $file->getClientName() !== '';
+        });
+
+        if (empty($files)) {
             return redirect()->back()->withInput()->with('errors', [
-                'file' => 'File upload failed. Please try again.',
+                'files' => 'You must select at least one file to upload.',
             ]);
         }
 
-        // Verify file was actually saved
-        $uploadedPath = $this->uploadPath . $newName;
-        if (!file_exists($uploadedPath)) {
-            log_message('error', "Uploaded file not found at: " . $uploadedPath);
+        $maxFiles = 20;
+        if (count($files) > $maxFiles) {
             return redirect()->back()->withInput()->with('errors', [
-                'file' => 'File upload verification failed',
+                'files' => 'You can upload at most ' . $maxFiles . ' files at a time.',
             ]);
         }
 
-        // Save file info to database
-        $filePath = 'uploads/folders/' . $newName;
         $expirationYears  = (int) $this->request->getPost('expiration_years');
         $expirationMonths = (int) $this->request->getPost('expiration_months');
         $expirationDays   = (int) $this->request->getPost('expiration_days');
 
+        // Retention applies to the whole batch.
         $expirationDate = null;
         if ($retentionType === 'expiration') {
             if ($expirationYears === 0 && $expirationMonths === 0 && $expirationDays === 0) {
@@ -141,37 +133,87 @@ class FileUploadController extends BaseController
             $interval = new \DateInterval('P' . $expirationYears . 'Y' . $expirationMonths . 'M' . $expirationDays . 'D');
             $expirationDate = $today->add($interval)->format('Y-m-d');
         }
-        $data = [
-            'folder_id' => $folderId,
-            'file_name' => $file->getClientName(),
-            'file_path' => $filePath,
-            'file_size' => $file->getSize(),
-            'uploaded_by' => auth_user()['user_id'] ?? null,
-            'retention_type' => $retentionType,
-            'expiration_date' => $expirationDate,
-        ];
 
-        if ($this->folderFileModel->save($data)) {
-            log_message('debug', "File record saved to database with path: " . $filePath);
-            return redirect()->to(route_to('records.show', $folderId))->with('success', 'File uploaded successfully');
-        } else {
-            // Delete uploaded file if database save fails
+        $maxBytes = 30 * 1024 * 1024; // 30MB, matching the previous single-file limit
+        $uploadedBy = auth_user()['user_id'] ?? null;
+
+        $savedCount = 0;
+        $failures = [];
+
+        foreach ($files as $file) {
+            $originalName = $file->getClientName();
+
+            if (! $file->isValid()) {
+                $failures[] = $originalName . ' (' . $file->getErrorString() . ')';
+                continue;
+            }
+
+            if ($file->getSize() > $maxBytes) {
+                $failures[] = $originalName . ' (exceeds 30MB)';
+                continue;
+            }
+
+            $newName = $folderId . '_' . time() . '_' . $file->getRandomName();
+
+            try {
+                $file->move($this->uploadPath, $newName);
+            } catch (\Throwable $e) {
+                log_message('error', 'File move failed for ' . $originalName . ': ' . $e->getMessage());
+                $failures[] = $originalName . ' (could not be saved)';
+                continue;
+            }
+
+            if (! file_exists($this->uploadPath . $newName)) {
+                log_message('error', 'Uploaded file not found at: ' . $this->uploadPath . $newName);
+                $failures[] = $originalName . ' (upload verification failed)';
+                continue;
+            }
+
+            $saved = $this->folderFileModel->save([
+                'folder_id' => $folderId,
+                'file_name' => $originalName,
+                'file_path' => 'uploads/folders/' . $newName,
+                'file_size' => $file->getSize(),
+                'uploaded_by' => $uploadedBy,
+                'retention_type' => $retentionType,
+                'expiration_date' => $expirationDate,
+            ]);
+
+            if ($saved) {
+                $savedCount++;
+                continue;
+            }
+
+            // Don't leave an orphaned file on disk with no database record.
             if (file_exists($this->uploadPath . $newName)) {
                 unlink($this->uploadPath . $newName);
             }
 
             $modelErrors = $this->folderFileModel->errors();
-            $errorText = is_array($modelErrors) ? implode(', ', $modelErrors) : (string) $modelErrors;
+            log_message('error', 'Database save failed for ' . $originalName . ': '
+                . (is_array($modelErrors) ? implode(', ', $modelErrors) : (string) $modelErrors));
 
-            log_message('error', 'Database save failed: ' . $errorText);
-
-            return redirect()->back()->withInput()->with(
-                'errors',
-                is_array($modelErrors) && !empty($modelErrors)
-                    ? $modelErrors
-                    : ['file' => 'Failed to save file information. Please try again.']
-            );
+            $failures[] = $originalName . ' (could not be recorded)';
         }
+
+        if ($savedCount === 0) {
+            return redirect()->back()->withInput()->with('errors', [
+                'files' => 'No files were uploaded. ' . implode('; ', $failures),
+            ]);
+        }
+
+        $message = $savedCount === 1
+            ? '1 file uploaded successfully.'
+            : $savedCount . ' files uploaded successfully.';
+
+        if (! empty($failures)) {
+            // Some succeeded, so this is a warning rather than an outright failure.
+            return redirect()->to(route_to('records.show', $folderId))
+                ->with('success', $message)
+                ->with('warning', count($failures) . ' file(s) were skipped: ' . implode('; ', $failures));
+        }
+
+        return redirect()->to(route_to('records.show', $folderId))->with('success', $message);
     }
 
     /**
@@ -274,7 +316,7 @@ class FileUploadController extends BaseController
         }
 
         $auditLog = service('auditLog');
-        $auditLog->log(auth_user()['user_id'] ?? null, 'request_file_disposal', "file_id:{$fileId}");
+        $auditLog->log('request_file_disposal', 'file', (int) $fileId, null, null, auth_user()['user_id'] ?? null);
 
         return redirect()->back()
             ->with('success', 'Disposal request submitted and is now pending approval.');

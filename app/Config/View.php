@@ -14,9 +14,17 @@ class View extends BaseView
 	 * calls so that it is available to all views. If that is the case,
 	 * set $saveData to true.
 	 *
+	 * Kept false deliberately. With it enabled, variables leaked between
+	 * view() calls: components/button uses `$type = $type ?? 'link'` style
+	 * defaults, which never fired because the previous button's $type,
+	 * $action and $confirm were still in scope. A "View" link rendered after
+	 * a "Decline" button therefore inherited its type/action/confirm and
+	 * became a form that rejected the request. Every nested view in this app
+	 * passes its data explicitly, so nothing relies on the old behaviour.
+	 *
 	 * @var boolean
 	 */
-	public $saveData = true;
+	public $saveData = false;
 
 	/**
 	 * Parser Filters map a filter name with any PHP callable. When the

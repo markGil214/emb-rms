@@ -655,6 +655,102 @@
 
     }
 
+    /* Shelves with no capacity set cannot hold folders at all. They get a
+       deliberately different treatment from the rotating shelf palette --
+       hatched, muted, and not clickable-looking -- so "unusable" reads
+       differently from "full". */
+    .rack-slot--disabled {
+        background-color: #f1f5f9 !important;
+        background-image: repeating-linear-gradient(
+            45deg,
+            rgba(100, 116, 139, 0.10) 0,
+            rgba(100, 116, 139, 0.10) 6px,
+            transparent 6px,
+            transparent 12px
+        ) !important;
+        border: 2px dashed #94a3b8 !important;
+    }
+
+    /* Only a shelf that is both unusable and empty has nothing to click
+       through to -- one holding stranded folders stays interactive so those
+       records can still be inspected. */
+    .rack-slot--empty {
+        cursor: not-allowed !important;
+    }
+
+    .rack-slot--empty:hover {
+        box-shadow: none !important;
+    }
+
+    .rack-slot__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #fee2e2;
+        color: #991b1b;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+    }
+
+    .rack-slot__hint {
+        margin-top: 6px;
+        color: #64748b;
+        font-size: 11px;
+    }
+
+    .rack-slot__fix {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border: 1px solid #2563eb;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .rack-slot__fix:hover {
+        background: #dbeafe;
+        color: #1e3a8a;
+    }
+
+    .dark .rack-slot--disabled {
+        background-color: #1f2937 !important;
+        border-color: #4b5563 !important;
+    }
+
+    .dark .rack-slot__badge {
+        background: rgba(220, 38, 38, 0.25);
+        color: #fca5a5;
+    }
+
+    .dark .rack-slot__hint {
+        color: #9ca3af;
+    }
+
+    .dark .rack-slot__fix {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.6);
+        color: #93c5fd;
+    }
+
+    .dark .rack-slot__fix:hover {
+        background: rgba(59, 130, 246, 0.28);
+        color: #bfdbfe;
+    }
+
 </style>
 
 
@@ -943,7 +1039,8 @@ class ShelfMapApp {
 
                 const rackSlot = e.target.closest('.rack-slot');
 
-            if (rackSlot) {
+            // An unusable shelf with nothing on it has no folders to show.
+            if (rackSlot && !rackSlot.classList.contains('rack-slot--empty')) {
 
                 const rackLetter = rackSlot.dataset.shelf;
 
@@ -1840,7 +1937,9 @@ class ShelfMapApp {
         rackLocations.forEach(loc => {
             const shelf = String(loc.shelf || '-');
             if (!shelfMap[shelf]) {
-                shelfMap[shelf] = { shelf, capacity: 0, occupied: 0, documents: [] };
+                // Rack + shelf is unique, so one location backs each entry --
+                // keep its id so the capacity fix can deep-link to it.
+                shelfMap[shelf] = { shelf, locationId: loc.location_id, capacity: 0, occupied: 0, documents: [] };
             }
 
             const area = areaByLocation[String(loc.location_id)];
@@ -1874,13 +1973,66 @@ class ShelfMapApp {
 
         container.innerHTML = shelves.map((shelfData, index) => {
             const color = colors[index % colors.length];
-            const pct = shelfData.capacity > 0 ? Math.min(100, Math.round((shelfData.occupied / shelfData.capacity) * 100)) : 0;
             const safeShelf = shelfData.shelf.replace(/"/g, '&quot;');
+
+            // Capacity 0 means the shelf cannot hold anything, which is a
+            // different problem from being full -- show it as unusable
+            // rather than as a shelf sitting at 0%.
+            if (!shelfData.capacity || shelfData.capacity <= 0) {
+                const hasStranded = shelfData.occupied > 0;
+                const strandedNote = hasStranded
+                    ? `<div class="rack-slot__hint">${shelfData.occupied} folder(s) still stored here. Set a capacity in Manage Racks.</div>`
+                    : '<div class="rack-slot__hint">Set a capacity in Manage Racks to use this shelf.</div>';
+
+                // Only users who can actually manage racks get the shortcut;
+                // the /manage-racks route enforces the same permission, so
+                // showing it to anyone else would just lead to a denial.
+                const canManageRacks = <?= can('manage_racks') ? 'true' : 'false' ?>;
+                const fixCapacityLink = (canManageRacks && shelfData.locationId)
+                    ? `<a href="<?= base_url('manage-racks') ?>/${shelfData.locationId}/edit"
+                          class="rack-slot__fix"
+                          title="Set this shelf's capacity in Manage Racks"
+                          onclick="event.stopPropagation();">
+                           <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                               <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                           </svg>
+                           Set capacity
+                       </a>`
+                    : '';
+
+                return `
+                    <div class="rack-slot rack-slot--disabled ${hasStranded ? 'cursor-pointer' : 'rack-slot--empty'} rounded-lg p-3 transition-all duration-200" data-shelf="${safeShelf}" data-folders='${JSON.stringify(shelfData.documents)}' title="This shelf has no capacity set and cannot accept folders.">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <div class="text-lg font-bold text-gray-500">Shelf ${safeShelf}</div>
+                            <div class="flex items-center gap-2">
+                                <span class="rack-slot__badge">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636L5.636 18.364M12 21a9 9 0 110-18 9 9 0 010 18z"></path>
+                                    </svg>
+                                    No capacity
+                                </span>
+                                ${fixCapacityLink}
+                            </div>
+                        </div>
+                        ${strandedNote}
+                    </div>
+                `;
+            }
+
+            const pct = Math.min(100, Math.round((shelfData.occupied / shelfData.capacity) * 100));
+            const isFull = shelfData.occupied >= shelfData.capacity;
+            const fullBadge = isFull
+                ? '<span class="rack-slot__badge">Full</span>'
+                : '';
+
             return `
                 <div class="rack-slot rounded-lg p-3 cursor-pointer transition-all duration-200 hover:shadow-lg" data-shelf="${safeShelf}" data-folders='${JSON.stringify(shelfData.documents)}' style="background:${color.bg}; border:2px solid ${color.border};">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between gap-2">
                         <div class="text-lg font-bold" style="color:${color.text};">Shelf ${safeShelf}</div>
-                        <div class="text-sm text-gray-600">${shelfData.occupied}/${shelfData.capacity}</div>
+                        <div class="flex items-center gap-2">
+                            ${fullBadge}
+                            <div class="text-sm text-gray-600">${shelfData.occupied}/${shelfData.capacity}</div>
+                        </div>
                     </div>
                     <div class="w-full bg-gray-300 rounded-full h-2 mt-2">
                         <div class="h-2 rounded-full transition-all duration-300" style="width:${pct}%; background:${color.bar};"></div>

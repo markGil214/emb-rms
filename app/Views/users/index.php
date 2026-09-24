@@ -300,6 +300,8 @@
     .modal-btn-save:hover { background:#1d4ed8;transform:translateY(-1px); }
     .update-btn { height:34px;padding:0 16px;background:#3b82f6;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;border:none;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 4px rgba(59,130,246,0.2); }
     .update-btn:hover { background:#2563eb;transform:translateY(-1px); }
+    .view-btn { display:inline-flex;align-items:center;height:34px;padding:0 16px;background:#fff;color:#475569;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;border:1px solid #cbd5e1;cursor:pointer;transition:all 0.2s;white-space:nowrap; }
+    .view-btn:hover { background:#f8fafc;border-color:#94a3b8;color:#1e293b; }
 
     /* Dark mode: this page uses its own hand-rolled CSS instead of Tailwind
        utility classes, so the global dark-mode.css overrides (which only
@@ -333,6 +335,8 @@
     .dark .modal-label { color: var(--color-text-muted) !important; }
     .dark .modal-input, .dark .modal-select { border-color: var(--color-border-light); color: var(--color-text) !important; background-color: var(--color-bg-secondary); }
     .dark .modal-actions { border-color: var(--color-border); }
+    .dark .view-btn { background: var(--color-bg-tertiary); border-color: var(--color-border-light); color: var(--color-text-secondary) !important; }
+    .dark .view-btn:hover { background: var(--color-border); color: var(--color-text) !important; }
     .dark .modal-btn-cancel { background: var(--color-bg-tertiary); color: var(--color-text-secondary) !important; }
     .dark .modal-btn-cancel:hover { background: var(--color-border); color: var(--color-text) !important; }
 </style>
@@ -487,9 +491,14 @@
                                     Joined: <?= !empty($user['created_at']) ? esc(date('M d, Y', strtotime($user['created_at']))) : '--' ?>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
-                                    <button type="button" class="update-btn" onclick="openUpdateModal(<?= esc($user['user_id']) ?>, '<?= esc($user['first_name'] ?? '', 'js') ?>', '<?= esc($user['last_name'] ?? '', 'js') ?>', '<?= esc($user['email'] ?? '', 'js') ?>', '<?= esc($status, 'js') ?>')" <?= $isSelf ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '' ?>>
-                                        Update
-                                    </button>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <a href="<?= route_to('users.show', $user['user_id']) ?>" class="view-btn" title="View details and recent activity">
+                                            View
+                                        </a>
+                                        <button type="button" class="update-btn" onclick="openUpdateModal(<?= esc($user['user_id']) ?>, '<?= esc($user['first_name'] ?? '', 'js') ?>', '<?= esc($user['last_name'] ?? '', 'js') ?>', '<?= esc($user['email'] ?? '', 'js') ?>', '<?= esc($status, 'js') ?>')" <?= $isSelf ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '' ?>>
+                                            Update
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

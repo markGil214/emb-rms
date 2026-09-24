@@ -314,6 +314,96 @@ class UserController extends BaseController
 
 		return redirect()->to('/users')->with('success', 'User status updated successfully');
 	}
+	/**
+	 * User detail page: account information plus what this user has done
+	 * over the last 30 days.
+	 *
+	 * Note this is activity the user *performed*. audit_logs.user_id records
+	 * the actor, and there is no column recording who an action was performed
+	 * on, so "changes made to this account" cannot be shown yet.
+	 */
+	public function show(int $userId)
+	{
+		if (!can('manage_users')) {
+			return redirect()->to('/dashboard')->with('error', 'Permission denied');
+		}
+
+		$db = \Config\Database::connect();
+
+		$user = $db->table('users u')
+			->select("u.user_id, u.username, u.first_name, u.last_name, u.email, u.role,
+				COALESCE(r.role_name, u.role) AS role_name, COALESCE(u.status, 'Active') AS status,
+				u.inactive_at, u.created_at, u.updated_at", false)
+			->join('user_roles ur', 'ur.user_id = u.user_id', 'left')
+			->join('roles r', 'r.role_id = ur.role_id', 'left')
+			->where('u.user_id', $userId)
+			->get()
+			->getRowArray();
+
+		if (! $user) {
+			return redirect()->to('/users')->with('error', 'User not found.');
+		}
+
+		$since = date('Y-m-d H:i:s', strtotime('-30 days'));
+		$activity = [];
+		$activityByDay = [];
+		$actionMix = [];
+
+		if ($db->tableExists('audit_logs')) {
+			$activity = $db->table('audit_logs')
+				->where('user_id', $userId)
+				->where('created_at >=', $since)
+				->orderBy('created_at', 'DESC')
+				->limit(100)
+				->get()
+				->getResultArray();
+
+			$actionMix = $db->table('audit_logs')
+				->select('action, entity_type, COUNT(*) AS total', false)
+				->where('user_id', $userId)
+				->where('created_at >=', $since)
+				->groupBy('action, entity_type')
+				->orderBy('total', 'DESC')
+				->limit(8)
+				->get()
+				->getResultArray();
+
+			$dayRows = $db->table('audit_logs')
+				->select('DATE(created_at) AS day, COUNT(*) AS total', false)
+				->where('user_id', $userId)
+				->where('created_at >=', $since)
+				->groupBy('day')
+				->get()
+				->getResultArray();
+
+			$counts = [];
+			foreach ($dayRows as $row) {
+				$counts[$row['day']] = (int) $row['total'];
+			}
+
+			// Fill the gaps so the sparkline covers all 30 days.
+			for ($i = 29; $i >= 0; $i--) {
+				$day = date('Y-m-d', strtotime("-{$i} days"));
+				$activityByDay[] = [
+					'day' => $day,
+					'label' => date('M j', strtotime($day)),
+					'total' => $counts[$day] ?? 0,
+				];
+			}
+		}
+
+		return view('users/show', [
+			'title' => 'User Details',
+			'user' => $user,
+			'permissions' => $this->permissionService->userPermissions($userId),
+			'activity' => $activity,
+			'activityByDay' => $activityByDay,
+			'actionMix' => $actionMix,
+			'activityTotal' => count($activity),
+			'since' => $since,
+		]);
+	}
+
 	public function updateInfo(int $userId)
 	{
 		if (!can('manage_users')) {

@@ -6,17 +6,20 @@ use App\Models\RelocationRequestModel;
 use App\Models\FolderModel;
 // use App\Models\FolderMovementModel;
 use App\Models\LocationModel;
+use App\Models\RackShelfModel;
 
 class RelocationController extends BaseController
 {
     protected $relocationModel;
     protected $folderModel;
+    protected $rackShelfModel;
 //    protected $movementModel;
 
     public function __construct()
     {
         $this->relocationModel = new RelocationRequestModel();
         $this->folderModel = new FolderModel();
+        $this->rackShelfModel = new RackShelfModel();
 //        $this->movementModel = new FolderMovementModel();
     }
 
@@ -125,6 +128,12 @@ class RelocationController extends BaseController
             ]);
         }
 
+        if (! $this->rackShelfModel->hasRoomFor($toLocationId, $folderId)) {
+            return redirect()->back()->withInput()->with('errors', [
+                'to_location_id' => $this->rackShelfModel->capacityMessage($toLocationId),
+            ]);
+        }
+
         // ARCHITECTURAL FIX #4: Lifecycle Guard - prevent relocating unavailable folders
         if ($folder['status'] !== 'Available') {
             return redirect()->back()->withInput()->with('errors', [
@@ -192,10 +201,17 @@ class RelocationController extends BaseController
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
 
+        // The target shelf may have filled up between request and approval,
+        // and this is the step that actually moves the folder.
+        $toLocationId = (int) ($relocation['to_location_id'] ?? 0);
+        if (! $this->rackShelfModel->hasRoomFor($toLocationId, (int) ($relocation['folder_id'] ?? 0))) {
+            return redirect()->back()->with('error', $this->rackShelfModel->capacityMessage($toLocationId));
+        }
+
         $this->relocationModel->approveRelocation($relocationId, auth_user()['user_id']);
 
         $auditLog = service('auditLog');
-        $auditLog->log(auth_user()['user_id'], 'approve_relocation', "relocation_id:{$relocationId}");
+        $auditLog->log('approve_relocation', 'relocation', (int) $relocationId, null, null, auth_user()['user_id']);
 
         return redirect()->back()->with('success', 'Relocation completed');
     }
@@ -223,7 +239,7 @@ class RelocationController extends BaseController
         ]);
 
         $auditLog = service('auditLog');
-        $auditLog->log(auth_user()['user_id'], 'decline_relocation', "relocation_id:{$relocationId}");
+        $auditLog->log('decline_relocation', 'relocation', (int) $relocationId, null, null, auth_user()['user_id']);
 
         return redirect()->back()->with('success', 'Relocation declined');
     }
@@ -310,7 +326,7 @@ class RelocationController extends BaseController
         }
 
         $auditLog = service('auditLog');
-        $auditLog->log(auth_user()['user_id'], 'update_relocation', "relocation_id:{$relocationId}");
+        $auditLog->log('update_relocation', 'relocation', (int) $relocationId, null, null, auth_user()['user_id']);
 
         return redirect()->to('/relocations')->with('success', 'Relocation updated');
     }
@@ -352,9 +368,15 @@ class RelocationController extends BaseController
             // Audit trail
             $auditLog = service('auditLog');
             $auditLog->log(
-                auth_user()['user_id'],
                 'start_relocation',
-                "relocation_id:{$relocationId},folder_id:{$relocation['folder_id']},movement_id:{$movementId}"
+                'relocation',
+                (int) $relocationId,
+                null,
+                [
+                    'folder_id' => $relocation['folder_id'],
+                    'movement_id' => $movementId,
+                ],
+                auth_user()['user_id']
             );
 
             return redirect()->back()->with('success', 'Relocation started.');
@@ -430,11 +452,18 @@ class RelocationController extends BaseController
             // Audit logging with enhanced details
             $auditLog = service('auditLog');
             $auditLog->log(
-                auth_user()['user_id'],
                 'complete_relocation',
-                "relocation_id:{$relocationId},folder_id:{$relocation['folder_id']}," .
-                "from_location:{$relocation['from_location_id']},to_location:{$relocation['to_location_id']}," .
-                "lifecycle:movement_finalized,race_condition_check:passed"
+                'relocation',
+                (int) $relocationId,
+                null,
+                [
+                    'folder_id' => $relocation['folder_id'],
+                    'from_location' => $relocation['from_location_id'],
+                    'to_location' => $relocation['to_location_id'],
+                    'lifecycle' => 'movement_finalized',
+                    'race_condition_check' => 'passed',
+                ],
+                auth_user()['user_id']
             );
 
             return redirect()->to('/relocations')->with(

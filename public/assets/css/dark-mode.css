@@ -483,6 +483,11 @@
         color: #fcd34d !important;
     }
 
+    .bg-amber-100 {
+        background-color: rgba(245, 158, 11, 0.2) !important;
+        color: #fcd34d !important;
+    }
+
     .text-yellow-700 {
         color: #fcd34d !important;
     }

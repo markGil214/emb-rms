@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\FolderModel;
 use App\Models\FolderFileModel;
 use App\Models\CategoryModel;
+use App\Models\RackShelfModel;
 use App\Models\RelocationRequestModel;
 // use App\Models\FolderMovementModel;
 use App\Libraries\FileCodeGenerator;
@@ -15,6 +16,7 @@ class FolderController extends BaseController
     protected $folderModel;
     protected $folderFileModel;
     protected $categoryModel;
+    protected $rackShelfModel;
     protected $relocationModel;
     //    protected $movementModel;
 
@@ -23,6 +25,7 @@ class FolderController extends BaseController
         $this->folderModel = new FolderModel();
         $this->folderFileModel = new FolderFileModel();
         $this->categoryModel = new CategoryModel();
+        $this->rackShelfModel = new RackShelfModel();
         $this->relocationModel = new RelocationRequestModel();
         //        $this->movementModel = new FolderMovementModel();
     }
@@ -37,6 +40,7 @@ class FolderController extends BaseController
             'status' => trim((string) $this->request->getGet('status')),
             'folder_type' => trim((string) $this->request->getGet('folder_type')),
             'category' => trim((string) $this->request->getGet('category')),
+            'no_attachments' => $this->request->getGet('no_attachments') === '1' ? '1' : '',
             'sort' => trim((string) $this->request->getGet('sort')),
             'limit' => trim((string) $this->request->getGet('limit')),
             'page' => (int) ($this->request->getGet('page') ?? 1),
@@ -108,17 +112,26 @@ class FolderController extends BaseController
     {
         $db = \Config\Database::connect();
         $locations = $db->table('locations')
-            ->select('location_id, rack, shelf')
+            ->select('location_id, rack, shelf, capacity')
             ->orderBy('rack', 'ASC')
             ->orderBy('shelf', 'ASC')
             ->get()
             ->getResultArray();
 
-        $locations = array_map(static function (array $location) {
+        // Surface remaining space per shelf so the form can show it and block
+        // submitting against a shelf that cannot take another folder.
+        $occupancyMap = $this->rackShelfModel->getOccupancyMap();
+
+        $locations = array_map(static function (array $location) use ($occupancyMap) {
+            $capacity = max(0, (int) ($location['capacity'] ?? 0));
+            $occupied = (int) ($occupancyMap[(int) $location['location_id']] ?? 0);
+
             return [
                 'location_id' => $location['location_id'],
                 'cabinet' => $location['rack'] ?? '',
                 'shelf' => $location['shelf'] ?? ($location['rack'] ?? ''),
+                'capacity' => $capacity,
+                'remaining' => max(0, $capacity - $occupied),
             ];
         }, $locations);
 
@@ -161,6 +174,11 @@ class FolderController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Selected location not found');
         }
 
+        if (! $this->rackShelfModel->hasRoomFor($locationId)) {
+            $db->transRollback();
+            return redirect()->back()->withInput()->with('error', $this->rackShelfModel->capacityMessage($locationId));
+        }
+
         // Generate location code from location details
         $locationCode = FileCodeGenerator::generateLocationCode(
             $location->rack ?? '',
@@ -171,6 +189,7 @@ class FolderController extends BaseController
             'file_code' => $nextCode,
             'location_code' => $locationCode,
             'company_name' => $companyName,
+            'company_location' => trim((string) $this->request->getPost('company_location')) ?: null,
             'folder_type' => $folderType,
             'category_id' => $categoryId,
             'status' => 'Pending',
@@ -298,17 +317,32 @@ class FolderController extends BaseController
         $folder = $this->findFolderOrFail($folderId);
         $db = \Config\Database::connect();
         $locations = $db->table('locations')
-            ->select('location_id, rack, shelf')
+            ->select('location_id, rack, shelf, capacity')
             ->orderBy('rack', 'ASC')
             ->orderBy('shelf', 'ASC')
             ->get()
             ->getResultArray();
 
-        $locations = array_map(static function (array $location) {
+        // This folder doesn't count against its own current shelf, otherwise
+        // re-saving it in place would look like the shelf is one over.
+        $occupancyMap = $this->rackShelfModel->getOccupancyMap();
+        $currentLocationId = (int) ($folder['location_id'] ?? 0);
+
+        $locations = array_map(static function (array $location) use ($occupancyMap, $currentLocationId) {
+            $locationId = (int) $location['location_id'];
+            $capacity = max(0, (int) ($location['capacity'] ?? 0));
+            $occupied = (int) ($occupancyMap[$locationId] ?? 0);
+
+            if ($locationId === $currentLocationId) {
+                $occupied = max(0, $occupied - 1);
+            }
+
             return [
                 'location_id' => $location['location_id'],
                 'cabinet' => $location['rack'] ?? '',
                 'shelf' => $location['shelf'] ?? ($location['rack'] ?? ''),
+                'capacity' => $capacity,
+                'remaining' => max(0, $capacity - $occupied),
             ];
         }, $locations);
 
@@ -365,6 +399,7 @@ class FolderController extends BaseController
 
         $data = [
             'company_name' => $companyName,
+            'company_location' => trim((string) $this->request->getPost('company_location')) ?: null,
             'folder_type' => $folderType,
             'category_id' => $categoryId,
             'status' => $folder['status'] ?? 'Available',
@@ -382,6 +417,14 @@ class FolderController extends BaseController
 
         if (!$selectedLocation) {
             return redirect()->back()->withInput()->with('error', 'Selected location not found');
+        }
+
+        // Only a move to a different shelf needs a capacity check -- the
+        // folder is excluded from the count so re-saving it in place, or
+        // moving it back and forth, never trips its own occupancy.
+        if ((int) $data['location_id'] !== (int) ($folder['location_id'] ?? 0)
+            && ! $this->rackShelfModel->hasRoomFor((int) $data['location_id'], $folderId)) {
+            return redirect()->back()->withInput()->with('error', $this->rackShelfModel->capacityMessage((int) $data['location_id']));
         }
 
         $data['location_code'] = FileCodeGenerator::generateLocationCode(
@@ -417,6 +460,7 @@ class FolderController extends BaseController
             'proposed_changes' => json_encode($data),
             'current_values' => json_encode([
                 'company_name' => $folder['company_name'] ?? null,
+                'company_location' => $folder['company_location'] ?? null,
                 'folder_type' => $folder['folder_type'] ?? null,
                 'category_id' => $folder['category_id'] ?? null,
                 'status' => $folder['status'] ?? null,
@@ -498,6 +542,7 @@ class FolderController extends BaseController
 
         $fields = [
             'company_name'  => 'Company Name',
+            'company_location' => 'Company Location',
             'folder_type'   => 'Folder Type',
             'category_id'   => 'Category',
             'location_id'   => 'Location',
@@ -554,6 +599,14 @@ class FolderController extends BaseController
         $db = \Config\Database::connect();
 
         if (($folder['status'] ?? '') === 'Pending') {
+            // Approval is the point a folder actually takes up shelf space,
+            // so this is where capacity has to hold -- several pending
+            // requests can otherwise queue up against the same free slot.
+            $pendingLocationId = (int) ($folder['location_id'] ?? 0);
+            if (! $this->rackShelfModel->hasRoomFor($pendingLocationId, $folderId)) {
+                return redirect()->to('/document-records')->with('error', $this->rackShelfModel->capacityMessage($pendingLocationId));
+            }
+
             $this->folderModel->update($folderId, [
                 'status' => 'Available',
                 'updated_by' => $approverId,
@@ -582,6 +635,15 @@ class FolderController extends BaseController
 
             if (empty($changes['status']) || $changes['status'] === 'Pending Update') {
                 $changes['status'] = 'Available';
+            }
+
+            // Re-check capacity at approval time: the target shelf may have
+            // filled up between the request being raised and approved.
+            $proposedLocationId = (int) ($changes['location_id'] ?? 0);
+            if ($proposedLocationId > 0
+                && $proposedLocationId !== (int) ($folder['location_id'] ?? 0)
+                && ! $this->rackShelfModel->hasRoomFor($proposedLocationId, $folderId)) {
+                return redirect()->to('/document-records')->with('error', $this->rackShelfModel->capacityMessage($proposedLocationId));
             }
 
             $changes['updated_by'] = $approverId;

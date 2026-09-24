@@ -148,6 +148,38 @@
 
                     </div>
 
+                    <div class="relative">
+
+                        <label for="company_location" class="block text-sm font-semibold text-gray-700 mb-1">
+
+                            Company Location
+
+                        </label>
+
+                        <input type="text" id="company_location" name="company_location"
+
+                            value="<?= esc(old('company_location', $folder['company_location'] ?? '')) ?>"
+
+                            maxlength="255"
+
+                            autocomplete="off"
+
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+
+                            placeholder="e.g. Turod, Luna, Apayao">
+
+                        <ul id="companyLocationSuggestions"
+                            class="absolute z-20 hidden w-full mt-1 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg text-sm">
+                        </ul>
+
+                        <?php if (isset($errors['company_location'])): ?>
+
+                            <p class="mt-1 text-sm text-red-600"><?= $errors['company_location'] ?></p>
+
+                        <?php endif; ?>
+
+                    </div>
+
 
                     <!-- Issuance Date -->
 
@@ -556,6 +588,83 @@
         }
 
         // Category options come directly from the database and are shown as plain names.
+
+        // Company Location autocomplete, backed by /api/ph-address/search.
+        const locationInput = document.getElementById('company_location');
+        const locationSuggestions = document.getElementById('companyLocationSuggestions');
+
+        if (locationInput && locationSuggestions) {
+            let debounceTimer = null;
+            let activeController = null;
+
+            const hideSuggestions = function () {
+                locationSuggestions.innerHTML = '';
+                locationSuggestions.classList.add('hidden');
+            };
+
+            const renderSuggestions = function (items) {
+                locationSuggestions.innerHTML = '';
+
+                if (!items.length) {
+                    hideSuggestions();
+                    return;
+                }
+
+                items.forEach(function (item) {
+                    const li = document.createElement('li');
+                    li.textContent = item.label;
+                    li.className = 'px-3 py-2 cursor-pointer hover:bg-blue-50';
+                    li.addEventListener('mousedown', function (event) {
+                        // mousedown (not click) so this fires before the input's blur hides the list.
+                        event.preventDefault();
+                        locationInput.value = item.label;
+                        hideSuggestions();
+                    });
+                    locationSuggestions.appendChild(li);
+                });
+
+                locationSuggestions.classList.remove('hidden');
+            };
+
+            locationInput.addEventListener('input', function () {
+                const query = this.value.trim();
+
+                clearTimeout(debounceTimer);
+
+                if (query.length < 2) {
+                    hideSuggestions();
+                    return;
+                }
+
+                debounceTimer = window.setTimeout(function () {
+                    if (activeController) activeController.abort();
+                    activeController = new AbortController();
+
+                    fetch('<?= route_to('api.phaddress.search') ?>?q=' + encodeURIComponent(query), {
+                            signal: activeController.signal,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(function (response) { return response.json(); })
+                        .then(renderSuggestions)
+                        .catch(function (error) {
+                            if (error.name !== 'AbortError') hideSuggestions();
+                        });
+                }, 250);
+            });
+
+            locationInput.addEventListener('blur', function () {
+                // Small delay so a suggestion's mousedown handler still runs first.
+                window.setTimeout(hideSuggestions, 150);
+            });
+
+            locationInput.addEventListener('focus', function () {
+                if (this.value.trim().length >= 2 && locationSuggestions.children.length) {
+                    locationSuggestions.classList.remove('hidden');
+                }
+            });
+        }
     })();
 </script>
 

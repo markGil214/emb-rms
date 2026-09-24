@@ -229,7 +229,7 @@ class ArchiveDisposalController extends BaseController
 
         // Log audit
         $auditLog = service('auditLog');
-        $auditLog->log(auth_user()['user_id'], 'approve_archive', "folder_id:{$data['folder_id']}");
+        $auditLog->log('approve_archive', 'folder', (int) $data['folder_id'], null, null, auth_user()['user_id']);
 
         $db->transComplete();
 
@@ -355,7 +355,7 @@ class ArchiveDisposalController extends BaseController
         }
 
         $auditLog = service('auditLog');
-        $auditLog->log(auth_user()['user_id'], 'approve_disposal', "disposal_id:{$disposalId}");
+        $auditLog->log('approve_disposal', 'disposal', (int) $disposalId, null, null, auth_user()['user_id']);
 
         return redirect()->back()->with('success', 'Disposal request approved');
     }
@@ -414,7 +414,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'] ?? null, 'complete_disposal', "disposal_id:{$disposalId}");
+            $auditLog->log('complete_disposal', 'disposal', (int) $disposalId, null, null, auth_user()['user_id'] ?? null);
         } catch (\Throwable $e) {
             log_message('error', 'Disposal completion audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
@@ -451,7 +451,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'] ?? null, 'reject_disposal', "disposal_id:{$disposalId}");
+            $auditLog->log('reject_disposal', 'disposal', (int) $disposalId, null, null, auth_user()['user_id'] ?? null);
         } catch (\Throwable $e) {
             log_message('error', 'Disposal rejection audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
@@ -553,7 +553,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'] ?? null, 'approve_file_disposal', "disposal_request_id:{$requestId}");
+            $auditLog->log('approve_file_disposal', 'file_disposal_request', (int) $requestId, null, null, auth_user()['user_id'] ?? null);
         } catch (\Throwable $e) {
             log_message('error', 'File Disposal approval audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
@@ -599,7 +599,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'] ?? null, 'reject_file_disposal', "disposal_request_id:{$requestId}");
+            $auditLog->log('reject_file_disposal', 'file_disposal_request', (int) $requestId, null, null, auth_user()['user_id'] ?? null);
         } catch (\Throwable $e) {
             log_message('error', 'File Disposal rejection audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
@@ -645,7 +645,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'] ?? null, 'complete_file_disposal', "disposal_request_id:{$requestId}");
+            $auditLog->log('complete_file_disposal', 'file_disposal_request', (int) $requestId, null, null, auth_user()['user_id'] ?? null);
         } catch (\Throwable $e) {
             log_message('error', 'File Disposal completion audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
@@ -753,7 +753,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'] ?? null, 'approve_archive', "folder_id:{$folderId}");
+            $auditLog->log('approve_archive', 'folder', (int) $folderId, null, null, auth_user()['user_id'] ?? null);
         } catch (\Throwable $e) {
             log_message('error', 'Archive request audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
@@ -809,7 +809,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'] ?? null, 'approve_archive', "folder_id:{$folderId}");
+            $auditLog->log('approve_archive', 'folder', (int) $folderId, null, null, auth_user()['user_id'] ?? null);
         } catch (\Throwable $e) {
             log_message('error', 'Archive approval audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
@@ -845,7 +845,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'] ?? null, 'decline_archive', "folder_id:{$folderId}");
+            $auditLog->log('decline_archive', 'folder', (int) $folderId, null, null, auth_user()['user_id'] ?? null);
         } catch (\Throwable $e) {
             log_message('error', 'Archive decline audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
@@ -900,7 +900,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'], 'request_restore', "folder_id:{$folderId}");
+            $auditLog->log('request_restore', 'folder', (int) $folderId, null, null, auth_user()['user_id']);
         } catch (\Throwable $e) {
             log_message('error', 'Restoration request audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
@@ -976,7 +976,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'], 'approve_restore', "restoration_request_id:{$requestId}");
+            $auditLog->log('approve_restore', 'restoration_request', (int) $requestId, null, null, auth_user()['user_id']);
         } catch (\Throwable $e) {
             log_message('error', 'Restoration approval audit logging failed: {message}', ['message' => $e->getMessage()]);
         }
@@ -1022,7 +1022,7 @@ class ArchiveDisposalController extends BaseController
 
         try {
             $auditLog = service('auditLog');
-            $auditLog->log(auth_user()['user_id'] ?? null, 'reject_restore', "restoration_request_id:{$requestId}");
+            $auditLog->log('reject_restore', 'restoration_request', (int) $requestId, null, null, auth_user()['user_id'] ?? null);
         } catch (\Throwable $e) {
             log_message('error', 'Restoration rejection audit logging failed: {message}', ['message' => $e->getMessage()]);
         }

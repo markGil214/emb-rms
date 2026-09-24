@@ -971,7 +971,8 @@
                                                 'type' => 'submit',
                                                 'style' => 'primary',
                                                 'action' => route_to($request['approve_route'], $request['route_id']),
-                                                'confirm' => $request['confirm_message'] ?? 'Approve this restoration request?'
+                                                'confirm' => $request['confirm_message'] ?? 'Approve this restoration request?',
+                                                'bulkAction' => 'approve'
                                             ]) ?>
                                         <?php elseif (($request['workflow_stage'] ?? '') === 'pending-archive' && can('approve_archive') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
                                             <?= view('components/button', [
@@ -979,7 +980,8 @@
                                                 'type' => 'submit',
                                                 'style' => 'primary',
                                                 'action' => route_to($request['approve_route'], $request['route_id']),
-                                                'confirm' => $request['confirm_message'] ?? 'Approve this archive request?'
+                                                'confirm' => $request['confirm_message'] ?? 'Approve this archive request?',
+                                                'bulkAction' => 'approve'
                                             ]) ?>
                                             <?php if (!empty($request['decline_route'])): ?>
                                                 <?= view('components/button', [
@@ -987,7 +989,8 @@
                                                     'type' => 'submit',
                                                     'style' => 'danger',
                                                     'action' => route_to($request['decline_route'], $request['route_id']),
-                                                    'confirm' => $request['decline_confirm_message'] ?? 'Reject this archive request?'
+                                                    'confirm' => $request['decline_confirm_message'] ?? 'Reject this archive request?',
+                                                    'bulkAction' => 'reject'
                                                 ]) ?>
                                             <?php endif; ?>
                                         <?php elseif (($request['workflow_stage'] ?? '') === 'pending-disposal' && can('approve_disposal') && !empty($request['approve_route']) && !empty($request['route_id'])): ?>
@@ -996,7 +999,8 @@
                                                 'type' => 'submit',
                                                 'style' => 'primary',
                                                 'action' => route_to($request['approve_route'], $request['route_id']),
-                                                'confirm' => $request['confirm_message'] ?? 'Approve this disposal request?'
+                                                'confirm' => $request['confirm_message'] ?? 'Approve this disposal request?',
+                                                'bulkAction' => 'approve'
                                             ]) ?>
                                             <?php if (!empty($request['decline_route'])): ?>
                                                 <?= view('components/button', [
@@ -1004,7 +1008,8 @@
                                                     'type' => 'submit',
                                                     'style' => 'danger',
                                                     'action' => route_to($request['decline_route'], $request['route_id']),
-                                                    'confirm' => $request['decline_confirm_message'] ?? 'Reject this disposal request?'
+                                                    'confirm' => $request['decline_confirm_message'] ?? 'Reject this disposal request?',
+                                                    'bulkAction' => 'reject'
                                                 ]) ?>
                                             <?php endif; ?>
                                         <?php elseif (!empty($request['fallback_action_label'])): ?>
@@ -1140,14 +1145,16 @@
                                                     'type' => 'submit',
                                                     'style' => 'primary',
                                                     'action' => route_to('restoration.approve', $pendingRestoration['restoration_request_id']),
-                                                    'confirm' => 'Approve this restoration request?'
+                                                    'confirm' => 'Approve this restoration request?',
+                                                    'bulkAction' => 'approve'
                                                 ]) ?>
                                                 <?= view('components/button', [
                                                     'label' => 'Reject',
                                                     'type' => 'submit',
                                                     'style' => 'danger',
                                                     'action' => route_to('restoration.reject', $pendingRestoration['restoration_request_id']),
-                                                    'confirm' => 'Reject this restoration request and keep folder archived?'
+                                                    'confirm' => 'Reject this restoration request and keep folder archived?',
+                                                    'bulkAction' => 'reject'
                                                 ]) ?>
                                             <?php else: ?>
                                                 <span class="text-xs font-semibold text-yellow-600 uppercase">Pending</span>
@@ -1159,14 +1166,16 @@
                                                     'type' => 'submit',
                                                     'style' => 'primary',
                                                     'action' => route_to('disposal.approve', $record['disposal_id']),
-                                                    'confirm' => 'Approve this disposal request?'
+                                                    'confirm' => 'Approve this disposal request?',
+                                                    'bulkAction' => 'approve'
                                                 ]) ?>
                                                 <?= view('components/button', [
                                                     'label' => 'Reject',
                                                     'type' => 'submit',
                                                     'style' => 'danger',
                                                     'action' => route_to('disposal.reject', $record['disposal_id']),
-                                                    'confirm' => 'Reject this disposal request and keep folder archived?'
+                                                    'confirm' => 'Reject this disposal request and keep folder archived?',
+                                                    'bulkAction' => 'reject'
                                                 ]) ?>
                                             <?php endif; ?>
 
@@ -1186,7 +1195,8 @@
                                                     'type' => 'submit',
                                                     'style' => 'primary',
                                                     'action' => route_to('archive.restore', $folderId),
-                                                    'confirm' => 'Submit a restoration request for this folder?'
+                                                    'confirm' => 'Submit a restoration request for this folder?',
+                                                    'bulkAction' => 'restore'
                                                 ]) ?>
                                             <?php endif; ?>
                                         <?php endif; ?>

@@ -16,6 +16,8 @@ $folderTypeFilter = $filters['folder_type'] ?? '';
 
 $categoryFilter = $filters['category'] ?? '';
 
+$noAttachmentsFilter = ($filters['no_attachments'] ?? '') === '1' ? '1' : '';
+
 $sortFilter = $filters['sort'] ?? 'company_asc';
 
 
@@ -127,6 +129,8 @@ $folders = $folders ?? [];
                     <input type="hidden" id="folderTypeFilterInput" name="folder_type" value="<?= esc($folderTypeFilter) ?>">
 
                     <input type="hidden" id="categoryFilterInput" name="category" value="<?= esc($categoryFilter) ?>">
+
+                    <input type="hidden" id="noAttachmentsFilterInput" name="no_attachments" value="<?= esc($noAttachmentsFilter) ?>">
 
 
 
@@ -310,6 +314,30 @@ $folders = $folders ?? [];
 
 
 
+                <!-- Attachment Filter -->
+
+                <div>
+
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
+
+                    <label for="modalNoAttachmentsFilter" class="flex items-start gap-2 cursor-pointer rounded-lg border border-gray-300 px-3 py-2 hover:bg-gray-50">
+
+                        <input type="checkbox" id="modalNoAttachmentsFilter" class="modal-filter mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" <?= $noAttachmentsFilter === '1' ? 'checked' : '' ?>>
+
+                        <span class="text-sm text-gray-700">
+
+                            Only records with no files attached
+
+                            <span class="block text-xs text-gray-500">Finds folders that were created but never populated</span>
+
+                        </span>
+
+                    </label>
+
+                </div>
+
+
+
                 <!-- Sort Options -->
 
                 <div>
@@ -402,6 +430,7 @@ $folders = $folders ?? [];
         var statusFilterInput = document.getElementById('statusFilterInput');
         var folderTypeFilterInput = document.getElementById('folderTypeFilterInput');
         var categoryFilterInput = document.getElementById('categoryFilterInput');
+        var noAttachmentsFilterInput = document.getElementById('noAttachmentsFilterInput');
 
         var filtersModal = document.getElementById('filtersModal');
         var openFiltersModal = document.getElementById('openFiltersModal');
@@ -411,6 +440,7 @@ $folders = $folders ?? [];
         var modalStatusFilter = document.getElementById('modalStatusFilter');
         var modalFolderTypeFilter = document.getElementById('modalFolderTypeFilter');
         var modalCategoryFilter = document.getElementById('modalCategoryFilter');
+        var modalNoAttachmentsFilter = document.getElementById('modalNoAttachmentsFilter');
         var sortButtons = Array.prototype.slice.call(document.querySelectorAll('.sort-button.modal-filter'));
 
         var resetButton = document.getElementById('resetFiltersButton');
@@ -455,6 +485,7 @@ $folders = $folders ?? [];
                 status: statusFilterInput ? statusFilterInput.value : '',
                 folder_type: folderTypeFilterInput ? folderTypeFilterInput.value : '',
                 category: categoryFilterInput ? categoryFilterInput.value : '',
+                no_attachments: noAttachmentsFilterInput ? noAttachmentsFilterInput.value : '',
                 sort: sortFilterInput ? sortFilterInput.value : 'company_asc',
             };
 
@@ -483,7 +514,11 @@ $folders = $folders ?? [];
 
             resultsPanel.classList.add('opacity-60');
 
-            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
                 .then(function(response) {
                     if (!response.ok) {
                         throw new Error('Failed to load results');
@@ -555,6 +590,13 @@ $folders = $folders ?? [];
             }
         });
 
+        // Checkbox rather than a select, so it maps to '1' / '' by checked state.
+        if (modalNoAttachmentsFilter && noAttachmentsFilterInput) {
+            modalNoAttachmentsFilter.addEventListener('change', function() {
+                noAttachmentsFilterInput.value = this.checked ? '1' : '';
+            });
+        }
+
         sortButtons.forEach(function(button) {
             button.addEventListener('click', function() {
                 setActiveSort(button.dataset.sortValue || 'company_asc');
@@ -590,9 +632,11 @@ $folders = $folders ?? [];
                 if (modalStatusFilter) modalStatusFilter.value = '';
                 if (modalFolderTypeFilter) modalFolderTypeFilter.value = '';
                 if (modalCategoryFilter) modalCategoryFilter.value = '';
+                if (modalNoAttachmentsFilter) modalNoAttachmentsFilter.checked = false;
                 if (statusFilterInput) statusFilterInput.value = '';
                 if (folderTypeFilterInput) folderTypeFilterInput.value = '';
                 if (categoryFilterInput) categoryFilterInput.value = '';
+                if (noAttachmentsFilterInput) noAttachmentsFilterInput.value = '';
                 setActiveSort('company_asc');
                 navigateWithCurrentFilters();
             });
@@ -656,7 +700,11 @@ $folders = $folders ?? [];
             var isApprove = updateForm.getAttribute('data-diff-action') === 'approve';
             var diffUrl = updateForm.getAttribute('data-diff-url');
 
-            fetch(diffUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            fetch(diffUrl, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
                 .then(function(response) {
                     if (!response.ok) {
                         return response.json().then(function(body) {
@@ -690,7 +738,9 @@ $folders = $folders ?? [];
 
         // Keep the results panel in sync with browser back/forward.
         window.addEventListener('popstate', function() {
-            loadResults(window.location.href, { replace: true });
+            loadResults(window.location.href, {
+                replace: true
+            });
         });
 
         applyActiveLimiterButton(<?= json_encode((string) ($filters['limit'] ?? 'all')) ?>);

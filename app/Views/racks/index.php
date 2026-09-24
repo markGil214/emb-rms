@@ -3,7 +3,15 @@
 <?= $this->section('content') ?>
 
 <?php
-$locationsList = $locations ?? [];
+$occupancyMap = $occupancyMap ?? [];
+$locationsList = array_map(static function (array $location) use ($occupancyMap): array {
+    // `current_count` on the locations table is never maintained, so the
+    // real occupancy is the live folder count passed in by the controller.
+    $location['used'] = (int) ($occupancyMap[(int) $location['location_id']] ?? 0);
+    $location['capacity'] = (int) ($location['capacity'] ?? 0);
+
+    return $location;
+}, $locations ?? []);
 $racksList = $racks ?? [];
 $totalShelves = is_array($locationsList) ? count($locationsList) : 0;
 $totalRacks = is_array($racksList) ? count($racksList) : 0;
@@ -84,6 +92,9 @@ $editLocation = $editLocation ?? null;
     .form-label { display: block; margin-bottom: 8px; color: #334155; font-size: 14px; font-weight: 600; }
     .form-control { min-height: 42px; padding: 10px 12px; }
     .form-error { margin-top: 6px; color: #dc2626; font-size: 13px; }
+    .form-hint { margin-top: 6px; color: #64748b; font-size: 12px; }
+    .used-pill--full { background: #fee2e2; color: #991b1b; }
+    .capacity-unset { color: #b45309; font-style: italic; }
     .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
     .secondary-button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; color: #334155; font-size: 14px; font-weight: 600; cursor: pointer; }
     .secondary-button:hover { background: #e2e8f0; }
@@ -128,6 +139,9 @@ $editLocation = $editLocation ?? null;
     .dark .pagination-button { border-color: var(--color-border-light); background: var(--color-bg-secondary); color: var(--color-text-secondary); }
     .dark .pagination-button:hover { background: var(--color-bg-tertiary); }
     .dark .pagination-page { background: var(--color-bg-tertiary); color: var(--color-text-secondary); }
+    .dark .form-hint { color: var(--color-text-muted); }
+    .dark .used-pill--full { background: rgba(220, 38, 38, 0.2); color: #fca5a5; }
+    .dark .capacity-unset { color: #fcd34d; }
     .dark .empty-state__icon { color: var(--color-text-muted); }
     .dark .empty-state__title { color: var(--color-text); }
     .dark .empty-state__text { color: var(--color-text-secondary); }
@@ -224,6 +238,15 @@ $editLocation = $editLocation ?? null;
                     <?php endif; ?>
                 </div>
 
+                <div class="form-group">
+                    <label for="capacity" class="form-label">Capacity</label>
+                    <input id="capacity" type="number" name="capacity" value="<?= esc(old('capacity', '0')) ?>" min="0" step="1" class="form-control">
+                    <p class="form-hint">Maximum folders this shelf can hold. A shelf set to 0 cannot store any folders.</p>
+                    <?php if (! empty($errors['capacity'])): ?>
+                        <p class="form-error"><?= esc($errors['capacity']) ?></p>
+                    <?php endif; ?>
+                </div>
+
                 <div class="modal-actions">
                     <button type="button" onclick="closeModal('addRackModal')" class="secondary-button">Cancel</button>
                     <button type="submit" class="submit-button">Add Shelf</button>
@@ -255,6 +278,15 @@ $editLocation = $editLocation ?? null;
                     <input id="edit-shelf" type="text" name="shelf" value="<?= esc(old('shelf', (string) ($editLocation['shelf'] ?? ''))) ?>" required maxlength="50" pattern="[A-Za-z0-9 ]+" title="Use letters, numbers, and spaces only." class="form-control">
                     <?php if (! empty($errors['shelf'])): ?>
                         <p class="form-error"><?= esc($errors['shelf']) ?></p>
+                    <?php endif; ?>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-capacity" class="form-label">Capacity</label>
+                    <input id="edit-capacity" type="number" name="capacity" value="<?= esc(old('capacity', (string) ($editLocation['capacity'] ?? '0'))) ?>" min="0" step="1" class="form-control">
+                    <p class="form-hint">Maximum folders this shelf can hold. A shelf set to 0 cannot store any folders.</p>
+                    <?php if (! empty($errors['capacity'])): ?>
+                        <p class="form-error"><?= esc($errors['capacity']) ?></p>
                     <?php endif; ?>
                 </div>
 
@@ -291,6 +323,7 @@ $editLocation = $editLocation ?? null;
                             <th>Rack</th>
                             <th>Shelf</th>
                             <th class="cell-center">Used</th>
+                            <th class="cell-center">Capacity</th>
                             <th class="cell-center">Actions</th>
                         </tr>
                     </thead>
@@ -314,6 +347,7 @@ $editLocation = $editLocation ?? null;
                                 <td class="cell-center">
                                     <span class="used-pill" x-text="rackGroup.totalUsed"></span>
                                 </td>
+                                <td class="cell-center"></td>
                                 <td class="cell-center">
                                     <button type="button" class="summary-pill">Rack summary</button>
                                 </td>
@@ -330,7 +364,14 @@ $editLocation = $editLocation ?? null;
                                             </div>
                                         </td>
                                         <td class="cell-center">
-                                            <span class="used-pill" x-text="Number(location.current_count) > 0 ? location.current_count : ''"></span>
+                                            <span class="used-pill"
+                                                :class="Number(location.used) >= Number(location.capacity) ? 'used-pill--full' : ''"
+                                                x-text="location.used"></span>
+                                        </td>
+                                        <td class="cell-center">
+                                            <span class="shelf-title"
+                                                :class="Number(location.capacity) === 0 ? 'capacity-unset' : ''"
+                                                x-text="Number(location.capacity) > 0 ? location.capacity : 'Not set'"></span>
                                         </td>
                                         <td class="cell-center">
                                             <button type="button" class="action-pill" @click="openEditModal(location)">Edit</button>
@@ -398,7 +439,7 @@ $editLocation = $editLocation ?? null;
 <script>
 function racksManager() {
     return {
-        locations: <?= json_encode($locations ?? []) ?>,
+        locations: <?= json_encode($locationsList) ?>,
         updateUrlBase: <?= json_encode(rtrim(base_url('manage-racks'), '/')) ?>,
         filteredLocations: [],
         filteredRacks: [],
@@ -431,6 +472,11 @@ function racksManager() {
                 shelfInput.value = location.shelf;
             }
 
+            var capacityInput = document.getElementById('edit-capacity');
+            if (capacityInput) {
+                capacityInput.value = Number(location.capacity || 0);
+            }
+
             openModal('editRackModal');
         },
 
@@ -448,7 +494,7 @@ function racksManager() {
                 }
 
                 groups[rackKey].shelves.push(location);
-                groups[rackKey].totalUsed += parseInt(location.current_count || 0, 10);
+                groups[rackKey].totalUsed += parseInt(location.used || 0, 10);
 
                 if (this.rackExpansionState[rackKey] === undefined) {
                     this.rackExpansionState[rackKey] = false;

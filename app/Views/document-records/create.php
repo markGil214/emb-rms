@@ -38,9 +38,15 @@
 
 
 
-            <!-- Company Name and Document Status -->
+            <!-- Group 1: Company -->
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+
+                <h3 class="text-base font-semibold text-gray-900 mb-1">Company Information</h3>
+
+                <p class="text-xs text-gray-500 mb-3">Who the records belong to</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <!-- Company Name -->
 
@@ -68,7 +74,59 @@
 
                 </div>
 
-                
+
+
+                <!-- Company Location -->
+
+                <div class="relative">
+
+                    <label for="company_location" class="block text-sm font-medium text-gray-700 pt-2">
+
+                        Company Location
+
+                    </label>
+
+                    <input type="text" id="company_location" name="company_location"
+
+                        value="<?= esc(old('company_location')) ?>"
+
+                        maxlength="255"
+
+                        autocomplete="off"
+
+                        class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+
+                        placeholder="e.g. Turod, Luna, Apayao">
+
+                    <ul id="companyLocationSuggestions"
+                        class="absolute z-20 hidden w-full mt-1 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded shadow-lg text-sm">
+                    </ul>
+
+                    <p class="mt-1 text-xs text-gray-500">Where the company is located. Separate from the shelf location below.</p>
+
+                    <?php if (isset($errors['company_location'])): ?>
+
+                        <p class="mt-1 text-sm text-red-600"><?= $errors['company_location'] ?></p>
+
+                    <?php endif; ?>
+
+                </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Group 2: Folder -->
+
+            <div class="border-t pt-4">
+
+                <h3 class="text-base font-semibold text-gray-900 mb-1">Folder Information</h3>
+
+                <p class="text-xs text-gray-500 mb-3">How this record is classified</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <!-- Folder Type -->
 
@@ -138,17 +196,19 @@
 
                 </div>
 
-                
+                </div>
 
             </div>
 
 
 
-            <!-- Location Section -->
+            <!-- Group 3: Shelf Location -->
 
             <div class="border-t pt-4">
 
-                <h3 class="text-base font-medium text-gray-900 mb-3">Location Information</h3>
+                <h3 class="text-base font-semibold text-gray-900 mb-1">Shelf Location</h3>
+
+                <p class="text-xs text-gray-500 mb-3">Where the physical folder will be stored</p>
 
                 
 
@@ -203,6 +263,8 @@
                             <option value="">-- Select Shelf --</option>
 
                         </select>
+
+                        <p id="shelfCapacityNote" class="mt-1 text-sm text-gray-600"></p>
 
                     </div>
 
@@ -267,13 +329,17 @@
 
                                 shelf: loc.shelf || loc.cabinet,
 
-                                locationId: loc.location_id
+                                locationId: loc.location_id,
+
+                                capacity: Number(loc.capacity || 0),
+
+                                remaining: Number(loc.remaining || 0)
 
                             }));
 
 
 
-                        const uniqueShelves = [...new Map(shelves.map(s => [s.shelf, s])).values()].sort((a, b) => 
+                        const uniqueShelves = [...new Map(shelves.map(s => [s.shelf, s])).values()].sort((a, b) =>
 
                             a.shelf.localeCompare(b.shelf)
 
@@ -287,7 +353,35 @@
 
                             option.value = JSON.stringify({ shelf: item.shelf, locationId: item.locationId });
 
-                            option.textContent = 'Shelf ' + item.shelf;
+                            // Show what's left so a full shelf is obvious before selecting it.
+
+                            let suffix;
+
+                            if (item.capacity <= 0) {
+
+                                suffix = ' — no capacity set';
+
+                            } else if (item.remaining <= 0) {
+
+                                suffix = ' — FULL (0 left)';
+
+                            } else {
+
+                                suffix = ' — ' + item.remaining + ' left';
+
+                            }
+
+                            option.textContent = 'Shelf ' + item.shelf + suffix;
+
+                            option.dataset.remaining = String(item.remaining);
+
+                            option.dataset.capacity = String(item.capacity);
+
+                            if (item.remaining <= 0) {
+
+                                option.disabled = true;
+
+                            }
 
                             shelfSelect.appendChild(option);
 
@@ -307,6 +401,77 @@
 
 
 
+                const createButton = document.getElementById('createRecordButton');
+
+                const capacityNote = document.getElementById('shelfCapacityNote');
+
+                // Keep the submit button in step with the selected shelf's
+                // remaining space -- the server rejects a full shelf anyway,
+                // so there's no point letting the form be submitted.
+                function syncCapacityState() {
+
+                    const option = shelfSelect.options[shelfSelect.selectedIndex];
+
+                    const hasSelection = !!(option && option.value);
+
+                    const remaining = hasSelection ? Number(option.dataset.remaining || 0) : null;
+
+                    const capacity = hasSelection ? Number(option.dataset.capacity || 0) : null;
+
+                    if (!hasSelection) {
+
+                        if (capacityNote) capacityNote.textContent = '';
+
+                        if (createButton) createButton.disabled = false;
+
+                        return;
+
+                    }
+
+                    if (capacity <= 0) {
+
+                        if (capacityNote) {
+
+                            capacityNote.textContent = 'This shelf has no capacity set and cannot store folders. Set its capacity in Manage Racks first.';
+
+                            capacityNote.className = 'mt-1 text-sm text-red-600';
+
+                        }
+
+                        if (createButton) createButton.disabled = true;
+
+                        return;
+
+                    }
+
+                    if (remaining <= 0) {
+
+                        if (capacityNote) {
+
+                            capacityNote.textContent = 'This shelf is full. Choose another shelf or raise its capacity in Manage Racks.';
+
+                            capacityNote.className = 'mt-1 text-sm text-red-600';
+
+                        }
+
+                        if (createButton) createButton.disabled = true;
+
+                        return;
+
+                    }
+
+                    if (capacityNote) {
+
+                        capacityNote.textContent = remaining + ' slot(s) left on this shelf.';
+
+                        capacityNote.className = remaining <= 5 ? 'mt-1 text-sm text-amber-600' : 'mt-1 text-sm text-gray-600';
+
+                    }
+
+                    if (createButton) createButton.disabled = false;
+
+                }
+
                 shelfSelect.addEventListener('change', function() {
 
                     locationIdInput.value = '';
@@ -319,7 +484,11 @@
 
                     }
 
+                    syncCapacityState();
+
                 });
+
+                cabinetSelect.addEventListener('change', syncCapacityState);
 
                 // Category options come directly from the database and are shown as plain names.
 
@@ -331,6 +500,14 @@
                     if (!cabinet || !shelf || !locationId) {
                         event.preventDefault();
                         window.showAppAlert('Please select both Rack and Shelf before creating the record.');
+                        return false;
+                    }
+
+                    const shelfSelectEl = document.getElementById('shelf');
+                    const selectedOption = shelfSelectEl.options[shelfSelectEl.selectedIndex];
+                    if (selectedOption && Number(selectedOption.dataset.remaining || 0) <= 0) {
+                        event.preventDefault();
+                        window.showAppAlert('That shelf has no space left. Choose another shelf or raise its capacity in Manage Racks.');
                         return false;
                     }
                     
@@ -353,9 +530,9 @@
 
                 </a>
 
-                <button type="submit" 
+                <button type="submit" id="createRecordButton"
 
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-full sm:w-auto">
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-full sm:w-auto disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:bg-gray-400">
 
                     Create Record
 
@@ -433,6 +610,82 @@ document.addEventListener('DOMContentLoaded', function() {
 
     }
 
+    // Company Location autocomplete, backed by /api/ph-address/search.
+    const locationInput = document.getElementById('company_location');
+    const locationSuggestions = document.getElementById('companyLocationSuggestions');
+
+    if (locationInput && locationSuggestions) {
+        let debounceTimer = null;
+        let activeController = null;
+
+        function hideSuggestions() {
+            locationSuggestions.innerHTML = '';
+            locationSuggestions.classList.add('hidden');
+        }
+
+        function renderSuggestions(items) {
+            locationSuggestions.innerHTML = '';
+
+            if (!items.length) {
+                hideSuggestions();
+                return;
+            }
+
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item.label;
+                li.className = 'px-3 py-2 cursor-pointer hover:bg-blue-50';
+                li.addEventListener('mousedown', function(event) {
+                    // mousedown (not click) so this fires before the input's blur hides the list.
+                    event.preventDefault();
+                    locationInput.value = item.label;
+                    hideSuggestions();
+                });
+                locationSuggestions.appendChild(li);
+            });
+
+            locationSuggestions.classList.remove('hidden');
+        }
+
+        locationInput.addEventListener('input', function() {
+            const query = this.value.trim();
+
+            clearTimeout(debounceTimer);
+
+            if (query.length < 2) {
+                hideSuggestions();
+                return;
+            }
+
+            debounceTimer = setTimeout(function() {
+                if (activeController) activeController.abort();
+                activeController = new AbortController();
+
+                fetch('<?= route_to('api.phaddress.search') ?>?q=' + encodeURIComponent(query), {
+                        signal: activeController.signal,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(renderSuggestions)
+                    .catch(function(error) {
+                        if (error.name !== 'AbortError') hideSuggestions();
+                    });
+            }, 250);
+        });
+
+        locationInput.addEventListener('blur', function() {
+            // Small delay so a suggestion's mousedown handler still runs first.
+            setTimeout(hideSuggestions, 150);
+        });
+
+        locationInput.addEventListener('focus', function() {
+            if (this.value.trim().length >= 2 && locationSuggestions.children.length) {
+                locationSuggestions.classList.remove('hidden');
+            }
+        });
+    }
 });
 
 </script>

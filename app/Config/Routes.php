@@ -112,6 +112,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
 $routes->group('', ['filter' => 'auth'], function($routes) {
 
+    $routes->get('/api/ph-address/search',            'Api\PhAddressApiController::search', ['as' => 'api.phaddress.search']);
+
     $routes->get('/document-records',                'FolderController::index',    ['as' => 'records', 'filter' => 'permission:search_documents']);
 
     $routes->get('/document-records/create',         'FolderController::create',   ['as' => 'records.create', 'filter' => 'permission:create_document_record']);
@@ -159,6 +161,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->get('/users/create',                 'Admin\UserController::create',        ['as' => 'users.create', 'filter' => 'permission:manage_users']);
     $routes->post('/users',                       'Admin\UserController::store',         ['as' => 'users.store', 'filter' => 'permission:manage_users']);
     $routes->get('/users/(:num)/status-confirm',  'Admin\UserController::confirmStatus/$1',['as' => 'users.status-confirm', 'filter' => 'permission:manage_users']);
+    $routes->get('/users/(:num)',                 'Admin\UserController::show/$1',        ['as' => 'users.show', 'filter' => 'permission:manage_users']);
     $routes->post('/users/(:num)/status',         'Admin\UserController::updateStatus/$1',['as' => 'users.update-status', 'filter' => 'permission:manage_users']);
     $routes->post('/users/(:num)/update-info',   'Admin\UserController::updateInfo/$1',  ['as' => 'users.update-info', 'filter' => 'permission:manage_users']);
 
