@@ -3,7 +3,6 @@
 namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
-use Kint\Renderer\Renderer;
 
 /**
  * --------------------------------------------------------------------------
@@ -39,8 +38,6 @@ class Kint extends BaseConfig
 	public $richTheme = 'aante-light.css';
 
 	public $richFolder = false;
-
-	public $richSort = Renderer::SORT_FULL;
 
 	public $richObjectPlugins = null;
 

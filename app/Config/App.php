@@ -26,6 +26,8 @@ class App extends BaseConfig
 	 */
 	public $baseURL = 'http://localhost:8080/';
 
+	public array $allowedHostnames = [];
+
 	public function __construct()
 	{
 		parent::__construct();
@@ -33,6 +35,8 @@ class App extends BaseConfig
 		// Dynamically detect base URL to avoid hardcoded port mismatches
 		if (php_sapi_name() !== 'cli' && !empty($_SERVER['HTTP_HOST'])) {
 			$this->baseURL = $this->detectBaseURL();
+		} elseif (trim((string) $this->baseURL) === '') {
+			$this->baseURL = 'http://localhost:8080/';
 		}
 	}
 
@@ -67,6 +71,8 @@ class App extends BaseConfig
 	 * @var string
 	 */
 	public $uriProtocol = 'REQUEST_URI';
+
+	public string $permittedURIChars = 'a-z 0-9~%.:_\-';
 
 	/**
 	 * --------------------------------------------------------------------------
@@ -336,7 +342,7 @@ class App extends BaseConfig
 	 *
 	 * @var string|string[]
 	 */
-	public $proxyIPs = '';
+	public array $proxyIPs = [];
 
 	/**
 	 * --------------------------------------------------------------------------
@@ -471,4 +477,3 @@ class App extends BaseConfig
 		return $protocol . $host . $port . $scriptPath . '/';
 	}
 }
-

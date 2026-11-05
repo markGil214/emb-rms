@@ -7,13 +7,6 @@ use App\Libraries\FileCodeGenerator;
 
 class FolderModel extends Model
 {
-    //Folder Type Constants
-    const FOLDER_TYPES = [
-        'PERMITS',
-        'ECC / CNC FILES',
-        'IEE / EIS FILES'
-    ];
-
     // Folder Category Constants
     const FOLDER_CATEGORIES = [
         'Solid Waste Management System Files',
@@ -31,7 +24,7 @@ class FolderModel extends Model
     protected $returnType       = 'array';
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'file_code', 'company_name', 'company_location', 'folder_type', 'category_id',
+        'file_code', 'company_name', 'company_location', 'folder_type', 'folder_type_id', 'category_id',
         'location_code', 'status', 'location_id', 'created_by', 'updated_by',
         'borrowed_date', 'due_date'
     ];
@@ -51,7 +44,8 @@ class FolderModel extends Model
         'location_id'    => 'required|integer',
         'company_name'   => 'required|max_length[100]',
         'company_location' => 'permit_empty|max_length[255]',
-        'folder_type'    => 'required|in_list[PERMITS,ECC / CNC FILES,IEE / EIS FILES]|max_length[50]',
+        'folder_type_id' => 'required|integer',
+        'folder_type'    => 'required|max_length[50]',
         'category_id'    => 'required|integer|is_not_unique[categories.category_id]',
         'status'         => 'in_list[Available,Borrowed,Archived,Disposed,Pending,Pending Update,Pending Archive,Declined]',
         'borrowed_date'  => 'permit_empty|valid_date',

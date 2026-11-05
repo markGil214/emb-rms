@@ -82,6 +82,8 @@ class Cache extends BaseConfig
 	 */
 	public $prefix = '';
 
+	public $reservedCharacters = '{}()/\@:';
+
 	/**
 	 * --------------------------------------------------------------------------
 	 * File settings

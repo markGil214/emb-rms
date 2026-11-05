@@ -255,26 +255,36 @@
 
                         </label>
 
-                        <select id="folder_type" name="folder_type" 
+                        <select id="folder_type" name="folder_type_id" 
 
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 
                             required>
 
-                            <option value="">-- Select Folder Type --</option>
-
-                            <option value="PERMITS" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'PERMITS' ? 'selected' : '' ?>>PERMIT</option>
-
-                            <option value="ECC / CNC FILES" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'ECC / CNC FILES' ? 'selected' : '' ?>>ECC / CNC FILES</option>
-
-                            <option value="IEE / EIS FILES" <?= (old('folder_type') ?? $folder['folder_type'] ?? '') === 'IEE / EIS FILES' ? 'selected' : '' ?>>IEE / EIS FILES</option>
+                            <?php foreach(($folderTypes ?? []) as $folderType): ?>
+                                <?php
+                                    $folderTypeId = (string) ($folderType['id'] ?? '');
+                                    $folderTypeName = trim((string) ($folderType['name'] ?? ''));
+                                    if ($folderTypeName === '') {
+                                        $folderTypeName = $folderTypeId === (string) ($folder['folder_type_id'] ?? '')
+                                            ? (string) ($folder['folder_type'] ?? '')
+                                            : 'Folder type #' . $folderTypeId;
+                                    }
+                                ?>
+                                <option 
+                                    value="<?= esc($folderTypeId) ?>"
+                                    <?= (string) old('folder_type_id', $folder['folder_type_id'] ?? '') === $folderTypeId ? 'selected' : '' ?>
+                                >
+                                    <?= esc($folderTypeName) ?>
+                                </option>
+                            <?php endforeach; ?>
 
                         </select>
 
-                        <?php if (isset($errors['folder_type'])): ?>
-
-                            <p class="mt-1 text-sm text-red-600"><?= $errors['folder_type'] ?></p>
-
+                       <?php if (isset($errors['folder_type_id'])): ?>
+                            <p class="mt-1 text-sm text-red-600">
+                                <?= esc($errors['folder_type_id']) ?>
+                            </p>
                         <?php endif; ?>
 
                     </div>
@@ -671,4 +681,3 @@
 
 
 <?= $this->endSection() ?>
-

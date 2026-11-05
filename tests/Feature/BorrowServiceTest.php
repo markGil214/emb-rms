@@ -2,14 +2,13 @@
 
 namespace Tests\Feature;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestCase;
 use App\Libraries\BorrowService;
 use App\Libraries\BorrowValidator;
 use App\Libraries\BorrowRepository;
 use App\Models\BorrowTransactionModel;
 use App\Models\FolderModel;
 use DomainException;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * ✅ COMPREHENSIVE BORROW SERVICE TESTS

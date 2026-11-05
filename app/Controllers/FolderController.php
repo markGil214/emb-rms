@@ -139,10 +139,17 @@ class FolderController extends BaseController
             ->orderBy('category_name', 'ASC')
             ->findAll();
 
+        $folderTypes = $db->table('folder_type')
+            ->select('id, name')
+            ->orderBy('name', 'ASC')
+            ->get()
+            ->getResultArray();
+
         return view('document-records/create', [
             'title' => 'Create New Folder',
             'locations' => $locations,
             'categories' => $categories,
+            'folderTypes' => $folderTypes,
             'selectedCategoryId' => old('category_id'),
         ]);
     }
@@ -156,8 +163,26 @@ class FolderController extends BaseController
         $db->transStart();
 
         $companyName = $this->request->getPost('company_name');
-        $folderType = $this->request->getPost('folder_type');
+        $folderTypeId = (int) $this->request->getPost('folder_type_id');
         $categoryId = (int) $this->request->getPost('category_id');
+
+        //Retrieve the selected folder type from the lookup table
+        $folderTypeRecord = $db->table('folder_type')
+            ->select('*')
+            ->where('id', $folderTypeId)
+            ->get()
+            ->getRowArray();
+
+        if(!$folderTypeRecord || !isset($folderTypeRecord['name'])){
+            $db->transRollback();
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Please select a valid folder type.');
+        }
+
+        $folderType = $folderTypeRecord['name'];
+
         $nextCode = FileCodeGenerator::getNextFromCompany($companyName);
 
         // Check for duplicate: same company name and folder type
@@ -190,11 +215,15 @@ class FolderController extends BaseController
             'location_code' => $locationCode,
             'company_name' => $companyName,
             'company_location' => trim((string) $this->request->getPost('company_location')) ?: null,
+            
+            //Save both the lookup ID and its name
+            'folder_type_id' => $folderTypeRecord['id'],
             'folder_type' => $folderType,
+            
             'category_id' => $categoryId,
             'status' => 'Pending',
             'location_id' => $locationId,
-            'created_by' => auth_user()['user_id'] ?? null,
+            'created_by' => auth_user()['user_id'] ?? null,          
         ];
 
         if (!$this->folderModel->save($data)) {
@@ -213,6 +242,13 @@ class FolderController extends BaseController
     public function show(int $folderId)
     {
         $folder = $this->findFolderOrFail($folderId);
+
+        if(($folder['status'] ?? '') === 'Pending'){
+            return redirect()
+            ->to('/document-records')
+            ->with('error', 'Folders with Pending status cannot be viewed or edited.');
+        }
+        
         $db = \Config\Database::connect();
         $location = $db->table('locations')
             ->where('location_id', $folder['location_id'])
@@ -315,6 +351,13 @@ class FolderController extends BaseController
     public function edit(int $folderId)
     {
         $folder = $this->findFolderOrFail($folderId);
+
+        if(($folder['status'] ?? '') === 'Pending'){
+            return redirect()
+            ->to('/document-records')
+            ->with('error', 'Folders with Pending status cannot be viewed or edited.');
+        }
+
         $db = \Config\Database::connect();
         $locations = $db->table('locations')
             ->select('location_id, rack, shelf, capacity')
@@ -358,11 +401,18 @@ class FolderController extends BaseController
             ->orderBy('category_name', 'ASC')
             ->findAll();
 
+        $folderTypes = $db->table('folder_type')
+            ->select('id, name')
+            ->orderBy('name', 'ASC')
+            ->get()
+            ->getResultArray();
+
         return view('document-records/edit', [
             'title' => 'Edit Folder',
             'folder' => $folder,
             'locations' => $locations,
             'categories' => $categories,
+            'folderTypes' => $folderTypes,
             'selectedCategoryId' => old('category_id', $folder['category_id'] ?? ''),
         ]);
     }
@@ -373,6 +423,12 @@ class FolderController extends BaseController
     public function update(int $folderId)
     {
         $folder = $this->findFolderOrFail($folderId);
+
+        if(($folder['status'] ?? '') === 'Pending'){
+            return redirect()
+            ->to('/document-records')
+            ->with('error', 'Folders with Pending status cannot be viewed or edited.');
+        }
 
         $rules = $this->getFolderValidationRules(false);
         if (!$this->validate($rules)) {
@@ -389,8 +445,23 @@ class FolderController extends BaseController
         }
 
         $companyName = $this->request->getPost('company_name');
-        $folderType = $this->request->getPost('folder_type');
+        $folderTypeId = (int) $this->request->getPost('folder_type_id');
         $categoryId = (int) $this->request->getPost('category_id');
+
+        $db = \Config\Database::connect();
+        $folderTypeRecord = $db->table('folder_type')
+            ->select('id, name')
+            ->where('id', $folderTypeId)
+            ->get()
+            ->getRowArray();
+
+        if (! $folderTypeRecord || ! isset($folderTypeRecord['name'])) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Please select a valid folder type.');
+        }
+
+        $folderType = $folderTypeRecord['name'];
 
         // Check for duplicate: same company name and folder type (exclude current folder)
         if ($this->folderModel->isDuplicate($companyName, $folderType, $folderId)) {
@@ -400,6 +471,7 @@ class FolderController extends BaseController
         $data = [
             'company_name' => $companyName,
             'company_location' => trim((string) $this->request->getPost('company_location')) ?: null,
+            'folder_type_id' => $folderTypeRecord['id'],
             'folder_type' => $folderType,
             'category_id' => $categoryId,
             'status' => $folder['status'] ?? 'Available',
@@ -409,7 +481,6 @@ class FolderController extends BaseController
             'updated_by' => auth_user()['user_id'] ?? null,
         ];
 
-        $db = \Config\Database::connect();
         $selectedLocation = $db->table('locations')
             ->where('location_id', $data['location_id'])
             ->get()
@@ -729,7 +800,7 @@ class FolderController extends BaseController
     {
         $rules = [
             'company_name'  => 'required|max_length[255]',
-            'folder_type'   => 'required|in_list[PERMITS,ECC / CNC FILES,IEE / EIS FILES]|max_length[50]',
+            'folder_type_id'   => 'required|integer|is_not_unique[folder_type.id]',
             'category_id'   => 'required|integer|is_not_unique[categories.category_id]',
         ];
 

@@ -234,26 +234,28 @@ $hasActiveFilters = $search !== '' || $statusFilter !== '' || $folderTypeFilter 
                         </td>
                         <td class="whitespace-nowrap px-4 py-2 text-sm font-medium">
                             <div class="flex items-center gap-2 whitespace-nowrap">
-                                <?= view('components/button', [
-                                    'label' => 'View',
-                                    'type' => 'link',
-                                    'url' => route_to('records.show', $folder['folder_id']),
-                                    'style' => 'info',
-                                    'title' => 'View Details',
-                                    'confirm' => null,
-                                    'class' => 'px-3 py-2'
-                                ]) ?>
-
-                                <?php if ($folderStatus !== 'Pending Archive'): ?>
+                                <?php if(!in_array($folder['status'] ?? '', ['Pending', 'Pending Update'], true)): ?>
                                     <?= view('components/button', [
-                                        'label' => 'Edit',
+                                        'label' => 'View',
                                         'type' => 'link',
-                                        'url' => route_to('records.edit', $folder['folder_id']),
+                                        'url' => route_to('records.show', $folder['folder_id']),
                                         'style' => 'info',
-                                        'title' => 'Edit Folder',
+                                        'title' => 'View Details',
                                         'confirm' => null,
                                         'class' => 'px-3 py-2'
                                     ]) ?>
+
+                                    <?php if ($folderStatus !== 'Pending Archive'): ?>
+                                        <?= view('components/button', [
+                                            'label' => 'Edit',
+                                            'type' => 'link',
+                                            'url' => route_to('records.edit', $folder['folder_id']),
+                                            'style' => 'info',
+                                            'title' => 'Edit Folder',
+                                            'confirm' => null,
+                                            'class' => 'px-3 py-2'
+                                        ]) ?>
+                                    <?php endif; ?>
                                 <?php endif; ?>
 
                                 <?php if (can('approve_folder_creation') && ($folderStatus === 'Pending' || $folderStatus === 'Pending Update')): ?>

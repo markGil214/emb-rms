@@ -7,6 +7,15 @@ use CodeIgniter\Config\BaseConfig;
 class Security extends BaseConfig
 {
 	/**
+	 * CSRF protection storage method.
+	 *
+	 * @var 'cookie'|'session'
+	 */
+	public string $csrfProtection = 'cookie';
+
+	public bool $tokenRandomize = false;
+
+	/**
 	 * --------------------------------------------------------------------------
 	 * CSRF Token Name
 	 * --------------------------------------------------------------------------

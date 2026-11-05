@@ -44,6 +44,8 @@ class Toolbar extends BaseConfig
 		// Events::class,
 	];
 
+	public $collectVarData = true;
+
 	/**
 	 * --------------------------------------------------------------------------
 	 * Max History

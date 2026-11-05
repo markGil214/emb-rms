@@ -45,4 +45,11 @@ class Exceptions extends BaseConfig
 	 * @var string
 	 */
 	public $errorViewPath = APPPATH . 'Views/errors';
+
+	/**
+	 * Any data keys to hide from exception traces.
+	 *
+	 * @var list<string>
+	 */
+	public $sensitiveDataInTrace = [];
 }

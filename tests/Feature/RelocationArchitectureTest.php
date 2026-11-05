@@ -2,7 +2,8 @@
 
 namespace Tests\Feature;
 
-use CodeIgniter\Test\FeatureTestCase;
+use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\DatabaseTestCase;
 use App\Models\FolderModel;
 use App\Models\RelocationRequestModel;
 use App\Models\FolderMovementModel;
@@ -18,8 +19,10 @@ use App\Models\LocationModel;
  * 4. Reason type capture
  * 5. Transaction integrity
  */
-class RelocationArchitectureTest extends FeatureTestCase
+class RelocationArchitectureTest extends DatabaseTestCase
 {
+    use FeatureTestTrait;
+
     protected $folderModel;
     protected $relocationModel;
     protected $movementModel;
